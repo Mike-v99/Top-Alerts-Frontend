@@ -638,7 +638,7 @@ export default function AppPage() {
                   </div>
                 )}
                 {!chartLoading && chartData.length > 0 && (
-                  <CandlestickChart data={chartData} T={T} />
+                  <CandlestickChart data={chartData} T={T} range={chartRange} />
                 )}
                 {!chartLoading && chartData.length === 0 && (
                   <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: T.textFaint }}>
@@ -1034,7 +1034,7 @@ export default function AppPage() {
 }
 
 // ── Candlestick Chart ────────────────────────────────────────────────────────
-function CandlestickChart({ data, T }) {
+function CandlestickChart({ data, T, range }) {
   const W = 600, H = 200, PAD = { top: 10, right: 10, bottom: 24, left: 52 };
   const cW = W - PAD.left - PAD.right;
   const cH = H - PAD.top - PAD.bottom;
@@ -1043,10 +1043,10 @@ function CandlestickChart({ data, T }) {
   const lows  = data.map(d => d.l);
   const minP  = Math.min(...lows);
   const maxP  = Math.max(...highs);
-  const range = maxP - minP || 1;
+  const priceRange = maxP - minP || 1;
 
-  const scaleY = p => cH - ((p - minP) / range) * cH;
-  const barW   = Math.max(1, Math.min(12, (cW / data.length) * 0.7));
+  const scaleY  = p => cH - ((p - minP) / priceRange) * cH;
+  const barW    = Math.max(1, Math.min(12, (cW / data.length) * 0.7));
   const spacing = cW / data.length;
 
   const fmt = n => n >= 1000
@@ -1055,11 +1055,47 @@ function CandlestickChart({ data, T }) {
 
   // Y axis labels
   const yTicks = 4;
-  const yLabels = Array.from({ length: yTicks + 1 }, (_, i) => minP + (range * i) / yTicks);
+  const yLabels = Array.from({ length: yTicks + 1 }, (_, i) => minP + (priceRange * i) / yTicks);
 
-  // X axis labels — show ~5 evenly spaced
-  const xStep = Math.ceil(data.length / 5);
-  const xLabels = data.filter((_, i) => i % xStep === 0 || i === data.length - 1);
+  // X axis label formatter — changes based on range
+  function formatXLabel(ts) {
+    const dt = new Date(ts);
+    if (range === "1M") {
+      // 5Y chart — monthly candles → show year only
+      return dt.getFullYear().toString();
+    } else if (range === "1W") {
+      // 1Y chart — weekly candles → show "Jan '25" style
+      return dt.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+    } else if (range === "1D") {
+      // 1M chart — daily candles → show "Mar 5"
+      return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    } else {
+      // 5D chart — 15min candles → show "Mar 5"
+      return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    }
+  }
+
+  // X axis: for 5Y deduplicate so we only label each year once
+  function getXLabels() {
+    if (range === "1M") {
+      const seen = new Set();
+      return data.reduce((acc, d, i) => {
+        const year = new Date(d.t).getFullYear();
+        if (!seen.has(year)) {
+          seen.add(year);
+          acc.push({ d, i });
+        }
+        return acc;
+      }, []);
+    }
+    // All other ranges: ~5 evenly spaced
+    const xStep = Math.ceil(data.length / 5);
+    return data
+      .map((d, i) => ({ d, i }))
+      .filter(({ i }) => i % xStep === 0 || i === data.length - 1);
+  }
+
+  const xLabels = getXLabels();
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
@@ -1080,35 +1116,31 @@ function CandlestickChart({ data, T }) {
 
       {/* Candles */}
       {data.map((d, i) => {
-        const x    = PAD.left + i * spacing + spacing / 2;
-        const up   = d.c >= d.o;
-        const col  = up ? T.green : T.red;
-        const top  = PAD.top + scaleY(Math.max(d.o, d.c));
-        const bot  = PAD.top + scaleY(Math.min(d.o, d.c));
-        const hHi  = PAD.top + scaleY(d.h);
-        const hLo  = PAD.top + scaleY(d.l);
+        const x     = PAD.left + i * spacing + spacing / 2;
+        const up    = d.c >= d.o;
+        const col   = up ? T.green : T.red;
+        const top   = PAD.top + scaleY(Math.max(d.o, d.c));
+        const bot   = PAD.top + scaleY(Math.min(d.o, d.c));
+        const hHi   = PAD.top + scaleY(d.h);
+        const hLo   = PAD.top + scaleY(d.l);
         const bodyH = Math.max(1, bot - top);
 
         return (
           <g key={i}>
             <line x1={x} x2={x} y1={hHi} y2={hLo} stroke={col} strokeWidth="1" />
             <rect x={x - barW/2} y={top} width={barW} height={bodyH}
-              fill={up ? col : col} stroke={col} strokeWidth="0.5"
-              fillOpacity={up ? 0.9 : 0.9} />
+              fill={col} stroke={col} strokeWidth="0.5" fillOpacity={0.9} />
           </g>
         );
       })}
 
       {/* X axis labels */}
-      {xLabels.map((d, i) => {
-        const idx = data.indexOf(d);
-        const x   = PAD.left + idx * spacing + spacing / 2;
-        const dt  = new Date(d.t);
-        const lbl = dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      {xLabels.map(({ d, i }) => {
+        const x = PAD.left + i * spacing + spacing / 2;
         return (
           <text key={i} x={x} y={H - 4} textAnchor="middle"
             fontSize="9" fill={T.textFaint} fontFamily="'DM Mono',monospace">
-            {lbl}
+            {formatXLabel(d.t)}
           </text>
         );
       })}
