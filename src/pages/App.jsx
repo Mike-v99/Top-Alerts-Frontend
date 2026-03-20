@@ -108,8 +108,6 @@ export default function AppPage() {
         const res  = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers?tickers=${tickers}&apiKey=${key}`);
         const data = await res.json();
         return (data.tickers || []).map(t => {
-          // lastTrade.p = most recent trade price (real-time during market hours)
-          // day.c = day close (use as fallback or after hours)
           const price = t.lastTrade?.p || t.day?.c || t.min?.c || 0;
           return {
             id: symbolToId[t.ticker] || t.ticker,
@@ -118,6 +116,8 @@ export default function AppPage() {
             change: t.todaysChange || 0,
             changePct: t.todaysChangePerc || 0,
             prevClose: t.prevDay?.c || 0,
+            high: t.day?.h || 0,
+            low: t.day?.l || 0,
           };
         }).filter(r => r.price !== 0);
       } catch (e) {
@@ -267,6 +267,8 @@ export default function AppPage() {
             change: t.todaysChange || 0,
             changePct: t.todaysChangePerc || 0,
             prevClose: t.prevDay?.c || 0,
+            high: t.day?.h || 0,
+            low: t.day?.l || 0,
           }}));
           showToast(`${symbol} added`);
         } else {
@@ -555,9 +557,13 @@ export default function AppPage() {
                 <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>YOUR WATCHLIST</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {watchlist.map(m => {
-                    const d   = watchData[m.symbol];
-                    const up  = d?.changePct >= 0;
-                    const col = !d ? T.border : up ? T.green : T.red;
+                    const d        = watchData[m.symbol];
+                    const up       = d?.changePct >= 0;
+                    const col      = !d ? T.border : up ? T.green : T.red;
+                    const rangePct = d?.high && d?.low && d.high !== d.low
+                      ? Math.min(100, Math.max(0, ((d.price - d.low) / (d.high - d.low)) * 100))
+                      : null;
+                    const fmt = n => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                     return (
                       <div key={m.symbol} style={{
                         background: T.bgCard, border: `1px solid ${T.border}`,
@@ -569,23 +575,44 @@ export default function AppPage() {
                           background: "none", border: "none", color: T.textFaint,
                           cursor: "pointer", fontSize: 14, lineHeight: 1,
                         }}>×</button>
+                        {/* Header */}
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingRight: 16 }}>
                           <div>
-                            <div style={{ ...mono, fontSize: 11, color: T.accent, fontWeight: 700 }}>{m.symbol}</div>
-                            <div style={{ ...font, fontSize: 16, color: T.text, marginTop: 2 }}>{m.label}</div>
+                            <div style={{ ...mono, fontSize: 10, color: T.accent, fontWeight: 500 }}>{m.symbol}</div>
+                            <div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text, marginTop: 1 }}>{m.label}</div>
                           </div>
                           {d && <div style={{ textAlign: "right" }}>
-                            <div style={{ ...mono, fontSize: 10, color: col }}>{up ? "▲" : "▼"} {Math.abs(d.changePct || 0).toFixed(2)}%</div>
+                            <div style={{ ...mono, fontSize: 11, color: col }}>{up ? "▲" : "▼"} {Math.abs(d.changePct || 0).toFixed(2)}%</div>
+                            <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>{up ? "+" : ""}{d.change?.toFixed(2)}</div>
                           </div>}
                         </div>
-                        <div style={{ ...font, fontSize: 24, color: T.text, marginTop: 6 }}>
-                          {!d ? "Loading..." : d.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                        {/* Price */}
+                        <div style={{ ...font, fontSize: 24, fontWeight: 500, color: T.text, margin: "8px 0" }}>
+                          {!d ? "Loading..." : d.price ? fmt(d.price) : "—"}
                         </div>
-                        <button onClick={() => openModal(m.symbol)} style={{
-                          marginTop: 10, padding: "4px 12px", background: "none",
-                          border: `1px solid ${T.accentBorder}`, borderRadius: 6,
-                          cursor: "pointer", ...font, fontSize: 14, color: T.accent,
-                        }}>+ SET ALERT</button>
+                        {/* Day range bar */}
+                        {rangePct !== null && (
+                          <div style={{ marginBottom: 8 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                              <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>L {fmt(d.low)}</span>
+                              <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>H {fmt(d.high)}</span>
+                            </div>
+                            <div style={{ height: 4, background: T.bgDeep, borderRadius: 2 }}>
+                              <div style={{ height: "100%", width: `${rangePct.toFixed(1)}%`, background: col, borderRadius: 2, transition: "width 0.5s" }} />
+                            </div>
+                          </div>
+                        )}
+                        {/* Footer */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div style={{ ...mono, fontSize: 9, color: T.textFaint }}>
+                            {d?.prevClose ? `Prev ${fmt(d.prevClose)}` : ""}
+                          </div>
+                          <button onClick={() => openModal(m.symbol)} style={{
+                            padding: "4px 12px", background: "none",
+                            border: `1px solid ${T.accentBorder}`, borderRadius: 6,
+                            cursor: "pointer", ...font, fontSize: 13, color: T.accent,
+                          }}>+ SET ALERT</button>
+                        </div>
                       </div>
                     );
                   })}
@@ -596,46 +623,66 @@ export default function AppPage() {
             <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 14 }}>MARKET OVERVIEW</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               {MARKET_SYMBOLS.map(m => {
-                const d = marketData[m.id];
-                const up = d?.changePct >= 0;
+                const d   = marketData[m.id];
+                const up  = d?.changePct >= 0;
+                const col = !d ? T.border : up ? T.green : T.red;
+                const rangePct = d?.high && d?.low && d.high !== d.low
+                  ? Math.min(100, Math.max(0, ((d.price - d.low) / (d.high - d.low)) * 100))
+                  : null;
+                const fmt = n => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 return (
                   <div key={m.id} style={{
                     background: T.bgCard, border: `1px solid ${T.border}`,
-                    borderRadius: 11, padding: "16px 18px", position: "relative", overflow: "hidden",
-                    borderLeft: `4px solid ${!d ? T.border : up ? T.green : T.red}`,
+                    borderLeft: `4px solid ${col}`,
+                    borderRadius: 11, padding: "14px 16px",
                   }}>
+                    {/* Header */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div>
-                        <div style={{ ...font, fontSize: 20, color: T.text }}>{m.label}</div>
-                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>{m.symbol}</div>
+                        <div style={{ ...font, fontSize: 15, fontWeight: 500, color: T.text }}>{m.label}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{m.symbol}</div>
                       </div>
                       {d && <div style={{ textAlign: "right" }}>
-                        <div style={{ ...mono, fontSize: 10, color: up ? T.green : T.red, letterSpacing: 1 }}>
+                        <div style={{ ...mono, fontSize: 11, color: col }}>
                           {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
                         </div>
-                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>
                           {up ? "+" : ""}{d.change?.toFixed(2)}
                         </div>
                       </div>}
                     </div>
-                    <div style={{ overflow: "hidden", marginTop: 10 }}>
+                    {/* Price */}
+                    <div style={{ overflow: "hidden", margin: "8px 0" }}>
                       <div
                         key={d?.price}
                         className={flashState[m.id] === "up" ? "price-slide-up" : flashState[m.id] === "down" ? "price-slide-down" : ""}
-                        style={{ ...font, fontSize: 26, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.8s" }}>
-                        {marketLoading && !d ? "Loading..." : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                        style={{ ...font, fontSize: 26, fontWeight: 500, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.8s" }}>
+                        {marketLoading && !d ? "Loading..." : d?.price ? fmt(d.price) : "—"}
                       </div>
                     </div>
-                    {d?.prevClose && <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 4 }}>
-                      Prev close: ${Number(d.prevClose).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </div>}
-                    <button onClick={() => { setForm(f => ({ ...f, asset: m.label })); openModal(); }} style={{
-                      marginTop: 12, padding: "6px 14px", background: "none",
-                      border: `1px solid ${T.accentBorder}`, borderRadius: 6,
-                      cursor: "pointer", ...font, fontSize: 15, color: T.accent,
-                    }}>
-                      + SET ALERT
-                    </button>
+                    {/* Day range bar */}
+                    {rangePct !== null && (
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                          <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>L {fmt(d.low)}</span>
+                          <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>H {fmt(d.high)}</span>
+                        </div>
+                        <div style={{ height: 4, background: T.bgDeep, borderRadius: 2 }}>
+                          <div style={{ height: "100%", width: `${rangePct.toFixed(1)}%`, background: col, borderRadius: 2, transition: "width 0.5s" }} />
+                        </div>
+                      </div>
+                    )}
+                    {/* Footer */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ ...mono, fontSize: 9, color: T.textFaint }}>
+                        {d?.prevClose ? `Prev ${fmt(d.prevClose)}` : ""}
+                      </div>
+                      <button onClick={() => openModal(m.label)} style={{
+                        padding: "4px 12px", background: "none",
+                        border: `1px solid ${T.accentBorder}`, borderRadius: 6,
+                        cursor: "pointer", ...font, fontSize: 13, color: T.accent,
+                      }}>+ SET ALERT</button>
+                    </div>
                   </div>
                 );
               })}
