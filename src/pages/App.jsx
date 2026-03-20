@@ -149,7 +149,11 @@ export default function AppPage() {
     ws.onerror = () => console.warn("[WS] Finnhub WebSocket error");
     ws.onclose = () => console.log("[WS] Finnhub WebSocket closed");
 
+    // Fallback: poll every 15s to catch symbols WebSocket misses (off-hours, low volume)
+    const fallback = setInterval(loadInitialQuotes, 15000);
+
     return () => {
+      clearInterval(fallback);
       MARKET_SYMBOLS.forEach(m => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: "unsubscribe", symbol: m.symbol }));
