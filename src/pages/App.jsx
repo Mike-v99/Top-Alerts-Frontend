@@ -1,4 +1,4 @@
-// src/pages/App.jsx
+// src/pages/App.jsx 
 //
 // This is the existing Top-Alerts UI (price-alert-app-v3.jsx) wired to live data.
 // useAlerts() replaces all mock state. useAuth() gates Pro features.
