@@ -78,6 +78,11 @@ export default function AppPage() {
     try { return JSON.parse(localStorage.getItem("ta-watchlist") || "[]"); } catch { return []; }
   });
   const [watchData,     setWatchData]     = useState({});
+  const [chartSymbol,   setChartSymbol]   = useState(null);
+  const [chartRange,    setChartRange]    = useState("1D");
+  const [chartData,     setChartData]     = useState([]);
+  const [chartLoading,  setChartLoading]  = useState(false);
+  const [chartLabel,    setChartLabel]    = useState("");
 
   const MARKET_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
@@ -247,6 +252,55 @@ export default function AppPage() {
       setSearchResults(results);
     } catch (e) { setSearchResults([]); }
     setSearchLoading(false);
+  }
+
+  // ── Chart data ──────────────────────────────────────────────────────────────
+  async function fetchChart(symbol, range) {
+    setChartLoading(true);
+    setChartData([]);
+    try {
+      const key = import.meta.env.VITE_MASSIVE_KEY || "";
+      const now   = new Date();
+      const pad   = n => String(n).padStart(2, "0");
+      const fmt   = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+      let multiplier, timespan, from, to;
+      if (range === "15m") {
+        multiplier = 15; timespan = "minute";
+        const start = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+        from = fmt(start); to = fmt(now);
+      } else if (range === "1D") {
+        multiplier = 5; timespan = "minute";
+        from = fmt(now); to = fmt(now);
+      } else if (range === "1W") {
+        multiplier = 1; timespan = "hour";
+        const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        from = fmt(start); to = fmt(now);
+      } else {
+        multiplier = 1; timespan = "day";
+        const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        from = fmt(start); to = fmt(now);
+      }
+
+      const res  = await fetch(`https://api.massive.com/v2/aggs/ticker/${symbol}/range/${multiplier}/${timespan}/${from}/${to}?adjusted=true&sort=asc&limit=200&apiKey=${key}`);
+      const data = await res.json();
+      if (data.results?.length) {
+        setChartData(data.results.map(r => ({ t: r.t, o: r.o, h: r.h, l: r.l, c: r.c, v: r.v })));
+      }
+    } catch (e) { console.error("Chart fetch failed", e); }
+    setChartLoading(false);
+  }
+
+  function openChart(symbol, label) {
+    setChartSymbol(symbol);
+    setChartLabel(label || symbol);
+    setChartRange("1D");
+    fetchChart(symbol, "1D");
+  }
+
+  function changeChartRange(range) {
+    setChartRange(range);
+    if (chartSymbol) fetchChart(chartSymbol, range);
   }
 
   function addToWatchlist(symbol, description) {
@@ -456,7 +510,7 @@ export default function AppPage() {
                 const up  = d?.changePct >= 0;
                 const col = !d ? T.border : up ? T.green : T.red;
                 return (
-                  <div key={m.id} onClick={() => openModal(m.label)} style={{
+                  <div key={m.id} onClick={() => openChart(m.symbol, m.label)} style={{
                     background: T.bgCard,
                     border: `1px solid ${T.border}`,
                     borderLeft: `4px solid ${col}`,
@@ -551,6 +605,44 @@ export default function AppPage() {
               )}
             </div>
 
+            {/* Chart panel */}
+            {chartSymbol && (
+              <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ ...font, fontSize: 16, fontWeight: 500, color: T.text }}>{chartLabel}</span>
+                    <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>{chartSymbol}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {["15m","1D","1W","1M"].map(r => (
+                      <button key={r} onClick={() => changeChartRange(r)} style={{
+                        ...mono, fontSize: 11, padding: "3px 10px", borderRadius: 6, cursor: "pointer",
+                        background: chartRange === r ? T.btnPrimary : "none",
+                        color: chartRange === r ? T.btnText : T.textFaint,
+                        border: `1px solid ${chartRange === r ? T.btnPrimary : T.border}`,
+                      }}>{r}</button>
+                    ))}
+                    <button onClick={() => { setChartSymbol(null); setChartData([]); }} style={{
+                      background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 18, marginLeft: 4,
+                    }}>×</button>
+                  </div>
+                </div>
+                {chartLoading && (
+                  <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: T.textFaint }}>
+                    Loading chart...
+                  </div>
+                )}
+                {!chartLoading && chartData.length > 0 && (
+                  <CandlestickChart data={chartData} T={T} />
+                )}
+                {!chartLoading && chartData.length === 0 && (
+                  <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: T.textFaint }}>
+                    No data available for this range
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Watchlist (user-added symbols) */}
             {watchlist.length > 0 && (
               <div style={{ marginBottom: 20 }}>
@@ -576,7 +668,7 @@ export default function AppPage() {
                           cursor: "pointer", fontSize: 14, lineHeight: 1,
                         }}>×</button>
                         {/* Header */}
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingRight: 16 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingRight: 16, cursor: "pointer" }} onClick={() => openChart(m.symbol, m.label)}>
                           <div>
                             <div style={{ ...mono, fontSize: 10, color: T.accent, fontWeight: 500 }}>{m.symbol}</div>
                             <div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text, marginTop: 1 }}>{m.label}</div>
@@ -637,7 +729,7 @@ export default function AppPage() {
                     borderRadius: 11, padding: "14px 16px",
                   }}>
                     {/* Header */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", cursor: "pointer" }} onClick={() => openChart(m.symbol, m.label)}>
                       <div>
                         <div style={{ ...font, fontSize: 15, fontWeight: 500, color: T.text }}>{m.label}</div>
                         <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{m.symbol}</div>
@@ -933,6 +1025,89 @@ export default function AppPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// ── Candlestick Chart ────────────────────────────────────────────────────────
+function CandlestickChart({ data, T }) {
+  const W = 600, H = 200, PAD = { top: 10, right: 10, bottom: 24, left: 52 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top - PAD.bottom;
+
+  const highs = data.map(d => d.h);
+  const lows  = data.map(d => d.l);
+  const minP  = Math.min(...lows);
+  const maxP  = Math.max(...highs);
+  const range = maxP - minP || 1;
+
+  const scaleY = p => cH - ((p - minP) / range) * cH;
+  const barW   = Math.max(1, Math.min(12, (cW / data.length) * 0.7));
+  const spacing = cW / data.length;
+
+  const fmt = n => n >= 1000
+    ? `$${(n/1000).toFixed(1)}k`
+    : `$${Number(n).toFixed(2)}`;
+
+  // Y axis labels
+  const yTicks = 4;
+  const yLabels = Array.from({ length: yTicks + 1 }, (_, i) => minP + (range * i) / yTicks);
+
+  // X axis labels — show ~5 evenly spaced
+  const xStep = Math.ceil(data.length / 5);
+  const xLabels = data.filter((_, i) => i % xStep === 0 || i === data.length - 1);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
+      {/* Y grid lines + labels */}
+      {yLabels.map((v, i) => {
+        const y = PAD.top + scaleY(v);
+        return (
+          <g key={i}>
+            <line x1={PAD.left} x2={W - PAD.right} y1={y} y2={y}
+              stroke={T.border} strokeWidth="0.5" strokeDasharray="3,3" />
+            <text x={PAD.left - 4} y={y + 4} textAnchor="end"
+              fontSize="9" fill={T.textFaint} fontFamily="'DM Mono',monospace">
+              {fmt(v)}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* Candles */}
+      {data.map((d, i) => {
+        const x    = PAD.left + i * spacing + spacing / 2;
+        const up   = d.c >= d.o;
+        const col  = up ? T.green : T.red;
+        const top  = PAD.top + scaleY(Math.max(d.o, d.c));
+        const bot  = PAD.top + scaleY(Math.min(d.o, d.c));
+        const hHi  = PAD.top + scaleY(d.h);
+        const hLo  = PAD.top + scaleY(d.l);
+        const bodyH = Math.max(1, bot - top);
+
+        return (
+          <g key={i}>
+            <line x1={x} x2={x} y1={hHi} y2={hLo} stroke={col} strokeWidth="1" />
+            <rect x={x - barW/2} y={top} width={barW} height={bodyH}
+              fill={up ? col : col} stroke={col} strokeWidth="0.5"
+              fillOpacity={up ? 0.9 : 0.9} />
+          </g>
+        );
+      })}
+
+      {/* X axis labels */}
+      {xLabels.map((d, i) => {
+        const idx = data.indexOf(d);
+        const x   = PAD.left + idx * spacing + spacing / 2;
+        const dt  = new Date(d.t);
+        const lbl = dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        return (
+          <text key={i} x={x} y={H - 4} textAnchor="middle"
+            fontSize="9" fill={T.textFaint} fontFamily="'DM Mono',monospace">
+            {lbl}
+          </text>
+        );
+      })}
+    </svg>
   );
 }
 
