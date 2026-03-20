@@ -3,7 +3,7 @@
 // This is the existing Top-Alerts UI (price-alert-app-v3.jsx) wired to live data.
 // useAlerts() replaces all mock state. useAuth() gates Pro features.
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth }   from "../context/AuthContext.jsx";
 import { useAlerts } from "../hooks/useAlerts.js";
@@ -72,44 +72,91 @@ export default function AppPage() {
   const [marketLoading, setMarketLoading] = useState(true);
 
   const MARKET_SYMBOLS = [
-    { id: "DJI",     label: "Dow 30",  symbol: "DIA"  },
-    { id: "SPX",     label: "S&P 500", symbol: "SPY"  },
-    { id: "VIX",     label: "VIX",     symbol: "VIXY" },
-    { id: "IXIC",    label: "Nasdaq",  symbol: "QQQ"  },
-    { id: "DXY",     label: "DXY",     symbol: "UUP"  },
-    { id: "BTCUSD",  label: "BTC/USD", symbol: "IBIT" },
-    { id: "USO",     label: "USO",     symbol: "USO"  },
-    { id: "GOLD",    label: "Gold",    symbol: "GLD"  },
+    { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
+    { id: "SPY",   label: "S&P 500", symbol: "SPY"  },
+    { id: "VIXY",  label: "VIX",     symbol: "VIXY" },
+    { id: "QQQ",   label: "Nasdaq",  symbol: "QQQ"  },
+    { id: "UUP",   label: "DXY",     symbol: "UUP"  },
+    { id: "IBIT",  label: "BTC/USD", symbol: "IBIT" },
+    { id: "USO",   label: "USO",     symbol: "USO"  },
+    { id: "GLD",   label: "Gold",    symbol: "GLD"  },
   ];
 
-  // Fetch market data on mount
+  // ── WebSocket real-time prices (Finnhub free tier: up to 50 symbols) ─────────
   useEffect(() => {
-    async function fetchMarket() {
-      setMarketLoading(true);
-      try {
-        // Use Finnhub for each symbol
-        const results = await Promise.allSettled(
-          MARKET_SYMBOLS.map(async (m) => {
-            const res = await fetch(
-              `https://finnhub.io/api/v1/quote?symbol=${m.symbol}&token=${import.meta.env.VITE_FINNHUB_KEY || ""}`
-            );
-            const data = await res.json();
-            return { id: m.id, price: data.c, change: data.d, changePct: data.dp, prevClose: data.pc };
-          })
-        );
-        const data = {};
-        results.forEach((r, i) => {
-          if (r.status === "fulfilled") data[MARKET_SYMBOLS[i].id] = r.value;
-        });
-        setMarketData(data);
-      } catch (e) {
-        console.error("Market fetch failed", e);
-      }
+    const key = import.meta.env.VITE_FINNHUB_KEY || "";
+    if (!key) { setMarketLoading(false); return; }
+
+    // Step 1: Load initial quotes via REST so we have prices before WS connects
+    async function loadInitialQuotes() {
+      const results = await Promise.allSettled(
+        MARKET_SYMBOLS.map(async (m) => {
+          const res  = await fetch(`https://finnhub.io/api/v1/quote?symbol=${m.symbol}&token=${key}`);
+          const data = await res.json();
+          return { id: m.id, price: data.c, change: data.d, changePct: data.dp, prevClose: data.pc };
+        })
+      );
+      const out = {};
+      results.forEach((r, i) => { if (r.status === "fulfilled") out[MARKET_SYMBOLS[i].id] = r.value; });
+      setMarketData(out);
       setMarketLoading(false);
     }
-    fetchMarket();
-    const interval = setInterval(fetchMarket, 60000); // refresh every minute
-    return () => clearInterval(interval);
+    loadInitialQuotes();
+
+    // Step 2: Open WebSocket for real-time tick updates
+    const ws = new WebSocket(`wss://ws.finnhub.io?token=${key}`);
+    const symbolToId = Object.fromEntries(MARKET_SYMBOLS.map(m => [m.symbol, m.id]));
+
+    ws.onopen = () => {
+      // Subscribe to each symbol
+      MARKET_SYMBOLS.forEach(m => {
+        ws.send(JSON.stringify({ type: "subscribe", symbol: m.symbol }));
+      });
+    };
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.type !== "trade" || !msg.data?.length) return;
+
+      // Finnhub sends batches of trades — take the latest price per symbol
+      const updates = {};
+      msg.data.forEach(trade => {
+        const id = symbolToId[trade.s];
+        if (!id) return;
+        // Only update if this trade is newer than what we have
+        if (!updates[id] || trade.t > updates[id].t) {
+          updates[id] = { price: trade.p, t: trade.t };
+        }
+      });
+
+      // Merge into marketData — keep existing change/prevClose, just update price
+      if (Object.keys(updates).length > 0) {
+        setMarketData(prev => {
+          const next = { ...prev };
+          Object.entries(updates).forEach(([id, update]) => {
+            if (next[id]) {
+              const prevClose = next[id].prevClose || next[id].price;
+              const change    = update.price - prevClose;
+              const changePct = prevClose ? (change / prevClose) * 100 : 0;
+              next[id] = { ...next[id], price: update.price, change, changePct };
+            }
+          });
+          return next;
+        });
+      }
+    };
+
+    ws.onerror = () => console.warn("[WS] Finnhub WebSocket error");
+    ws.onclose = () => console.log("[WS] Finnhub WebSocket closed");
+
+    return () => {
+      MARKET_SYMBOLS.forEach(m => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "unsubscribe", symbol: m.symbol }));
+        }
+      });
+      ws.close();
+    };
   }, []);
   const [form, setForm] = useState({
     asset: "BTC/USD", trigger: null, value: "",
