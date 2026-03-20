@@ -1,4 +1,4 @@
-// src/pages/App.jsx 
+// src/pages/App.jsx
 //
 // This is the existing Top-Alerts UI (price-alert-app-v3.jsx) wired to live data.
 // useAlerts() replaces all mock state. useAuth() gates Pro features.
@@ -149,7 +149,7 @@ export default function AppPage() {
     // Massive WebSocket — true tick-by-tick from all US exchanges
     function connectWS() {
       if (destroyed) return;
-      ws = new WebSocket(`wss://socket.massive.com/stocks`);
+      ws = new WebSocket(`wss://socket.polygon.io/stocks`);
 
       ws.onopen = () => {
         ws.send(JSON.stringify({ action: "auth", params: key }));
@@ -161,18 +161,18 @@ export default function AppPage() {
           msgs.forEach(msg => {
             // After auth success, subscribe to all symbols
             if (msg.ev === "status" && msg.status === "auth_success") {
-              const subs = MARKET_SYMBOLS.map(m => `T.${m.symbol}`).join(",");
+              const subs = MARKET_SYMBOLS.map(m => `A.${m.symbol}`).join(",");
               ws.send(JSON.stringify({ action: "subscribe", params: subs }));
             }
-            // Trade event
-            if (msg.ev === "T") {
+            // Per-second aggregate event (smoother than raw trades)
+            if (msg.ev === "A") {
               const id = symbolToId[msg.sym];
               if (!id) return;
               setMarketData(prev => {
                 if (!prev[id]) return prev;
                 const oldPrice  = prev[id].price;
                 const prevClose = prev[id].prevClose || oldPrice;
-                const newPrice  = msg.p;
+                const newPrice  = msg.c || msg.vw || msg.p;
                 const change    = newPrice - prevClose;
                 const changePct = prevClose ? (change / prevClose) * 100 : 0;
                 const dir = newPrice > oldPrice ? "up" : newPrice < oldPrice ? "down" : null;
