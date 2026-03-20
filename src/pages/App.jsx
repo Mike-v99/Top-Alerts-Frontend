@@ -320,8 +320,8 @@ export default function AppPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 36 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 52, color: "#cc2222", lineHeight: 1 }}>◈</span>
-              <span style={{ fontSize: 56, letterSpacing: "1px" }}>
+              <span style={{ fontSize: 38, color: "#cc2222", lineHeight: 1 }}>◈</span>
+              <span style={{ fontSize: 45, letterSpacing: "1px" }}>
                 <span style={{ color: T.text }}>TOP</span>
                 <span style={{ color: "#1a8a44" }}>-</span>
                 <span style={{ color: T.text }}>ALERTS</span>
