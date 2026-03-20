@@ -64,10 +64,53 @@ export default function AppPage() {
   const { alerts, history, loading, createAlert, deleteAlert, togglePause } = useAlerts();
 
   const [themeName, setThemeName] = useState("paper");
-  const [tab,       setTab]       = useState("alerts");
+  const [tab,       setTab]       = useState("market");
   const [showModal, setShowModal] = useState(false);
   const [step,      setStep]      = useState(1);
   const [toast,     setToast]     = useState(null);
+  const [marketData, setMarketData] = useState({});
+  const [marketLoading, setMarketLoading] = useState(true);
+
+  const MARKET_SYMBOLS = [
+    { id: "DJI",     label: "Dow 30",   symbol: "^DJI",    type: "index" },
+    { id: "SPX",     label: "S&P 500",  symbol: "^GSPC",   type: "index" },
+    { id: "VIX",     label: "VIX",      symbol: "^VIX",    type: "index" },
+    { id: "IXIC",    label: "Nasdaq",   symbol: "^IXIC",   type: "index" },
+    { id: "DXY",     label: "DXY",      symbol: "DX-Y.NYB",type: "index" },
+    { id: "BTCUSD",  label: "BTC/USD",  symbol: "BTC-USD", type: "crypto" },
+    { id: "USO",     label: "USO",      symbol: "USO",     type: "etf"   },
+    { id: "GOLD",    label: "Gold",     symbol: "GC=F",    type: "commodity" },
+  ];
+
+  // Fetch market data on mount
+  useState(() => {
+    async function fetchMarket() {
+      setMarketLoading(true);
+      try {
+        // Use Finnhub for each symbol
+        const results = await Promise.allSettled(
+          MARKET_SYMBOLS.map(async (m) => {
+            const res = await fetch(
+              `https://finnhub.io/api/v1/quote?symbol=${m.symbol}&token=${import.meta.env.VITE_FINNHUB_KEY || ""}`
+            );
+            const data = await res.json();
+            return { id: m.id, price: data.c, change: data.d, changePct: data.dp, prevClose: data.pc };
+          })
+        );
+        const data = {};
+        results.forEach((r, i) => {
+          if (r.status === "fulfilled") data[MARKET_SYMBOLS[i].id] = r.value;
+        });
+        setMarketData(data);
+      } catch (e) {
+        console.error("Market fetch failed", e);
+      }
+      setMarketLoading(false);
+    }
+    fetchMarket();
+    const interval = setInterval(fetchMarket, 60000); // refresh every minute
+    return () => clearInterval(interval);
+  }, []);
   const [form, setForm] = useState({
     asset: "BTC/USD", trigger: null, value: "",
     ma: "50", bb: "Upper Band", volume: "3",
@@ -92,6 +135,7 @@ export default function AppPage() {
   }
 
   function openModal() {
+    if (!user) { navigate("/login"); return; }
     setStep(1);
     setForm(f => ({ ...f, trigger: null, value: "" }));
     setShowModal(true);
@@ -187,12 +231,21 @@ export default function AppPage() {
             </div>
 
             {/* User + sign out */}
-            <button onClick={() => { signOut(); navigate("/login"); }} style={{
-              ...font, fontSize: 16, background: T.bgCard, border: `1px solid ${T.border}`,
-              borderRadius: 8, padding: "6px 12px", cursor: "pointer", color: T.textFaint,
-            }}>
-              {user?.email?.split("@")[0]} ↩
-            </button>
+            {user ? (
+              <button onClick={() => { signOut(); navigate("/"); }} style={{
+                ...font, fontSize: 16, background: T.bgCard, border: `1px solid ${T.border}`,
+                borderRadius: 8, padding: "6px 12px", cursor: "pointer", color: T.textFaint,
+              }}>
+                {user?.email?.split("@")[0]} ↩
+              </button>
+            ) : (
+              <button onClick={() => navigate("/login")} style={{
+                ...font, fontSize: 18, background: T.btnPrimary, border: "none",
+                borderRadius: 8, padding: "6px 16px", cursor: "pointer", color: T.btnText,
+              }}>
+                SIGN IN
+              </button>
+            )}
           </div>
         </div>
 
@@ -210,7 +263,7 @@ export default function AppPage() {
 
         {/* Tabs */}
         <div style={{ display: "flex", marginBottom: 28, borderBottom: `1px solid ${T.border}` }}>
-          {["alerts","history","pricing"].map(t => (
+          {["market","alerts","history","pricing"].map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: "10px 22px", background: "none", border: "none", cursor: "pointer",
               ...font, fontSize: 20, letterSpacing: "1px",
@@ -228,6 +281,92 @@ export default function AppPage() {
             + NEW ALERT
           </button>
         </div>
+
+        {/* Two-column layout for market tab */}
+        <div style={{ display: "flex", gap: 20 }}>
+
+          {/* Market sidebar — always visible */}
+          <div style={{ width: 200, flexShrink: 0 }}>
+            <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>MARKETS</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {MARKET_SYMBOLS.map(m => {
+                const d = marketData[m.id];
+                const up = d?.changePct >= 0;
+                return (
+                  <div key={m.id} style={{
+                    background: T.bgCard, border: `1px solid ${T.border}`,
+                    borderRadius: 9, padding: "10px 12px",
+                    cursor: "pointer",
+                    borderLeft: `3px solid ${!d ? T.border : up ? T.green : T.red}`,
+                  }} onClick={() => { setForm(f => ({ ...f, asset: m.label })); openModal(); }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ ...font, fontSize: 16, color: T.text }}>{m.label}</span>
+                      {d && <span style={{ ...mono, fontSize: 9, color: up ? T.green : T.red }}>
+                        {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
+                      </span>}
+                    </div>
+                    <div style={{ ...mono, fontSize: 11, color: T.textMid, marginTop: 2 }}>
+                      {marketLoading && !d ? "..." : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                    </div>
+                  </div>
+                );
+              })}
+              <div style={{ ...mono, fontSize: 9, color: T.textFaint, textAlign: "center", marginTop: 4 }}>
+                Updates every 60s
+              </div>
+            </div>
+          </div>
+
+          {/* Main content */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+
+        {/* Market tab */}
+        {tab === "market" && (
+          <div>
+            <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 14 }}>MARKET OVERVIEW</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {MARKET_SYMBOLS.map(m => {
+                const d = marketData[m.id];
+                const up = d?.changePct >= 0;
+                return (
+                  <div key={m.id} style={{
+                    background: T.bgCard, border: `1px solid ${T.border}`,
+                    borderRadius: 11, padding: "16px 18px", position: "relative", overflow: "hidden",
+                    borderLeft: `4px solid ${!d ? T.border : up ? T.green : T.red}`,
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ ...font, fontSize: 20, color: T.text }}>{m.label}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>{m.symbol}</div>
+                      </div>
+                      {d && <div style={{ textAlign: "right" }}>
+                        <div style={{ ...mono, fontSize: 10, color: up ? T.green : T.red, letterSpacing: 1 }}>
+                          {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
+                        </div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>
+                          {up ? "+" : ""}{d.change?.toFixed(2)}
+                        </div>
+                      </div>}
+                    </div>
+                    <div style={{ ...font, fontSize: 26, color: T.text, marginTop: 10 }}>
+                      {marketLoading && !d ? "Loading..." : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                    </div>
+                    {d?.prevClose && <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 4 }}>
+                      Prev close: ${Number(d.prevClose).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>}
+                    <button onClick={() => { setForm(f => ({ ...f, asset: m.label })); openModal(); }} style={{
+                      marginTop: 12, padding: "6px 14px", background: "none",
+                      border: `1px solid ${T.accentBorder}`, borderRadius: 6,
+                      cursor: "pointer", ...font, fontSize: 15, color: T.accent,
+                    }}>
+                      + SET ALERT
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Alerts tab */}
         {tab === "alerts" && (
@@ -298,6 +437,9 @@ export default function AppPage() {
         {tab === "pricing" && (
           <PricingPage T={T} font={font} mono={mono} currentPlan={profile?.plan || "free"} onUpgrade={handleUpgrade} />
         )}
+
+        </div>{/* end main content */}
+        </div>{/* end two-column layout */}
       </div>
 
       {/* Modal */}
