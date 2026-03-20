@@ -266,19 +266,24 @@ export default function AppPage() {
 
       let multiplier, timespan, from, to;
       if (range === "15m") {
+        // 5 day chart — 15 min candles
         multiplier = 15; timespan = "minute";
-        const start = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+        const start = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
         from = fmt(start); to = fmt(now);
       } else if (range === "1D") {
-        multiplier = 5; timespan = "minute";
-        from = fmt(now); to = fmt(now);
-      } else if (range === "1W") {
-        multiplier = 1; timespan = "hour";
-        const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        from = fmt(start); to = fmt(now);
-      } else {
+        // 1 month chart — 1 day candles
         multiplier = 1; timespan = "day";
         const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        from = fmt(start); to = fmt(now);
+      } else if (range === "1W") {
+        // 1 year chart — 1 week candles
+        multiplier = 1; timespan = "week";
+        const start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        from = fmt(start); to = fmt(now);
+      } else {
+        // 5 year chart — 1 month candles
+        multiplier = 1; timespan = "month";
+        const start = new Date(now.getTime() - 5 * 365 * 24 * 60 * 60 * 1000);
         from = fmt(start); to = fmt(now);
       }
 
@@ -614,13 +619,13 @@ export default function AppPage() {
                     <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>{chartSymbol}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    {["15m","1D","1W","1M"].map(r => (
+                    {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r,lbl]) => (
                       <button key={r} onClick={() => changeChartRange(r)} style={{
                         ...mono, fontSize: 11, padding: "3px 10px", borderRadius: 6, cursor: "pointer",
                         background: chartRange === r ? T.btnPrimary : "none",
                         color: chartRange === r ? T.btnText : T.textFaint,
                         border: `1px solid ${chartRange === r ? T.btnPrimary : T.border}`,
-                      }}>{r}</button>
+                      }}>{lbl}</button>
                     ))}
                     <button onClick={() => { setChartSymbol(null); setChartData([]); }} style={{
                       background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 18, marginLeft: 4,
