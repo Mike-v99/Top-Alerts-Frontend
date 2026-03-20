@@ -175,6 +175,20 @@ export default function AppPage() {
     connectWS();
     fallback = setInterval(loadInitialQuotes, 15000);
 
+    // Fetch prices for any watchlist symbols already in localStorage on mount
+    const saved = (() => { try { return JSON.parse(localStorage.getItem("ta-watchlist") || "[]"); } catch { return []; } })();
+    if (saved.length > 0) {
+      saved.forEach(m => {
+        fetch(`https://finnhub.io/api/v1/quote?symbol=${m.symbol}&token=${key}`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.c && data.c !== 0) {
+              setWatchData(prev => ({ ...prev, [m.symbol]: { id: m.symbol, price: data.c, change: data.d, changePct: data.dp, prevClose: data.pc } }));
+            }
+          }).catch(() => {});
+      });
+    }
+
     return () => {
       destroyed = true;
       clearInterval(fallback);
