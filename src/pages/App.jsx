@@ -300,10 +300,7 @@ export default function AppPage() {
     <div style={{ minHeight: "100vh", background: T.bg, ...font, color: T.text, position: "relative", overflowX: "hidden", transition: "background 0.3s" }}>
       <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
 
-      {/* Grid */}
-      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
-        backgroundImage: `linear-gradient(${T.gridColor} 1px,transparent 1px),linear-gradient(90deg,${T.gridColor} 1px,transparent 1px)`,
-        backgroundSize: "44px 44px" }} />
+
 
       {/* Toast */}
       {toast && (
