@@ -91,6 +91,7 @@ export default function AppPage() {
   const [modalSymbolSearch, setModalSymbolSearch] = useState("");
   const [modalSearchResults, setModalSearchResults] = useState([]);
   const [modalSearchLoading, setModalSearchLoading] = useState(false);
+  const [modalPrice,  setModalPrice]  = useState(null); // { price, change, changePct, marketOpen }
 
   const MARKET_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
@@ -379,7 +380,9 @@ export default function AppPage() {
       // Opened from a card — we already know the symbol
       setModalSource("card");
       setModalAssetLabel(assetLabel || assetOverride);
+      setModalPrice(null);
       setForm(f => ({ ...f, trigger: null, value: "", asset: assetOverride }));
+      fetchModalPrice(assetOverride);
     } else {
       // Opened standalone — user needs to search for a symbol
       setModalSource("standalone");
@@ -401,6 +404,24 @@ export default function AppPage() {
       setModalSearchResults((data.results || []).map(r => ({ symbol: r.ticker, name: r.name, type: r.type })));
     } catch { setModalSearchResults([]); }
     setModalSearchLoading(false);
+  }
+
+  async function fetchModalPrice(symbol) {
+    setModalPrice(null);
+    try {
+      const key = import.meta.env.VITE_MASSIVE_KEY || "";
+      const res  = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers?tickers=${symbol}&apiKey=${key}`);
+      const data = await res.json();
+      const t = data.tickers?.[0];
+      if (!t) return;
+      const price     = t.lastTrade?.p || t.day?.c || t.min?.c || 0;
+      const prevClose = t.prevDay?.c || 0;
+      const change    = t.todaysChange || 0;
+      const changePct = t.todaysChangePerc || 0;
+      // Market is open if there's a last trade price different from prev close
+      const marketOpen = !!(t.lastTrade?.p && t.lastTrade.p !== prevClose);
+      if (price) setModalPrice({ price, change, changePct, marketOpen });
+    } catch {}
   }
 
   async function handleSaveAlert() {
@@ -951,17 +972,28 @@ export default function AppPage() {
             {step === 1 && (
               <div style={{ padding: "22px 28px" }}>
 
-                {/* Card source: show symbol card */}
+                {/* Card source: show symbol card with live price */}
                 {modalSource === "card" && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, background: T.accentBg, border: `1px solid ${T.accentBorder}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ ...mono, fontSize: 10, color: T.accent, fontWeight: 500 }}>{form.asset?.slice(0,3)}</span>
+                  <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 20 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, background: T.bgDeep, padding: "12px 16px" }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: T.accentBg, border: `1px solid ${T.accentBorder}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <span style={{ ...mono, fontSize: 10, color: T.accent, fontWeight: 500 }}>{form.asset?.slice(0,3)}</span>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ ...font, fontSize: 16, fontWeight: 500, color: T.text }}>{form.asset}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
+                      </div>
+                      <div style={{ ...mono, fontSize: 9, color: T.accent, background: T.accentBg, border: `1px solid ${T.accentBorder}`, padding: "3px 8px", borderRadius: 4, flexShrink: 0 }}>SELECTED</div>
                     </div>
-                    <div>
-                      <div style={{ ...font, fontSize: 16, fontWeight: 500, color: T.text }}>{form.asset}</div>
-                      <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
-                    </div>
-                    <div style={{ marginLeft: "auto", ...mono, fontSize: 9, color: T.accent, background: T.accentBg, border: `1px solid ${T.accentBorder}`, padding: "3px 8px", borderRadius: 4 }}>SELECTED</div>
+                    {modalPrice && (
+                      <div style={{ background: T.bgDeep, borderTop: `1px solid ${T.border}`, padding: "7px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        {modalPrice.marketOpen
+                          ? <span style={{ ...mono, fontSize: 10, color: modalPrice.changePct >= 0 ? T.green : T.red }}>{modalPrice.changePct >= 0 ? "▲" : "▼"} {Math.abs(modalPrice.changePct).toFixed(2)}% · {modalPrice.changePct >= 0 ? "+" : ""}{Number(modalPrice.change).toFixed(2)}</span>
+                          : <span style={{ ...mono, fontSize: 9, background: T.bgDeep, color: T.textMid, border: `1px solid ${T.border}`, borderRadius: 3, padding: "1px 6px" }}>CLOSED</span>
+                        }
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -993,6 +1025,7 @@ export default function AppPage() {
                             setModalAssetLabel(r.name);
                             setModalSymbolSearch(r.symbol);
                             setModalSearchResults([]);
+                            fetchModalPrice(r.symbol);
                           }} style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${T.border}` }}
                           onMouseEnter={e => e.currentTarget.style.background = T.bgDeep}
                           onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
@@ -1004,12 +1037,23 @@ export default function AppPage() {
                       </div>
                     )}
 
-                    {/* Selected symbol confirmation */}
+                    {/* Selected symbol confirmation with price */}
                     {form.asset && !modalSearchResults.length && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, padding: "8px 12px", background: T.accentBg, border: `1px solid ${T.accentBorder}`, borderRadius: 7 }}>
-                        <span style={{ ...mono, fontSize: 11, color: T.accent, fontWeight: 500 }}>{form.asset}</span>
-                        <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>{modalAssetLabel}</span>
-                        <span style={{ marginLeft: "auto", ...mono, fontSize: 9, color: T.accent }}>✓ SELECTED</span>
+                      <div style={{ border: `1px solid ${T.accentBorder}`, borderRadius: 7, overflow: "hidden", marginTop: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: T.accentBg }}>
+                          <span style={{ ...mono, fontSize: 11, color: T.accent, fontWeight: 500 }}>{form.asset}</span>
+                          <span style={{ ...mono, fontSize: 10, color: T.textFaint, flex: 1 }}>{modalAssetLabel}</span>
+                          <span style={{ ...mono, fontSize: 9, color: T.accent }}>✓ SELECTED</span>
+                        </div>
+                        {modalPrice && (
+                          <div style={{ background: T.bgDeep, borderTop: `1px solid ${T.accentBorder}`, padding: "6px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            {modalPrice.marketOpen
+                              ? <span style={{ ...mono, fontSize: 10, color: modalPrice.changePct >= 0 ? T.green : T.red }}>{modalPrice.changePct >= 0 ? "▲" : "▼"} {Math.abs(modalPrice.changePct).toFixed(2)}% · {modalPrice.changePct >= 0 ? "+" : ""}{Number(modalPrice.change).toFixed(2)}</span>
+                              : <span style={{ ...mono, fontSize: 9, background: T.bgDeep, color: T.textMid, border: `1px solid ${T.border}`, borderRadius: 3, padding: "1px 6px" }}>CLOSED</span>
+                            }
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1062,12 +1106,23 @@ export default function AppPage() {
             {/* Step 2 — Configure value */}
             {step === 2 && form.trigger && (
               <div style={{ padding: "22px 28px" }}>
-                <div style={{ background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 18px", marginBottom: 22, display: "flex", gap: 12, alignItems: "center" }}>
-                  <span style={{ fontSize: 24 }}>{form.trigger.icon}</span>
-                  <div>
-                    <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>{form.asset}</div>
-                    <div style={{ fontSize: 20 }}>{form.trigger.label}</div>
+                <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 22 }}>
+                  <div style={{ background: T.bgDeep, padding: "14px 18px", display: "flex", gap: 12, alignItems: "center" }}>
+                    <span style={{ fontSize: 24 }}>{form.trigger.icon}</span>
+                    <div>
+                      <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>{form.asset}</div>
+                      <div style={{ fontSize: 20 }}>{form.trigger.label}</div>
+                    </div>
                   </div>
+                  {modalPrice && (
+                    <div style={{ background: T.bgDeep, borderTop: `1px solid ${T.border}`, padding: "7px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      {modalPrice.marketOpen
+                        ? <span style={{ ...mono, fontSize: 10, color: modalPrice.changePct >= 0 ? T.green : T.red }}>{modalPrice.changePct >= 0 ? "▲" : "▼"} {Math.abs(modalPrice.changePct).toFixed(2)}% · {modalPrice.changePct >= 0 ? "+" : ""}{Number(modalPrice.change).toFixed(2)}</span>
+                        : <span style={{ ...mono, fontSize: 9, color: T.textMid, border: `1px solid ${T.border}`, borderRadius: 3, padding: "1px 6px" }}>CLOSED</span>
+                      }
+                    </div>
+                  )}
                 </div>
 
                 {form.trigger.input === "price" && (
