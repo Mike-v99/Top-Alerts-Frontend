@@ -281,15 +281,16 @@ export default function AppPage() {
         const start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         from = fmt(start); to = fmt(now);
       } else {
-        // 5 year chart — 1 month candles
+        // 5 year chart — 1 month candles, go back exactly 5 years from Jan 1
         multiplier = 1; timespan = "month";
-        const start = new Date(now.getTime() - 5 * 365 * 24 * 60 * 60 * 1000);
-        from = fmt(start); to = fmt(now);
+        from = `${now.getFullYear() - 5}-01-01`;
+        to = fmt(now);
       }
 
       const res  = await fetch(`https://api.massive.com/v2/aggs/ticker/${symbol}/range/${multiplier}/${timespan}/${from}/${to}?adjusted=true&sort=asc&limit=300&apiKey=${key}`);
       const data = await res.json();
       if (data.results?.length) {
+        console.log(`[chart] ${symbol} ${range}: ${data.results.length} candles (${data.results[0] ? new Date(data.results[0].t).toLocaleDateString() : ''} → ${data.results[data.results.length-1] ? new Date(data.results[data.results.length-1].t).toLocaleDateString() : ''})`);
         setChartData(data.results.map(r => ({ t: r.t, o: r.o, h: r.h, l: r.l, c: r.c, v: r.v })));
       }
     } catch (e) { console.error("Chart fetch failed", e); }
