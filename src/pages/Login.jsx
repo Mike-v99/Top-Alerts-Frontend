@@ -4,10 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const T = {
-  bg: "#f4f0e8", bgCard: "#ede9df", border: "#d0c8b8",
+  bg: "#faf9f6", bgCard: "#f4f2ed", border: "#d0c8b8",
   text: "#1a1200", textFaint: "#aaa090", textMid: "#6a6050",
   accent: "#8a6a00", accentBg: "rgba(138,106,0,0.08)",
-  btnBg: "#1a1200", btnText: "#f4f0e8", error: "#cc2222",
+  btnBg: "#1a1200", btnText: "#faf9f6", error: "#cc2222",
 };
 const font = { fontFamily: "'Roboto', sans-serif" };
 const mono = { fontFamily: "'Roboto', sans-serif" };
