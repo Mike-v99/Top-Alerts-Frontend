@@ -156,6 +156,7 @@ export default function AppPage() {
       };
 
       ws.onmessage = (event) => {
+        console.log("[WS]", event.data.slice(0, 150));
         try {
           const msgs = JSON.parse(event.data);
           msgs.forEach(msg => {
@@ -187,8 +188,8 @@ export default function AppPage() {
         } catch (e) {}
       };
 
-      ws.onerror = () => console.warn("[WS] Massive error");
-      ws.onclose = () => { if (!destroyed) setTimeout(connectWS, 3000); };
+      ws.onerror = (e) => console.warn("[WS] error", e);
+      ws.onclose = (e) => { console.log("[WS] closed", e.code, e.reason); if (!destroyed) setTimeout(connectWS, 3000); };
     }
 
     // Start everything
