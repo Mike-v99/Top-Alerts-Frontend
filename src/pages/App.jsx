@@ -101,21 +101,30 @@ export default function AppPage() {
 
     const symbolToId = Object.fromEntries(MARKET_SYMBOLS.map(m => [m.symbol, m.id]));
 
-    // REST fallback — always runs every 15s regardless of WebSocket state
+    // Fetch a single symbol with a 4s timeout
+    async function fetchQuote(symbol, id) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+      try {
+        const res  = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${key}`, { signal: controller.signal });
+        const data = await res.json();
+        clearTimeout(timeout);
+        if (data.c && data.c !== 0) return { id, price: data.c, change: data.d, changePct: data.dp, prevClose: data.pc };
+      } catch (e) { clearTimeout(timeout); }
+      return null;
+    }
+
+    // REST fallback — fetches each symbol independently so fast ones show immediately
     async function loadInitialQuotes() {
-      const results = await Promise.allSettled(
-        MARKET_SYMBOLS.map(async (m) => {
-          const res  = await fetch(`https://finnhub.io/api/v1/quote?symbol=${m.symbol}&token=${key}`);
-          const data = await res.json();
-          return { id: m.id, price: data.c, change: data.d, changePct: data.dp, prevClose: data.pc };
-        })
-      );
-      const out = {};
-      results.forEach((r, i) => { if (r.status === "fulfilled" && r.value.price) out[MARKET_SYMBOLS[i].id] = r.value; });
-      if (Object.keys(out).length > 0) {
-        setMarketData(prev => ({ ...prev, ...out }));
-        setMarketLoading(false);
-      }
+      setMarketLoading(true);
+      // Fire all requests in parallel — update state as each one resolves
+      MARKET_SYMBOLS.forEach(async (m) => {
+        const result = await fetchQuote(m.symbol, m.id);
+        if (result) {
+          setMarketData(prev => ({ ...prev, [m.id]: result }));
+          setMarketLoading(false);
+        }
+      });
     }
 
     // WebSocket with auto-reconnect
@@ -175,17 +184,12 @@ export default function AppPage() {
     connectWS();
     fallback = setInterval(loadInitialQuotes, 15000);
 
-    // Fetch prices for any watchlist symbols already in localStorage on mount
+    // Fetch prices for watchlist symbols on mount — show each as it arrives
     const saved = (() => { try { return JSON.parse(localStorage.getItem("ta-watchlist") || "[]"); } catch { return []; } })();
     if (saved.length > 0) {
-      saved.forEach(m => {
-        fetch(`https://finnhub.io/api/v1/quote?symbol=${m.symbol}&token=${key}`)
-          .then(r => r.json())
-          .then(data => {
-            if (data.c && data.c !== 0) {
-              setWatchData(prev => ({ ...prev, [m.symbol]: { id: m.symbol, price: data.c, change: data.d, changePct: data.dp, prevClose: data.pc } }));
-            }
-          }).catch(() => {});
+      saved.forEach(async (m) => {
+        const result = await fetchQuote(m.symbol, m.symbol);
+        if (result) setWatchData(prev => ({ ...prev, [m.symbol]: result }));
       });
     }
 
