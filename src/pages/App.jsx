@@ -12,7 +12,7 @@ import { billingApi } from "../api/client.js";
 // ── Themes (same as v3) ───────────────────────────────────────────────────────
 const THEMES = {
   paper: {
-    bg: "#f4f0e8", bgCard: "#ede9df", bgDeep: "#e6e2d8", bgModal: "#ede9df", bgInput: "#e6e2d8",
+    bg: "#faf9f6", bgCard: "#f4f2ed", bgDeep: "#ede9e0", bgModal: "#f4f2ed", bgInput: "#ede9e0",
     border: "#d0c8b8", borderLight: "#ddd5c5", text: "#1a1200", textMid: "#6a6050", textFaint: "#aaa090",
     accent: "#8a6a00", accentBg: "rgba(138,106,0,0.1)", accentBorder: "rgba(138,106,0,0.25)",
     green: "#1a8a44", greenGlow: "none", yellow: "#c89000", yellowGlow: "none", red: "#cc2222", redGlow: "none",
