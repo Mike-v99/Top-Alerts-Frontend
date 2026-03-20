@@ -254,7 +254,7 @@ export default function AppPage() {
     setSearchLoading(false);
   }
 
-  // ── Chart data ──────────────────────────────────────────────────────────────
+  // ── Chart data ────────────────────────────────────────────────────────────────────────
   async function fetchChart(symbol, range) {
     setChartLoading(true);
     setChartData([]);
@@ -263,38 +263,44 @@ export default function AppPage() {
       const now   = new Date();
       const pad   = n => String(n).padStart(2, "0");
       const fmt   = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      const mapR  = r => ({ t: r.t, o: r.o, h: r.h, l: r.l, c: r.c, v: r.v });
+      const getAggs = (mult, span, f, t) =>
+        fetch(`https://api.massive.com/v2/aggs/ticker/${symbol}/range/${mult}/${span}/${f}/${t}?adjusted=true&sort=asc&limit=300&apiKey=${key}`)
+          .then(r => r.json()).then(d => d.results || []).catch(() => []);
 
-      let multiplier, timespan, from, to;
       if (range === "15m") {
         // 5 day chart — 15 min candles
-        multiplier = 15; timespan = "minute";
         const start = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
-        from = fmt(start); to = fmt(now);
+        const results = await getAggs(15, "minute", fmt(start), fmt(now));
+        if (results.length) setChartData(results.map(mapR));
       } else if (range === "1D") {
-        // 1 month chart — 1 day candles
-        multiplier = 1; timespan = "day";
+        // 1 month chart — daily candles
         const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        from = fmt(start); to = fmt(now);
+        const results = await getAggs(1, "day", fmt(start), fmt(now));
+        if (results.length) setChartData(results.map(mapR));
       } else if (range === "1W") {
-        // 1 year chart — 1 week candles
-        multiplier = 1; timespan = "week";
+        // 1 year chart — weekly candles
         const start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-        from = fmt(start); to = fmt(now);
+        const results = await getAggs(1, "week", fmt(start), fmt(now));
+        if (results.length) setChartData(results.map(mapR));
       } else {
-        // 5 year chart — weekly candles (gives ~260 bars, more reliable than monthly)
-        multiplier = 1; timespan = "week";
-        from = `${now.getFullYear() - 5}-01-01`;
-        to = fmt(now);
-      }
-
-      const res  = await fetch(`https://api.massive.com/v2/aggs/ticker/${symbol}/range/${multiplier}/${timespan}/${from}/${to}?adjusted=true&sort=asc&limit=300&apiKey=${key}`);
-      const data = await res.json();
-      if (data.results?.length) {
-        setChartData(data.results.map(r => ({ t: r.t, o: r.o, h: r.h, l: r.l, c: r.c, v: r.v })));
+        // 5 year chart — fetch 3 chunks of ~20 monthly candles each and stitch
+        const yr = now.getFullYear();
+        const mo = pad(now.getMonth() + 1);
+        const chunks = await Promise.all([
+          getAggs(1, "month", `${yr - 5}-01-01`, `${yr - 3}-01-01`),
+          getAggs(1, "month", `${yr - 3}-01-01`, `${yr - 1}-01-01`),
+          getAggs(1, "month", `${yr - 1}-01-01`, `${yr}-${mo}-${pad(now.getDate())}`),
+        ]);
+        const merged = Object.values(
+          chunks.flat().reduce((acc, r) => { acc[r.t] = r; return acc; }, {})
+        ).sort((a, b) => a.t - b.t);
+        if (merged.length) setChartData(merged.map(mapR));
       }
     } catch (e) { console.error("Chart fetch failed", e); }
     setChartLoading(false);
   }
+
 
   function openChart(symbol, label) {
     setChartSymbol(symbol);
