@@ -880,7 +880,7 @@ export default function AppPage() {
         </div>{/* end two-column layout */}
       </div>
 
-      {/* Flying card animation — magnetic pull #13 */}
+      {/* Flying card animation — ghost fade trail #8 */}
       {flyingCard && (
         <FlyingCard
           card={flyingCard}
@@ -1063,8 +1063,8 @@ export default function AppPage() {
 }
 
 
-// ── FlyingCard — magnetic pull animation (concept #13) ───────────────────────
-// Card starts slow then whips fast into the chart panel with a spin.
+// ── FlyingCard — ghost fade trail animation (concept #8) ────────────────────
+// Card glides smoothly to chart, leaving fading ghost copies behind it.
 function FlyingCard({ card, chartPanelRef, T, onDone }) {
   const elRef = useRef(null);
 
@@ -1073,32 +1073,69 @@ function FlyingCard({ card, chartPanelRef, T, onDone }) {
 
     const el = elRef.current;
     const panelRect = chartPanelRef.current.getBoundingClientRect();
-    const targetX   = panelRect.left + window.scrollX + panelRect.width / 2 - card.w / 2;
+    const targetX   = panelRect.left + window.scrollX + panelRect.width  / 2 - card.w / 2;
     const targetY   = panelRect.top  + window.scrollY + panelRect.height / 2 - card.h / 2;
 
-    let start = null;
-    const duration = 620; // ms
+    // Container for ghost clones — appended to body so they are fixed-positioned
+    const ghosts = [];
+    let lastGhostFrame = -1;
 
-    function easeInCubic(t) { return t * t * t; } // slow start → fast end
+    let start = null;
+    const duration = 700;
+
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+    function spawnGhost(x, y) {
+      const g = document.createElement('div');
+      g.style.cssText = [
+        'position:fixed',
+        'top:0','left:0',
+        `width:${card.w}px`,`height:${card.h}px`,
+        `transform:translate(${x}px,${y}px)`,
+        `background:${T.bgCard}`,
+        `border:1px solid ${T.accent}`,
+        'border-radius:11px',
+        'pointer-events:none',
+        'z-index:9998',
+        'opacity:0.45',
+        'transition:opacity 0.55s ease-out',
+        'box-sizing:border-box',
+        'padding:10px 14px',
+        'display:flex','flex-direction:column','justify-content:center',
+      ].join(';');
+      g.innerHTML = `<div style="font-family:'Roboto',sans-serif;font-size:13px;font-weight:500;color:${T.text};opacity:0.5">${card.label}</div>`;
+      document.body.appendChild(g);
+      ghosts.push(g);
+      // Fade out after short delay
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { g.style.opacity = '0'; });
+      });
+      setTimeout(() => g.remove(), 600);
+    }
 
     function step(ts) {
       if (!start) start = ts;
       const raw  = Math.min((ts - start) / duration, 1);
-      const ease = easeInCubic(raw);
+      const ease = easeOutCubic(raw);
 
       const x = card.x + (targetX - card.x) * ease;
       const y = card.y + (targetY - card.y) * ease;
-      const rot = ease * 180; // half rotation as it flies
-      const scale = 1 - ease * 0.45;
-      const opacity = raw > 0.75 ? 1 - (raw - 0.75) * 4 : 1;
+      const opacity = raw > 0.78 ? 1 - (raw - 0.78) * (1 / 0.22) : 1;
 
-      el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
-      el.style.opacity = opacity;
+      el.style.transform = `translate(${x}px, ${y}px)`;
+      el.style.opacity   = Math.max(0, opacity);
+
+      // Spawn a ghost every ~8 animation frames while not fading out yet
+      const frameNum = Math.floor(raw * 60);
+      if (raw < 0.75 && frameNum % 8 === 0 && frameNum !== lastGhostFrame) {
+        lastGhostFrame = frameNum;
+        spawnGhost(x, y);
+      }
 
       if (raw < 1) {
         requestAnimationFrame(step);
       } else {
-        // Pulse the chart panel
+        // Pulse chart panel
         if (chartPanelRef.current) {
           chartPanelRef.current.classList.add('chart-panel-pulse');
           setTimeout(() => chartPanelRef.current?.classList.remove('chart-panel-pulse'), 500);
@@ -1108,6 +1145,8 @@ function FlyingCard({ card, chartPanelRef, T, onDone }) {
     }
 
     requestAnimationFrame(step);
+
+    return () => { ghosts.forEach(g => g.remove()); };
   }, []);
 
   return (
