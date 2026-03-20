@@ -287,7 +287,7 @@ export default function AppPage() {
         from = fmt(start); to = fmt(now);
       }
 
-      const res  = await fetch(`https://api.massive.com/v2/aggs/ticker/${symbol}/range/${multiplier}/${timespan}/${from}/${to}?adjusted=true&sort=asc&limit=200&apiKey=${key}`);
+      const res  = await fetch(`https://api.massive.com/v2/aggs/ticker/${symbol}/range/${multiplier}/${timespan}/${from}/${to}?adjusted=true&sort=asc&limit=300&apiKey=${key}`);
       const data = await res.json();
       if (data.results?.length) {
         setChartData(data.results.map(r => ({ t: r.t, o: r.o, h: r.h, l: r.l, c: r.c, v: r.v })));
@@ -1078,15 +1078,17 @@ function CandlestickChart({ data, T, range }) {
   // X axis: for 5Y deduplicate so we only label each year once
   function getXLabels() {
     if (range === "1M") {
-      const seen = new Set();
-      return data.reduce((acc, d, i) => {
+      // Group candles by year, pick the middle candle of each year for centering
+      const byYear = {};
+      data.forEach((d, i) => {
         const year = new Date(d.t).getFullYear();
-        if (!seen.has(year)) {
-          seen.add(year);
-          acc.push({ d, i });
-        }
-        return acc;
-      }, []);
+        if (!byYear[year]) byYear[year] = [];
+        byYear[year].push({ d, i });
+      });
+      return Object.values(byYear).map(candles => {
+        const mid = Math.floor(candles.length / 2);
+        return candles[mid];
+      });
     }
     // All other ranges: ~5 evenly spaced
     const xStep = Math.ceil(data.length / 5);
