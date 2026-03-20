@@ -218,7 +218,7 @@ export default function AppPage() {
   }
 
   function addToWatchlist(symbol, description) {
-    const entry = { id: symbol, label: description ? description.slice(0, 20) : symbol, symbol };
+    const entry = { id: symbol, label: description ? description.slice(0, 24) : symbol, symbol };
     const updated = [entry, ...watchlist.filter(w => w.symbol !== symbol)].slice(0, 20);
     setWatchlist(updated);
     try { localStorage.setItem("ta-watchlist", JSON.stringify(updated)); } catch {}
@@ -227,9 +227,22 @@ export default function AppPage() {
     fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${key}`)
       .then(r => r.json())
       .then(data => {
-        if (data.c) setWatchData(prev => ({ ...prev, [symbol]: { id: symbol, price: data.c, change: data.d, changePct: data.dp, prevClose: data.pc } }));
+        if (data.c && data.c !== 0) {
+          setWatchData(prev => ({ ...prev, [symbol]: { id: symbol, price: data.c, change: data.d, changePct: data.dp, prevClose: data.pc } }));
+          showToast(`${symbol} added`);
+        } else {
+          // Symbol not supported on free tier — remove it and warn
+          setWatchlist(prev => {
+            const filtered = prev.filter(w => w.symbol !== symbol);
+            try { localStorage.setItem("ta-watchlist", JSON.stringify(filtered)); } catch {}
+            return filtered;
+          });
+          showToast(`${symbol} not available on free plan`, "warn");
+        }
+      })
+      .catch(() => {
+        showToast(`${symbol} not available`, "warn");
       });
-    showToast(`${symbol} added to watchlist`);
   }
 
   function removeFromWatchlist(symbol) {
