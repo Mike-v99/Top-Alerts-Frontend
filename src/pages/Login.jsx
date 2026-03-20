@@ -9,8 +9,8 @@ const T = {
   accent: "#8a6a00", accentBg: "rgba(138,106,0,0.08)",
   btnBg: "#1a1200", btnText: "#f4f0e8", error: "#cc2222",
 };
-const font = { fontFamily: "'VT323', monospace" };
-const mono = { fontFamily: "'DM Mono', monospace" };
+const font = { fontFamily: "'Roboto', sans-serif" };
+const mono = { fontFamily: "'Roboto', sans-serif" };
 
 export default function Login() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
@@ -40,7 +40,7 @@ export default function Login() {
   return (
     <div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       {/* Google font */}
-      <link href="https://fonts.googleapis.com/css2?family=VT323&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
 
       <div style={{ width: "100%", maxWidth: 420 }}>
         {/* Logo */}
