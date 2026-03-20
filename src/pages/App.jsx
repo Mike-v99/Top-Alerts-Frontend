@@ -90,9 +90,9 @@ export default function AppPage() {
     { id: "GLD",   label: "Gold",    symbol: "GLD"  },
   ];
 
-  // ── WebSocket real-time prices (Finnhub free tier: up to 50 symbols) ─────────
+  // ── Massive.com real-time prices ─────────────────────────────────────────────
   useEffect(() => {
-    const key = import.meta.env.VITE_FINNHUB_KEY || "";
+    const key = import.meta.env.VITE_MASSIVE_KEY || "";
     if (!key) { setMarketLoading(false); return; }
 
     let ws = null;
@@ -101,97 +101,96 @@ export default function AppPage() {
 
     const symbolToId = Object.fromEntries(MARKET_SYMBOLS.map(m => [m.symbol, m.id]));
 
-    // Fetch a single symbol with a 4s timeout
-    async function fetchQuote(symbol, id) {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 4000);
+    // Fetch snapshot for multiple symbols in one call — Massive supports batch snapshots
+    async function fetchSnapshots(symbols) {
       try {
-        const res  = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${key}`, { signal: controller.signal });
+        const tickers = symbols.join(",");
+        const res  = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers?tickers=${tickers}&apiKey=${key}`);
         const data = await res.json();
-        clearTimeout(timeout);
-        if (data.c && data.c !== 0) return { id, price: data.c, change: data.d, changePct: data.dp, prevClose: data.pc };
-      } catch (e) { clearTimeout(timeout); }
-      return null;
+        return (data.tickers || []).map(t => ({
+          id: symbolToId[t.ticker] || t.ticker,
+          symbol: t.ticker,
+          price: t.day?.c || t.lastTrade?.p || 0,
+          change: t.todaysChange || 0,
+          changePct: t.todaysChangePerc || 0,
+          prevClose: t.prevDay?.c || 0,
+        })).filter(r => r.price !== 0);
+      } catch (e) { return []; }
     }
 
-    // REST fallback — fetches each symbol independently so fast ones show immediately
+    // Load all market symbols in one batch request
     async function loadInitialQuotes() {
-      setMarketLoading(true);
-      // Fire all requests in parallel — update state as each one resolves
-      MARKET_SYMBOLS.forEach(async (m) => {
-        const result = await fetchQuote(m.symbol, m.id);
-        if (result) {
-          setMarketData(prev => ({ ...prev, [m.id]: result }));
-          setMarketLoading(false);
-        }
+      const results = await fetchSnapshots(MARKET_SYMBOLS.map(m => m.symbol));
+      if (results.length > 0) {
+        const out = {};
+        results.forEach(r => { out[r.id] = r; });
+        setMarketData(prev => ({ ...prev, ...out }));
+        setMarketLoading(false);
+      }
+    }
+
+    // Fetch watchlist symbols in one batch
+    async function loadWatchlistQuotes(saved) {
+      if (!saved.length) return;
+      const results = await fetchSnapshots(saved.map(m => m.symbol));
+      results.forEach(r => {
+        setWatchData(prev => ({ ...prev, [r.symbol]: r }));
       });
     }
 
-    // WebSocket with auto-reconnect
+    // Massive WebSocket — true tick-by-tick from all US exchanges
     function connectWS() {
       if (destroyed) return;
-      ws = new WebSocket(`wss://ws.finnhub.io?token=${key}`);
+      ws = new WebSocket(`wss://socket.massive.com/stocks`);
 
       ws.onopen = () => {
-        MARKET_SYMBOLS.forEach(m => ws.send(JSON.stringify({ type: "subscribe", symbol: m.symbol })));
+        ws.send(JSON.stringify({ action: "auth", params: key }));
       };
 
       ws.onmessage = (event) => {
         try {
-          const msg = JSON.parse(event.data);
-          if (msg.type !== "trade" || !msg.data?.length) return;
-          const updates = {};
-          msg.data.forEach(trade => {
-            const id = symbolToId[trade.s];
-            if (!id) return;
-            if (!updates[id] || trade.t > updates[id].t) updates[id] = { price: trade.p, t: trade.t };
-          });
-          if (Object.keys(updates).length > 0) {
-            setMarketData(prev => {
-              const next = { ...prev };
-              const flashes = {};
-              Object.entries(updates).forEach(([id, update]) => {
-                if (next[id]) {
-                  const oldPrice  = next[id].price;
-                  const prevClose = next[id].prevClose || oldPrice;
-                  const change    = update.price - prevClose;
-                  const changePct = prevClose ? (change / prevClose) * 100 : 0;
-                  next[id] = { ...next[id], price: update.price, change, changePct };
-                  if (update.price > oldPrice) flashes[id] = "up";
-                  else if (update.price < oldPrice) flashes[id] = "down";
+          const msgs = JSON.parse(event.data);
+          msgs.forEach(msg => {
+            // After auth success, subscribe to all symbols
+            if (msg.ev === "status" && msg.status === "auth_success") {
+              const subs = MARKET_SYMBOLS.map(m => `T.${m.symbol}`).join(",");
+              ws.send(JSON.stringify({ action: "subscribe", params: subs }));
+            }
+            // Trade event
+            if (msg.ev === "T") {
+              const id = symbolToId[msg.sym];
+              if (!id) return;
+              setMarketData(prev => {
+                if (!prev[id]) return prev;
+                const oldPrice  = prev[id].price;
+                const prevClose = prev[id].prevClose || oldPrice;
+                const newPrice  = msg.p;
+                const change    = newPrice - prevClose;
+                const changePct = prevClose ? (change / prevClose) * 100 : 0;
+                const dir = newPrice > oldPrice ? "up" : newPrice < oldPrice ? "down" : null;
+                if (dir) {
+                  setFlashState(f => ({ ...f, [id]: dir }));
+                  setTimeout(() => setFlashState(f => { const n = {...f}; delete n[id]; return n; }), 700);
                 }
+                return { ...prev, [id]: { ...prev[id], price: newPrice, change, changePct } };
               });
-              if (Object.keys(flashes).length > 0) {
-                setFlashState(flashes);
-                setTimeout(() => setFlashState({}), 600);
-              }
-              return next;
-            });
-          }
+            }
+          });
         } catch (e) {}
       };
 
-      ws.onerror = () => console.warn("[WS] error");
-
-      // Auto-reconnect after 3s if closed unexpectedly
-      ws.onclose = () => {
-        if (!destroyed) setTimeout(connectWS, 3000);
-      };
+      ws.onerror = () => console.warn("[WS] Massive error");
+      ws.onclose = () => { if (!destroyed) setTimeout(connectWS, 3000); };
     }
 
     // Start everything
     loadInitialQuotes();
     connectWS();
-    fallback = setInterval(loadInitialQuotes, 15000);
+    fallback = setInterval(loadInitialQuotes, 30000);
 
-    // Fetch prices for watchlist symbols on mount — show each as it arrives
+    // Load watchlist on mount
     const saved = (() => { try { return JSON.parse(localStorage.getItem("ta-watchlist") || "[]"); } catch { return []; } })();
-    if (saved.length > 0) {
-      saved.forEach(async (m) => {
-        const result = await fetchQuote(m.symbol, m.symbol);
-        if (result) setWatchData(prev => ({ ...prev, [m.symbol]: result }));
-      });
-    }
+    loadWatchlistQuotes(saved);
 
     return () => {
       destroyed = true;
@@ -227,10 +226,16 @@ export default function AppPage() {
     if (!q || q.length < 1) { setSearchResults([]); return; }
     setSearchLoading(true);
     try {
-      const key = import.meta.env.VITE_FINNHUB_KEY || "";
-      const res  = await fetch(`https://finnhub.io/api/v1/search?q=${encodeURIComponent(q)}&token=${key}`);
+      const key = import.meta.env.VITE_MASSIVE_KEY || "";
+      const res  = await fetch(`https://api.massive.com/v3/reference/tickers?search=${encodeURIComponent(q)}&active=true&market=stocks&limit=8&apiKey=${key}`);
       const data = await res.json();
-      setSearchResults((data.result || []).slice(0, 8));
+      const results = (data.results || []).map(r => ({
+        symbol: r.ticker,
+        description: r.name,
+        type: r.type,
+        displaySymbol: r.ticker,
+      }));
+      setSearchResults(results);
     } catch (e) { setSearchResults([]); }
     setSearchLoading(false);
   }
@@ -241,26 +246,30 @@ export default function AppPage() {
     setWatchlist(updated);
     try { localStorage.setItem("ta-watchlist", JSON.stringify(updated)); } catch {}
     setSearch(""); setSearchResults([]);
-    const key = import.meta.env.VITE_FINNHUB_KEY || "";
-    fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${key}`)
+    const key = import.meta.env.VITE_MASSIVE_KEY || "";
+    fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers?tickers=${symbol}&apiKey=${key}`)
       .then(r => r.json())
       .then(data => {
-        if (data.c && data.c !== 0) {
-          setWatchData(prev => ({ ...prev, [symbol]: { id: symbol, price: data.c, change: data.d, changePct: data.dp, prevClose: data.pc } }));
+        const t = data.tickers?.[0];
+        const price = t?.day?.c || t?.lastTrade?.p || 0;
+        if (price !== 0) {
+          setWatchData(prev => ({ ...prev, [symbol]: {
+            id: symbol, symbol, price,
+            change: t.todaysChange || 0,
+            changePct: t.todaysChangePerc || 0,
+            prevClose: t.prevDay?.c || 0,
+          }}));
           showToast(`${symbol} added`);
         } else {
-          // Symbol not supported on free tier — remove it and warn
           setWatchlist(prev => {
             const filtered = prev.filter(w => w.symbol !== symbol);
             try { localStorage.setItem("ta-watchlist", JSON.stringify(filtered)); } catch {}
             return filtered;
           });
-          showToast(`${symbol} not available on free plan`, "warn");
+          showToast(`${symbol} not found`, "warn");
         }
       })
-      .catch(() => {
-        showToast(`${symbol} not available`, "warn");
-      });
+      .catch(() => showToast(`${symbol} not available`, "warn"));
   }
 
   function removeFromWatchlist(symbol) {
