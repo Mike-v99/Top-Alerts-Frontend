@@ -313,6 +313,12 @@ export default function AppPage() {
   return (
     <div style={{ minHeight: "100vh", background: T.bg, ...font, color: T.text, position: "relative", overflowX: "hidden", transition: "background 0.3s" }}>
       <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+      <style>{`
+        @keyframes slideFromLeft  { from { transform: translateX(-60%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideFromRight { from { transform: translateX(60%);  opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .price-slide-up   { animation: slideFromLeft  0.22s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .price-slide-down { animation: slideFromRight 0.22s cubic-bezier(0.22,1,0.36,1) forwards; }
+      `}</style>
 
 
 
@@ -437,8 +443,13 @@ export default function AppPage() {
                         {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
                       </span>}
                     </div>
-                    <div style={{ ...mono, fontSize: 11, marginTop: 2, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.textMid, transition: "color 0.4s" }}>
-                      {marketLoading && !d ? "..." : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                    <div style={{ overflow: "hidden", marginTop: 2 }}>
+                      <div
+                        key={d?.price}
+                        className={flashState[m.id] === "up" ? "price-slide-up" : flashState[m.id] === "down" ? "price-slide-down" : ""}
+                        style={{ ...mono, fontSize: 11, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.textMid, transition: "color 0.8s" }}>
+                        {marketLoading && !d ? "..." : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                      </div>
                     </div>
                   </div>
                 );
@@ -575,8 +586,13 @@ export default function AppPage() {
                         </div>
                       </div>}
                     </div>
-                    <div style={{ ...font, fontSize: 26, marginTop: 10, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.4s" }}>
-                      {marketLoading && !d ? "Loading..." : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                    <div style={{ overflow: "hidden", marginTop: 10 }}>
+                      <div
+                        key={d?.price}
+                        className={flashState[m.id] === "up" ? "price-slide-up" : flashState[m.id] === "down" ? "price-slide-down" : ""}
+                        style={{ ...font, fontSize: 26, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.8s" }}>
+                        {marketLoading && !d ? "Loading..." : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                      </div>
                     </div>
                     {d?.prevClose && <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 4 }}>
                       Prev close: ${Number(d.prevClose).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
