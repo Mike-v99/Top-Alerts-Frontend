@@ -85,6 +85,7 @@ export default function AppPage() {
   const [chartLabel,    setChartLabel]    = useState("");
   const chartPanelRef = useRef(null);
   const [flyingCard,   setFlyingCard]   = useState(null); // {x,y,label,symbol}
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const MARKET_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
@@ -362,7 +363,12 @@ export default function AppPage() {
   }
 
   function openModal(assetOverride) {
-    if (!user) { navigate("/login"); return; }
+    // Free users limited to 10 alerts — show upgrade modal on 11th attempt
+    const activeAlerts = alerts.filter(a => a.status !== "deleted").length;
+    if (!isPro && activeAlerts >= 10) {
+      setShowUpgradeModal(true);
+      return;
+    }
     setStep(1);
     setForm(f => ({ ...f, trigger: null, value: "", ...(assetOverride ? { asset: assetOverride } : {}) }));
     setShowModal(true);
@@ -880,6 +886,11 @@ export default function AppPage() {
         </div>{/* end two-column layout */}
       </div>
 
+      {/* Upgrade modal — shown when free user hits 10 alert limit */}
+      {showUpgradeModal && (
+        <UpgradeModal T={T} font={font} mono={mono} onClose={() => setShowUpgradeModal(false)} onUpgrade={() => { setShowUpgradeModal(false); setTab("pricing"); }} />
+      )}
+
       {/* Flying card animation — ghost fade trail #8 */}
       {flyingCard && (
         <FlyingCard
@@ -1062,6 +1073,71 @@ export default function AppPage() {
   );
 }
 
+
+// ── UpgradeModal — shown when free user hits 10-alert limit ─────────────────
+function UpgradeModal({ T, font, mono, onClose, onUpgrade }) {
+  const benefits = [
+    { icon: "∞", title: "Unlimited alerts",       desc: "No cap — monitor as many assets as you want" },
+    { icon: "⚡", title: "12 trigger types",       desc: "RSI, MACD, Bollinger Bands, Golden Cross and more" },
+    { icon: "◈", title: "Multi-condition logic",  desc: "Combine AND/OR conditions in a single alert" },
+    { icon: "↗", title: "SMS & Webhook delivery", desc: "Get notified via text or pipe into any workflow" },
+    { icon: "⏱", title: "Custom cooldowns",       desc: "Control how often the same alert can fire" },
+    { icon: "★", title: "Priority delivery",      desc: "Alerts processed first in the queue" },
+  ];
+
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: T.bgModal, border: `1px solid ${T.border}`, borderRadius: 18, width: "100%", maxWidth: 480, boxShadow: "0 40px 80px rgba(0,0,0,0.3)", overflow: "hidden" }}>
+
+        {/* Header */}
+        <div style={{ background: T.btnPrimary, padding: "28px 32px 24px", position: "relative" }}>
+          <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", color: T.btnText, opacity: 0.5, cursor: "pointer", fontSize: 22, lineHeight: 1 }}>×</button>
+          <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.btnText, opacity: 0.6, marginBottom: 8 }}>FREE PLAN LIMIT REACHED</div>
+          <div style={{ fontSize: 24, color: T.btnText, marginBottom: 6 }}>You've used all 10 free alerts</div>
+          <div style={{ ...mono, fontSize: 12, color: T.btnText, opacity: 0.65, lineHeight: 1.5 }}>Upgrade to Pro for unlimited alerts and advanced triggers</div>
+        </div>
+
+        {/* Benefits list */}
+        <div style={{ padding: "24px 32px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+            {benefits.map(b => (
+              <div key={b.title} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <span style={{ fontSize: 16, color: T.accent, flexShrink: 0, marginTop: 1 }}>{b.icon}</span>
+                <div>
+                  <div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.text }}>{b.title}</div>
+                  <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2, lineHeight: 1.4 }}>{b.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Price + CTA */}
+          <div style={{ background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 12, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div>
+              <div style={{ ...mono, fontSize: 10, color: T.textFaint, letterSpacing: "1px" }}>PRO PLAN</div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 4 }}>
+                <span style={{ fontSize: 28, color: T.text }}>$9</span>
+                <span style={{ ...mono, fontSize: 11, color: T.textFaint }}>/mo</span>
+              </div>
+            </div>
+            <button onClick={onUpgrade} style={{
+              padding: "10px 24px", background: T.btnPrimary, border: "none", borderRadius: 9,
+              cursor: "pointer", ...font, fontSize: 16, color: T.btnText,
+            }}>
+              UPGRADE NOW →
+            </button>
+          </div>
+
+          <div style={{ textAlign: "center", ...mono, fontSize: 10, color: T.textFaint }}>
+            14-day money-back guarantee · Cancel anytime
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── FlyingCard — ghost fade trail animation (concept #8) ────────────────────
 // Card glides smoothly to chart, leaving fading ghost copies behind it.
