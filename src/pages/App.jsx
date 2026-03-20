@@ -724,9 +724,9 @@ export default function AppPage() {
                             {d?.prevClose ? `Prev ${fmt(d.prevClose)}` : ""}
                           </div>
                           <button onClick={() => openModal(m.symbol)} style={{
-                            padding: "4px 12px", background: "#5F5E5A",
+                            padding: "4px 12px", background: "none",
                             border: "1px solid #5F5E5A", borderRadius: 6,
-                            cursor: "pointer", ...font, fontSize: 13, color: "#ffffff",
+                            cursor: "pointer", ...font, fontSize: 13, color: "#5F5E5A",
                           }}>+ SET ALERT</button>
                         </div>
                       </div>
@@ -794,9 +794,9 @@ export default function AppPage() {
                         {d?.prevClose ? `Prev ${fmt(d.prevClose)}` : ""}
                       </div>
                       <button onClick={() => openModal(m.label)} style={{
-                        padding: "4px 12px", background: "#5F5E5A",
+                        padding: "4px 12px", background: "none",
                         border: "1px solid #5F5E5A", borderRadius: 6,
-                        cursor: "pointer", ...font, fontSize: 13, color: "#ffffff",
+                        cursor: "pointer", ...font, fontSize: 13, color: "#5F5E5A",
                       }}>+ SET ALERT</button>
                     </div>
                   </div>
