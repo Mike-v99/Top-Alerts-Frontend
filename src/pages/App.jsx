@@ -1035,7 +1035,7 @@ export default function AppPage() {
 
 // ── Candlestick Chart ────────────────────────────────────────────────────────
 function CandlestickChart({ data, T, range }) {
-  const W = 600, H = 200, PAD = { top: 10, right: 10, bottom: 24, left: 52 };
+  const W = range === "1M" ? 700 : 600, H = 200, PAD = { top: 10, right: 10, bottom: 24, left: 52 };
   const cW = W - PAD.left - PAD.right;
   const cH = H - PAD.top - PAD.bottom;
 
@@ -1046,7 +1046,10 @@ function CandlestickChart({ data, T, range }) {
   const priceRange = maxP - minP || 1;
 
   const scaleY  = p => cH - ((p - minP) / priceRange) * cH;
-  const barW    = Math.max(1, Math.min(12, (cW / data.length) * 0.7));
+  // For 5Y (monthly candles) squeeze tighter so all ~60 fit
+  const barW    = range === "1M"
+    ? Math.max(1, (cW / data.length) * 0.5)
+    : Math.max(1, Math.min(12, (cW / data.length) * 0.7));
   const spacing = cW / data.length;
 
   const fmt = n => n >= 1000
