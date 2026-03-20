@@ -71,6 +71,13 @@ export default function AppPage() {
   const [marketData, setMarketData] = useState({});
   const [marketLoading, setMarketLoading] = useState(true);
   const [flashState,    setFlashState]    = useState({});
+  const [search,        setSearch]        = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [watchlist,     setWatchlist]     = useState(() => {
+    try { return JSON.parse(localStorage.getItem("ta-watchlist") || "[]"); } catch { return []; }
+  });
+  const [watchData,     setWatchData]     = useState({});
 
   const MARKET_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
@@ -197,10 +204,44 @@ export default function AppPage() {
     setTimeout(() => setToast(null), 3000);
   }
 
-  function openModal() {
+  // ── Symbol search ──────────────────────────────────────────────────────────
+  async function searchSymbols(q) {
+    if (!q || q.length < 1) { setSearchResults([]); return; }
+    setSearchLoading(true);
+    try {
+      const key = import.meta.env.VITE_FINNHUB_KEY || "";
+      const res  = await fetch(`https://finnhub.io/api/v1/search?q=${encodeURIComponent(q)}&token=${key}`);
+      const data = await res.json();
+      setSearchResults((data.result || []).slice(0, 8));
+    } catch (e) { setSearchResults([]); }
+    setSearchLoading(false);
+  }
+
+  function addToWatchlist(symbol, description) {
+    const entry = { id: symbol, label: description ? description.slice(0, 20) : symbol, symbol };
+    const updated = [entry, ...watchlist.filter(w => w.symbol !== symbol)].slice(0, 20);
+    setWatchlist(updated);
+    try { localStorage.setItem("ta-watchlist", JSON.stringify(updated)); } catch {}
+    setSearch(""); setSearchResults([]);
+    const key = import.meta.env.VITE_FINNHUB_KEY || "";
+    fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${key}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.c) setWatchData(prev => ({ ...prev, [symbol]: { id: symbol, price: data.c, change: data.d, changePct: data.dp, prevClose: data.pc } }));
+      });
+    showToast(`${symbol} added to watchlist`);
+  }
+
+  function removeFromWatchlist(symbol) {
+    const updated = watchlist.filter(w => w.symbol !== symbol);
+    setWatchlist(updated);
+    try { localStorage.setItem("ta-watchlist", JSON.stringify(updated)); } catch {}
+  }
+
+  function openModal(assetOverride) {
     if (!user) { navigate("/login"); return; }
     setStep(1);
-    setForm(f => ({ ...f, trigger: null, value: "" }));
+    setForm(f => ({ ...f, trigger: null, value: "", ...(assetOverride ? { asset: assetOverride } : {}) }));
     setShowModal(true);
   }
 
@@ -386,6 +427,101 @@ export default function AppPage() {
         {/* Market tab */}
         {tab === "market" && (
           <div>
+            {/* Search bar */}
+            <div style={{ position: "relative", marginBottom: 20 }}>
+              <input
+                type="text"
+                placeholder="Search any symbol — AAPL, TSLA, ETH-USD..."
+                value={search}
+                onChange={e => { setSearch(e.target.value); searchSymbols(e.target.value); }}
+                style={{
+                  width: "100%", padding: "12px 16px", boxSizing: "border-box",
+                  background: T.bgCard, border: `1px solid ${search ? T.accent : T.border}`,
+                  borderRadius: 10, color: T.text, ...font, fontSize: 18,
+                  outline: "none", transition: "border 0.2s",
+                }}
+              />
+              {search && (
+                <button onClick={() => { setSearch(""); setSearchResults([]); }} style={{
+                  position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                  background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 18,
+                }}>×</button>
+              )}
+
+              {/* Search results dropdown */}
+              {(searchResults.length > 0 || searchLoading) && search && (
+                <div style={{
+                  position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 50,
+                  background: T.bgModal, border: `1px solid ${T.border}`, borderRadius: 10,
+                  overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                }}>
+                  {searchLoading && (
+                    <div style={{ padding: "12px 16px", ...mono, fontSize: 11, color: T.textFaint }}>Searching...</div>
+                  )}
+                  {searchResults.map(r => (
+                    <div key={r.symbol} onClick={() => addToWatchlist(r.symbol, r.description)} style={{
+                      padding: "12px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
+                      borderBottom: `1px solid ${T.border}`,
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = T.bgDeep}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                      <div style={{ ...mono, fontSize: 11, color: T.accent, minWidth: 60, fontWeight: 700 }}>{r.symbol}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ ...font, fontSize: 16, color: T.text }}>{(r.description || "").slice(0, 35)}</div>
+                        <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 1 }}>{r.type} · {r.displaySymbol}</div>
+                      </div>
+                      <div style={{ ...mono, fontSize: 9, color: T.accent, border: `1px solid ${T.accentBorder}`, padding: "2px 8px", borderRadius: 4 }}>+ ADD</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Watchlist (user-added symbols) */}
+            {watchlist.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>YOUR WATCHLIST</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {watchlist.map(m => {
+                    const d   = watchData[m.symbol];
+                    const up  = d?.changePct >= 0;
+                    const col = !d ? T.border : up ? T.green : T.red;
+                    return (
+                      <div key={m.symbol} style={{
+                        background: T.bgCard, border: `1px solid ${T.border}`,
+                        borderLeft: `4px solid ${col}`, borderRadius: 11, padding: "14px 16px",
+                        position: "relative",
+                      }}>
+                        <button onClick={() => removeFromWatchlist(m.symbol)} style={{
+                          position: "absolute", top: 8, right: 10,
+                          background: "none", border: "none", color: T.textFaint,
+                          cursor: "pointer", fontSize: 14, lineHeight: 1,
+                        }}>×</button>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingRight: 16 }}>
+                          <div>
+                            <div style={{ ...mono, fontSize: 11, color: T.accent, fontWeight: 700 }}>{m.symbol}</div>
+                            <div style={{ ...font, fontSize: 16, color: T.text, marginTop: 2 }}>{m.label}</div>
+                          </div>
+                          {d && <div style={{ textAlign: "right" }}>
+                            <div style={{ ...mono, fontSize: 10, color: col }}>{up ? "▲" : "▼"} {Math.abs(d.changePct || 0).toFixed(2)}%</div>
+                          </div>}
+                        </div>
+                        <div style={{ ...font, fontSize: 24, color: T.text, marginTop: 6 }}>
+                          {!d ? "Loading..." : d.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                        </div>
+                        <button onClick={() => openModal(m.symbol)} style={{
+                          marginTop: 10, padding: "4px 12px", background: "none",
+                          border: `1px solid ${T.accentBorder}`, borderRadius: 6,
+                          cursor: "pointer", ...font, fontSize: 14, color: T.accent,
+                        }}>+ SET ALERT</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 14 }}>MARKET OVERVIEW</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               {MARKET_SYMBOLS.map(m => {
