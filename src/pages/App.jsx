@@ -1105,6 +1105,7 @@ function CandlestickChart({ data, T, range }) {
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
+      <text x="300" y="9" textAnchor="middle" fontSize="8" fill="#aaa" fontFamily="monospace">{`${data.length} candles · ${data.length > 0 ? new Date(data[0].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""} → ${data.length > 0 ? new Date(data[data.length-1].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""}`}</text>
       {/* Y grid lines + labels */}
       {yLabels.map((v, i) => {
         const y = PAD.top + scaleY(v);
