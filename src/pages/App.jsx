@@ -3,7 +3,7 @@
 // This is the existing Top-Alerts UI (price-alert-app-v3.jsx) wired to live data.
 // useAlerts() replaces all mock state. useAuth() gates Pro features.
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth }   from "../context/AuthContext.jsx";
 import { useAlerts } from "../hooks/useAlerts.js";
