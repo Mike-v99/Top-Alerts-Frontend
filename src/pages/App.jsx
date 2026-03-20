@@ -70,6 +70,7 @@ export default function AppPage() {
   const [toast,     setToast]     = useState(null);
   const [marketData, setMarketData] = useState({});
   const [marketLoading, setMarketLoading] = useState(true);
+  const [flashState,    setFlashState]    = useState({});
 
   const MARKET_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
@@ -133,14 +134,23 @@ export default function AppPage() {
       if (Object.keys(updates).length > 0) {
         setMarketData(prev => {
           const next = { ...prev };
+          const flashes = {};
           Object.entries(updates).forEach(([id, update]) => {
             if (next[id]) {
-              const prevClose = next[id].prevClose || next[id].price;
+              const oldPrice  = next[id].price;
+              const prevClose = next[id].prevClose || oldPrice;
               const change    = update.price - prevClose;
               const changePct = prevClose ? (change / prevClose) * 100 : 0;
               next[id] = { ...next[id], price: update.price, change, changePct };
+              if (update.price > oldPrice) flashes[id] = "up";
+              else if (update.price < oldPrice) flashes[id] = "down";
             }
           });
+          // Trigger flash then clear after 600ms
+          if (Object.keys(flashes).length > 0) {
+            setFlashState(flashes);
+            setTimeout(() => setFlashState({}), 600);
+          }
           return next;
         });
       }
@@ -356,14 +366,14 @@ export default function AppPage() {
                         {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
                       </span>}
                     </div>
-                    <div style={{ ...mono, fontSize: 11, color: T.textMid, marginTop: 2 }}>
+                    <div style={{ ...mono, fontSize: 11, marginTop: 2, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.textMid, transition: "color 0.4s" }}>
                       {marketLoading && !d ? "..." : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
                     </div>
                   </div>
                 );
               })}
               <div style={{ ...mono, fontSize: 9, color: T.textFaint, textAlign: "center", marginTop: 4 }}>
-                Updates every 60s
+                Live · WebSocket
               </div>
             </div>
           </div>
@@ -399,7 +409,7 @@ export default function AppPage() {
                         </div>
                       </div>}
                     </div>
-                    <div style={{ ...font, fontSize: 26, color: T.text, marginTop: 10 }}>
+                    <div style={{ ...font, fontSize: 26, marginTop: 10, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.4s" }}>
                       {marketLoading && !d ? "Loading..." : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
                     </div>
                     {d?.prevClose && <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 4 }}>
