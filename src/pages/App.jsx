@@ -101,21 +101,29 @@ export default function AppPage() {
 
     const symbolToId = Object.fromEntries(MARKET_SYMBOLS.map(m => [m.symbol, m.id]));
 
-    // Fetch snapshot for multiple symbols in one call — Massive supports batch snapshots
+    // Fetch snapshot for multiple symbols in one call
     async function fetchSnapshots(symbols) {
       try {
         const tickers = symbols.join(",");
         const res  = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers?tickers=${tickers}&apiKey=${key}`);
         const data = await res.json();
-        return (data.tickers || []).map(t => ({
-          id: symbolToId[t.ticker] || t.ticker,
-          symbol: t.ticker,
-          price: t.day?.c || t.lastTrade?.p || 0,
-          change: t.todaysChange || 0,
-          changePct: t.todaysChangePerc || 0,
-          prevClose: t.prevDay?.c || 0,
-        })).filter(r => r.price !== 0);
-      } catch (e) { return []; }
+        return (data.tickers || []).map(t => {
+          // lastTrade.p = most recent trade price (real-time during market hours)
+          // day.c = day close (use as fallback or after hours)
+          const price = t.lastTrade?.p || t.day?.c || t.min?.c || 0;
+          return {
+            id: symbolToId[t.ticker] || t.ticker,
+            symbol: t.ticker,
+            price,
+            change: t.todaysChange || 0,
+            changePct: t.todaysChangePerc || 0,
+            prevClose: t.prevDay?.c || 0,
+          };
+        }).filter(r => r.price !== 0);
+      } catch (e) {
+        console.error("[Massive] snapshot error", e);
+        return [];
+      }
     }
 
     // Load all market symbols in one batch request
@@ -251,7 +259,7 @@ export default function AppPage() {
       .then(r => r.json())
       .then(data => {
         const t = data.tickers?.[0];
-        const price = t?.day?.c || t?.lastTrade?.p || 0;
+        const price = t?.lastTrade?.p || t?.day?.c || t?.min?.c || 0;
         if (price !== 0) {
           setWatchData(prev => ({ ...prev, [symbol]: {
             id: symbol, symbol, price,
