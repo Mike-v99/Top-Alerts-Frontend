@@ -334,9 +334,9 @@ export default function AppPage() {
             {/* Theme toggle */}
             <button onClick={() => setThemeName(t => t === "paper" ? "charcoal" : "paper")} style={{
               ...font, fontSize: 18, background: T.bgCard, border: `1px solid ${T.border}`,
-              borderRadius: 8, padding: "6px 12px", cursor: "pointer", color: T.textMid,
+              borderRadius: 8, padding: "6px 12px", cursor: "pointer",
             }}>
-              {T.icon}
+              <span style={{ color: themeName === "paper" ? "#f5a623" : "#ffffff" }}>{T.icon}</span>
             </button>
 
             {/* Plan badge */}
