@@ -188,8 +188,8 @@ export default function AppPage() {
   });
 
   const T    = THEMES[themeName];
-  const font = { fontFamily: "'VT323', monospace" };
-  const mono = { fontFamily: "'DM Mono', monospace" };
+  const font = { fontFamily: "'Roboto', sans-serif" };
+  const mono = { fontFamily: "'Roboto', sans-serif" };
 
   const chipBtn = (active) => ({
     padding: "7px 14px", borderRadius: 7,
@@ -285,7 +285,7 @@ export default function AppPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, ...font, color: T.text, position: "relative", overflowX: "hidden", transition: "background 0.3s" }}>
-      <link href="https://fonts.googleapis.com/css2?family=VT323&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
 
       {/* Grid */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
