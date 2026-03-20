@@ -149,7 +149,7 @@ export default function AppPage() {
     // Massive WebSocket — true tick-by-tick from all US exchanges
     function connectWS() {
       if (destroyed) return;
-      ws = new WebSocket(`wss://socket.polygon.io/stocks`);
+      ws = new WebSocket(`wss://delayed.polygon.io/stocks`);
 
       ws.onopen = () => {
         ws.send(JSON.stringify({ action: "auth", params: key }));
@@ -445,33 +445,43 @@ export default function AppPage() {
         {/* Two-column layout for market tab */}
         <div style={{ display: "flex", gap: 20 }}>
 
-          {/* Market sidebar — always visible */}
-          <div style={{ width: 200, flexShrink: 0 }}>
+          {/* Market sidebar — style #2 left border accent */}
+          <div style={{ width: 210, flexShrink: 0 }}>
             <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>MARKETS</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               {MARKET_SYMBOLS.map(m => {
-                const d = marketData[m.id];
-                const up = d?.changePct >= 0;
+                const d   = marketData[m.id];
+                const up  = d?.changePct >= 0;
+                const col = !d ? T.border : up ? T.green : T.red;
                 return (
-                  <div key={m.id} style={{
-                    background: T.bgCard, border: `1px solid ${T.border}`,
-                    borderRadius: 9, padding: "10px 12px",
+                  <div key={m.id} onClick={() => openModal(m.label)} style={{
+                    background: T.bgCard,
+                    border: `1px solid ${T.border}`,
+                    borderLeft: `4px solid ${col}`,
+                    borderRadius: 9,
+                    padding: "10px 12px",
                     cursor: "pointer",
-                    borderLeft: `3px solid ${!d ? T.border : up ? T.green : T.red}`,
-                  }} onClick={() => { setForm(f => ({ ...f, asset: m.label })); openModal(); }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ ...font, fontSize: 16, color: T.text }}>{m.label}</span>
-                      {d && <span style={{ ...mono, fontSize: 9, color: up ? T.green : T.red }}>
-                        {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
-                      </span>}
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    transition: "border-left-color 0.3s",
+                  }}>
+                    <div>
+                      <div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.text }}>{m.label}</div>
+                      <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{m.symbol}</div>
                     </div>
-                    <div style={{ overflow: "hidden", marginTop: 2 }}>
-                      <div
-                        key={d?.price}
-                        className={flashState[m.id] === "up" ? "price-slide-up" : flashState[m.id] === "down" ? "price-slide-down" : ""}
-                        style={{ ...mono, fontSize: 11, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.textMid, transition: "color 0.8s" }}>
-                        {marketLoading && !d ? "..." : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ overflow: "hidden" }}>
+                        <div
+                          key={d?.price}
+                          className={flashState[m.id] === "up" ? "price-slide-up" : flashState[m.id] === "down" ? "price-slide-down" : ""}
+                          style={{ ...font, fontSize: 14, fontWeight: 500, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.8s" }}>
+                          {marketLoading && !d ? "—" : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                        </div>
                       </div>
+                      {d && <div style={{ ...mono, fontSize: 10, color: col, marginTop: 1 }}>
+                        {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
+                      </div>}
                     </div>
                   </div>
                 );
