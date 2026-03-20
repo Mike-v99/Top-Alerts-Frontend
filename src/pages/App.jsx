@@ -86,6 +86,11 @@ export default function AppPage() {
   const chartPanelRef = useRef(null);
   const [flyingCard,   setFlyingCard]   = useState(null); // {x,y,label,symbol}
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [modalSource,      setModalSource]      = useState("standalone"); // "card" | "standalone"
+  const [modalAssetLabel,  setModalAssetLabel]  = useState(""); // display name from card
+  const [modalSymbolSearch, setModalSymbolSearch] = useState("");
+  const [modalSearchResults, setModalSearchResults] = useState([]);
+  const [modalSearchLoading, setModalSearchLoading] = useState(false);
 
   const MARKET_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
@@ -362,7 +367,7 @@ export default function AppPage() {
     try { localStorage.setItem("ta-watchlist", JSON.stringify(updated)); } catch {}
   }
 
-  function openModal(assetOverride) {
+  function openModal(assetOverride, assetLabel) {
     // Free users limited to 10 alerts — show upgrade modal on 11th attempt
     const activeAlerts = alerts.filter(a => a.status !== "deleted").length;
     if (!isPro && activeAlerts >= 10) {
@@ -370,8 +375,32 @@ export default function AppPage() {
       return;
     }
     setStep(1);
-    setForm(f => ({ ...f, trigger: null, value: "", ...(assetOverride ? { asset: assetOverride } : {}) }));
+    if (assetOverride) {
+      // Opened from a card — we already know the symbol
+      setModalSource("card");
+      setModalAssetLabel(assetLabel || assetOverride);
+      setForm(f => ({ ...f, trigger: null, value: "", asset: assetOverride }));
+    } else {
+      // Opened standalone — user needs to search for a symbol
+      setModalSource("standalone");
+      setModalAssetLabel("");
+      setModalSymbolSearch("");
+      setModalSearchResults([]);
+      setForm(f => ({ ...f, trigger: null, value: "", asset: "" }));
+    }
     setShowModal(true);
+  }
+
+  async function searchModalSymbols(q) {
+    if (!q || q.length < 1) { setModalSearchResults([]); return; }
+    setModalSearchLoading(true);
+    try {
+      const key = import.meta.env.VITE_MASSIVE_KEY || "";
+      const res  = await fetch(`https://api.massive.com/v3/reference/tickers?search=${encodeURIComponent(q)}&active=true&market=stocks&limit=6&apiKey=${key}`);
+      const data = await res.json();
+      setModalSearchResults((data.results || []).map(r => ({ symbol: r.ticker, name: r.name, type: r.type })));
+    } catch { setModalSearchResults([]); }
+    setModalSearchLoading(false);
   }
 
   async function handleSaveAlert() {
@@ -729,7 +758,7 @@ export default function AppPage() {
                           <div style={{ ...mono, fontSize: 9, color: T.textFaint }}>
                             {d?.prevClose ? `Prev ${fmt(d.prevClose)}` : ""}
                           </div>
-                          <button onClick={() => openModal(m.symbol)} style={{
+                          <button onClick={() => openModal(m.symbol, m.label)} style={{
                             padding: "4px 12px", background: "none",
                             border: "1px solid #5F5E5A", borderRadius: 6,
                             cursor: "pointer", ...font, fontSize: 13, color: "#5F5E5A",
@@ -799,7 +828,7 @@ export default function AppPage() {
                       <div style={{ ...mono, fontSize: 9, color: T.textFaint }}>
                         {d?.prevClose ? `Prev ${fmt(d.prevClose)}` : ""}
                       </div>
-                      <button onClick={() => openModal(m.label)} style={{
+                      <button onClick={() => openModal(m.symbol, m.label)} style={{
                         padding: "4px 12px", background: "none",
                         border: "1px solid #5F5E5A", borderRadius: 6,
                         cursor: "pointer", ...font, fontSize: 13, color: "#5F5E5A",
@@ -921,14 +950,81 @@ export default function AppPage() {
             {/* Step 1 — Asset + Trigger */}
             {step === 1 && (
               <div style={{ padding: "22px 28px" }}>
-                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>ASSET</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
-                  {ASSETS.map(a => <button key={a} onClick={() => setForm(f => ({ ...f, asset: a }))} style={chipBtn(form.asset === a)}>{a}</button>)}
-                </div>
+
+                {/* Card source: show symbol card */}
+                {modalSource === "card" && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: T.accentBg, border: `1px solid ${T.accentBorder}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ ...mono, fontSize: 10, color: T.accent, fontWeight: 500 }}>{form.asset?.slice(0,3)}</span>
+                    </div>
+                    <div>
+                      <div style={{ ...font, fontSize: 16, fontWeight: 500, color: T.text }}>{form.asset}</div>
+                      <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
+                    </div>
+                    <div style={{ marginLeft: "auto", ...mono, fontSize: 9, color: T.accent, background: T.accentBg, border: `1px solid ${T.accentBorder}`, padding: "3px 8px", borderRadius: 4 }}>SELECTED</div>
+                  </div>
+                )}
+
+                {/* Standalone: show search bar */}
+                {modalSource === "standalone" && (
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>SEARCH SYMBOL</div>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="text"
+                        placeholder="AAPL, TSLA, BTC-USD..."
+                        value={modalSymbolSearch}
+                        onChange={e => { setModalSymbolSearch(e.target.value); searchModalSymbols(e.target.value); }}
+                        autoFocus
+                        style={{ width: "100%", padding: "11px 14px", boxSizing: "border-box", background: T.bgInput, border: `1px solid ${modalSymbolSearch ? T.accent : T.border}`, borderRadius: 9, color: T.text, ...font, fontSize: 16, outline: "none" }}
+                      />
+                      {modalSymbolSearch && (
+                        <button onClick={() => { setModalSymbolSearch(""); setModalSearchResults([]); setForm(f => ({ ...f, asset: "" })); }} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 18 }}>×</button>
+                      )}
+                    </div>
+
+                    {/* Search results dropdown */}
+                    {(modalSearchResults.length > 0 || modalSearchLoading) && (
+                      <div style={{ background: T.bgModal, border: `1px solid ${T.border}`, borderRadius: 9, overflow: "hidden", marginTop: 4 }}>
+                        {modalSearchLoading && <div style={{ padding: "10px 14px", ...mono, fontSize: 11, color: T.textFaint }}>Searching...</div>}
+                        {modalSearchResults.map(r => (
+                          <div key={r.symbol} onClick={() => {
+                            setForm(f => ({ ...f, asset: r.symbol }));
+                            setModalAssetLabel(r.name);
+                            setModalSymbolSearch(r.symbol);
+                            setModalSearchResults([]);
+                          }} style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${T.border}` }}
+                          onMouseEnter={e => e.currentTarget.style.background = T.bgDeep}
+                          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                            <div style={{ ...mono, fontSize: 11, color: T.accent, minWidth: 52, fontWeight: 500 }}>{r.symbol}</div>
+                            <div style={{ ...font, fontSize: 14, color: T.text, flex: 1 }}>{(r.name || "").slice(0, 32)}</div>
+                            <div style={{ ...mono, fontSize: 9, color: T.textFaint }}>{r.type}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Selected symbol confirmation */}
+                    {form.asset && !modalSearchResults.length && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, padding: "8px 12px", background: T.accentBg, border: `1px solid ${T.accentBorder}`, borderRadius: 7 }}>
+                        <span style={{ ...mono, fontSize: 11, color: T.accent, fontWeight: 500 }}>{form.asset}</span>
+                        <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>{modalAssetLabel}</span>
+                        <span style={{ marginLeft: "auto", ...mono, fontSize: 9, color: T.accent }}>✓ SELECTED</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {/* Nudge if no symbol selected yet */}
+                {modalSource === "standalone" && !form.asset && (
+                  <div style={{ ...mono, fontSize: 11, color: T.textFaint, textAlign: "center", padding: "12px 0 8px" }}>
+                    Search and select a symbol above to continue
+                  </div>
+                )}
+
                 <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>FREE TRIGGERS</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
                   {FREE_TRIGGERS.map(t => (
-                    <button key={t.id} onClick={() => { setForm(f => ({ ...f, trigger: t })); setStep(2); }} style={{
+                    <button key={t.id} onClick={() => { if (modalSource === "standalone" && !form.asset) return; setForm(f => ({ ...f, trigger: t })); setStep(2); }} style={{
                       padding: "11px 16px", borderRadius: 9,
                       border: `1px solid ${form.trigger?.id === t.id ? T.accent : T.border}`,
                       background: form.trigger?.id === t.id ? T.accentBg : T.bgDeep,
