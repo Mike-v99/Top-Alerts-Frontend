@@ -3,7 +3,7 @@
 // This is the existing Top-Alerts UI (price-alert-app-v3.jsx) wired to live data.
 // useAlerts() replaces all mock state. useAuth() gates Pro features.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth }   from "../context/AuthContext.jsx";
 import { useAlerts } from "../hooks/useAlerts.js";
@@ -83,6 +83,8 @@ export default function AppPage() {
   const [chartData,     setChartData]     = useState([]);
   const [chartLoading,  setChartLoading]  = useState(false);
   const [chartLabel,    setChartLabel]    = useState("");
+  const chartPanelRef = useRef(null);
+  const [flyingCard,   setFlyingCard]   = useState(null); // {x,y,label,symbol}
 
   const MARKET_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
@@ -302,7 +304,12 @@ export default function AppPage() {
   }
 
 
-  function openChart(symbol, label) {
+  function openChart(symbol, label, e) {
+    // Magnetic pull animation: record card position, animate flying clone to chart panel
+    if (e && e.currentTarget) {
+      const r = e.currentTarget.getBoundingClientRect();
+      setFlyingCard({ x: r.left + window.scrollX, y: r.top + window.scrollY, w: r.width, h: r.height, label: label || symbol, symbol });
+    }
     setChartSymbol(symbol);
     setChartLabel(label || symbol);
     setChartRange("1D");
@@ -407,6 +414,12 @@ export default function AppPage() {
         @keyframes slideFromRight { from { transform: translateX(60%);  opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .price-slide-up   { animation: slideFromLeft  0.22s cubic-bezier(0.22,1,0.36,1) forwards; }
         .price-slide-down { animation: slideFromRight 0.22s cubic-bezier(0.22,1,0.36,1) forwards; }
+        @keyframes chartPanelPulse {
+          0%   { box-shadow: 0 0 0 0px rgba(138,106,0,0.5); }
+          50%  { box-shadow: 0 0 0 6px rgba(138,106,0,0.15); }
+          100% { box-shadow: 0 0 0 0px rgba(138,106,0,0); }
+        }
+        .chart-panel-pulse { animation: chartPanelPulse 0.5s ease-out forwards; }
       `}</style>
 
 
@@ -521,7 +534,7 @@ export default function AppPage() {
                 const up  = d?.changePct >= 0;
                 const col = !d ? T.border : up ? T.green : T.red;
                 return (
-                  <div key={m.id} onClick={() => openChart(m.symbol, m.label)} style={{
+                  <div key={m.id} onClick={(e) => openChart(m.symbol, m.label, e)} style={{
                     background: T.bgCard,
                     border: `1px solid ${T.border}`,
                     borderLeft: `4px solid ${col}`,
@@ -618,7 +631,7 @@ export default function AppPage() {
 
             {/* Chart panel */}
             {chartSymbol && (
-              <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
+              <div ref={chartPanelRef} style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <span style={{ ...font, fontSize: 16, fontWeight: 500, color: T.text }}>{chartLabel}</span>
@@ -679,7 +692,7 @@ export default function AppPage() {
                           cursor: "pointer", fontSize: 14, lineHeight: 1,
                         }}>×</button>
                         {/* Header */}
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingRight: 16, cursor: "pointer" }} onClick={() => openChart(m.symbol, m.label)}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingRight: 16, cursor: "pointer" }} onClick={(e) => openChart(m.symbol, m.label, e)}>
                           <div>
                             <div style={{ ...mono, fontSize: 10, color: T.accent, fontWeight: 500 }}>{m.symbol}</div>
                             <div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text, marginTop: 1 }}>{m.label}</div>
@@ -740,7 +753,7 @@ export default function AppPage() {
                     borderRadius: 11, padding: "14px 16px",
                   }}>
                     {/* Header */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", cursor: "pointer" }} onClick={() => openChart(m.symbol, m.label)}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", cursor: "pointer" }} onClick={(e) => openChart(m.symbol, m.label, e)}>
                       <div>
                         <div style={{ ...font, fontSize: 15, fontWeight: 500, color: T.text }}>{m.label}</div>
                         <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{m.symbol}</div>
@@ -866,6 +879,16 @@ export default function AppPage() {
         </div>{/* end main content */}
         </div>{/* end two-column layout */}
       </div>
+
+      {/* Flying card animation — magnetic pull #13 */}
+      {flyingCard && (
+        <FlyingCard
+          card={flyingCard}
+          chartPanelRef={chartPanelRef}
+          T={T}
+          onDone={() => setFlyingCard(null)}
+        />
+      )}
 
       {/* Modal */}
       {showModal && (
@@ -1035,6 +1058,83 @@ export default function AppPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+
+// ── FlyingCard — magnetic pull animation (concept #13) ───────────────────────
+// Card starts slow then whips fast into the chart panel with a spin.
+function FlyingCard({ card, chartPanelRef, T, onDone }) {
+  const elRef = useRef(null);
+
+  useEffect(() => {
+    if (!elRef.current || !chartPanelRef.current) { onDone(); return; }
+
+    const el = elRef.current;
+    const panelRect = chartPanelRef.current.getBoundingClientRect();
+    const targetX   = panelRect.left + window.scrollX + panelRect.width / 2 - card.w / 2;
+    const targetY   = panelRect.top  + window.scrollY + panelRect.height / 2 - card.h / 2;
+
+    let start = null;
+    const duration = 620; // ms
+
+    function easeInCubic(t) { return t * t * t; } // slow start → fast end
+
+    function step(ts) {
+      if (!start) start = ts;
+      const raw  = Math.min((ts - start) / duration, 1);
+      const ease = easeInCubic(raw);
+
+      const x = card.x + (targetX - card.x) * ease;
+      const y = card.y + (targetY - card.y) * ease;
+      const rot = ease * 180; // half rotation as it flies
+      const scale = 1 - ease * 0.45;
+      const opacity = raw > 0.75 ? 1 - (raw - 0.75) * 4 : 1;
+
+      el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+      el.style.opacity = opacity;
+
+      if (raw < 1) {
+        requestAnimationFrame(step);
+      } else {
+        // Pulse the chart panel
+        if (chartPanelRef.current) {
+          chartPanelRef.current.classList.add('chart-panel-pulse');
+          setTimeout(() => chartPanelRef.current?.classList.remove('chart-panel-pulse'), 500);
+        }
+        onDone();
+      }
+    }
+
+    requestAnimationFrame(step);
+  }, []);
+
+  return (
+    <div
+      ref={elRef}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: card.w,
+        height: card.h,
+        transform: `translate(${card.x}px, ${card.y}px)`,
+        background: T.bgCard,
+        border: `1.5px solid ${T.accent}`,
+        borderRadius: 11,
+        pointerEvents: "none",
+        zIndex: 9999,
+        padding: "10px 14px",
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        willChange: "transform, opacity",
+      }}
+    >
+      <div style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, fontWeight: 500, color: T.text }}>{card.label}</div>
+      <div style={{ fontFamily: "'Roboto', sans-serif", fontSize: 10, color: T.textFaint, marginTop: 2 }}>{card.symbol}</div>
     </div>
   );
 }
