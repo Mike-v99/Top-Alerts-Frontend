@@ -88,7 +88,13 @@ export default function AppPage() {
     const key = import.meta.env.VITE_FINNHUB_KEY || "";
     if (!key) { setMarketLoading(false); return; }
 
-    // Step 1: Load initial quotes via REST so we have prices before WS connects
+    let ws = null;
+    let fallback = null;
+    let destroyed = false;
+
+    const symbolToId = Object.fromEntries(MARKET_SYMBOLS.map(m => [m.symbol, m.id]));
+
+    // REST fallback — always runs every 15s regardless of WebSocket state
     async function loadInitialQuotes() {
       const results = await Promise.allSettled(
         MARKET_SYMBOLS.map(async (m) => {
@@ -98,78 +104,74 @@ export default function AppPage() {
         })
       );
       const out = {};
-      results.forEach((r, i) => { if (r.status === "fulfilled") out[MARKET_SYMBOLS[i].id] = r.value; });
-      setMarketData(out);
-      setMarketLoading(false);
-    }
-    loadInitialQuotes();
-
-    // Step 2: Open WebSocket for real-time tick updates
-    const ws = new WebSocket(`wss://ws.finnhub.io?token=${key}`);
-    const symbolToId = Object.fromEntries(MARKET_SYMBOLS.map(m => [m.symbol, m.id]));
-
-    ws.onopen = () => {
-      // Subscribe to each symbol
-      MARKET_SYMBOLS.forEach(m => {
-        ws.send(JSON.stringify({ type: "subscribe", symbol: m.symbol }));
-      });
-    };
-
-    ws.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      if (msg.type !== "trade" || !msg.data?.length) return;
-
-      // Finnhub sends batches of trades — take the latest price per symbol
-      const updates = {};
-      msg.data.forEach(trade => {
-        const id = symbolToId[trade.s];
-        if (!id) return;
-        // Only update if this trade is newer than what we have
-        if (!updates[id] || trade.t > updates[id].t) {
-          updates[id] = { price: trade.p, t: trade.t };
-        }
-      });
-
-      // Merge into marketData — keep existing change/prevClose, just update price
-      if (Object.keys(updates).length > 0) {
-        setMarketData(prev => {
-          const next = { ...prev };
-          const flashes = {};
-          Object.entries(updates).forEach(([id, update]) => {
-            if (next[id]) {
-              const oldPrice  = next[id].price;
-              const prevClose = next[id].prevClose || oldPrice;
-              const change    = update.price - prevClose;
-              const changePct = prevClose ? (change / prevClose) * 100 : 0;
-              next[id] = { ...next[id], price: update.price, change, changePct };
-              if (update.price > oldPrice) flashes[id] = "up";
-              else if (update.price < oldPrice) flashes[id] = "down";
-            }
-          });
-          // Trigger flash then clear after 600ms
-          if (Object.keys(flashes).length > 0) {
-            setFlashState(flashes);
-            setTimeout(() => setFlashState({}), 600);
-          }
-          return next;
-        });
+      results.forEach((r, i) => { if (r.status === "fulfilled" && r.value.price) out[MARKET_SYMBOLS[i].id] = r.value; });
+      if (Object.keys(out).length > 0) {
+        setMarketData(prev => ({ ...prev, ...out }));
+        setMarketLoading(false);
       }
-    };
+    }
 
-    ws.onerror = () => console.warn("[WS] Finnhub WebSocket error");
-    ws.onclose = () => console.log("[WS] Finnhub WebSocket closed");
+    // WebSocket with auto-reconnect
+    function connectWS() {
+      if (destroyed) return;
+      ws = new WebSocket(`wss://ws.finnhub.io?token=${key}`);
 
-    // Fallback: poll every 15s to catch symbols WebSocket misses (off-hours, low volume)
-    const fallback = setInterval(loadInitialQuotes, 15000);
+      ws.onopen = () => {
+        MARKET_SYMBOLS.forEach(m => ws.send(JSON.stringify({ type: "subscribe", symbol: m.symbol })));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type !== "trade" || !msg.data?.length) return;
+          const updates = {};
+          msg.data.forEach(trade => {
+            const id = symbolToId[trade.s];
+            if (!id) return;
+            if (!updates[id] || trade.t > updates[id].t) updates[id] = { price: trade.p, t: trade.t };
+          });
+          if (Object.keys(updates).length > 0) {
+            setMarketData(prev => {
+              const next = { ...prev };
+              const flashes = {};
+              Object.entries(updates).forEach(([id, update]) => {
+                if (next[id]) {
+                  const oldPrice  = next[id].price;
+                  const prevClose = next[id].prevClose || oldPrice;
+                  const change    = update.price - prevClose;
+                  const changePct = prevClose ? (change / prevClose) * 100 : 0;
+                  next[id] = { ...next[id], price: update.price, change, changePct };
+                  if (update.price > oldPrice) flashes[id] = "up";
+                  else if (update.price < oldPrice) flashes[id] = "down";
+                }
+              });
+              if (Object.keys(flashes).length > 0) {
+                setFlashState(flashes);
+                setTimeout(() => setFlashState({}), 600);
+              }
+              return next;
+            });
+          }
+        } catch (e) {}
+      };
+
+      ws.onerror = () => console.warn("[WS] error");
+
+      // Auto-reconnect after 3s if closed unexpectedly
+      ws.onclose = () => {
+        if (!destroyed) setTimeout(connectWS, 3000);
+      };
+    }
+
+    // Start everything
+    loadInitialQuotes();
+    connectWS();
+    fallback = setInterval(loadInitialQuotes, 15000);
 
     return () => {
+      destroyed = true;
       clearInterval(fallback);
-      MARKET_SYMBOLS.forEach(m => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: "unsubscribe", symbol: m.symbol }));
-        }
-      });
-      ws.close();
+      if (ws) ws.close();
     };
   }, []);
   const [form, setForm] = useState({
