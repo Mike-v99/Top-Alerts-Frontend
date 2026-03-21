@@ -1086,13 +1086,17 @@ export default function AppPage() {
                                       {e.time && <span style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{e.time}</span>}
                                     </div>
                                   </div>
-                                  {(e.prev != null || e.est != null || e.actual != null) && (
-                                    <div style={{ display: "flex", gap: 24, marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                                      {e.prev != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>PREVIOUS</span><div style={{ ...mono, fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 2 }}>{e.prev}</div></div>}
-                                      {e.est != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>FORECAST</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.est}</div></div>}
-                                      {e.actual != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#3ddc84", marginTop: 2 }}>{e.actual}</div></div>}
-                                    </div>
-                                  )}
+                                  <div style={{ display: "flex", gap: 24, marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)", alignItems: "center" }}>
+                                    {e.prev != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>PREVIOUS</span><div style={{ ...mono, fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 2 }}>{e.prev}</div></div>}
+                                    {e.est != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>FORECAST</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.est}</div></div>}
+                                    {e.actual != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#3ddc84", marginTop: 2 }}>{e.actual}</div></div>}
+                                    <div style={{ flex: 1 }} />
+                                    <button onClick={() => { showToast(`Reminder set for ${e.label}`); }} style={{
+                                      padding: "8px 16px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+                                      borderRadius: 8, cursor: "pointer", ...font, fontSize: 13, color: "#e8f2ff",
+                                      display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
+                                    }}>🔔 Set Alert</button>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -1107,7 +1111,14 @@ export default function AppPage() {
                                       <div style={{ ...font, fontSize: 16, fontWeight: 600, color: "#e8f2ff" }}>{e.symbol}</div>
                                       <div style={{ ...font, fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{e.label}</div>
                                     </div>
-                                    {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.06)", padding: "2px 8px", borderRadius: 4 }}>{e.time}</span>}
+                                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                                      {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.06)", padding: "2px 8px", borderRadius: 4 }}>{e.time}</span>}
+                                      <button onClick={() => { openModal(e.symbol, e.label); }} style={{
+                                        padding: "6px 12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+                                        borderRadius: 6, cursor: "pointer", ...font, fontSize: 12, color: "#e8f2ff",
+                                        display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
+                                      }}>🔔 Alert</button>
+                                    </div>
                                   </div>
                                   <div style={{ display: "flex", gap: 20, marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                                     <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>EST EPS</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.est || "—"}</div></div>
@@ -1129,10 +1140,19 @@ export default function AppPage() {
                                       {e.symbol && <div style={{ ...font, fontSize: 15, fontWeight: 600, color: "#e8f2ff" }}>{e.symbol}</div>}
                                       <div style={{ ...font, fontSize: 13, color: e.symbol ? "rgba(255,255,255,0.45)" : "#e8f2ff", marginTop: e.symbol ? 2 : 0 }}>{e.label}</div>
                                     </div>
-                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                                      {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{e.time}</span>}
-                                      {e.price && <span style={{ ...mono, fontSize: 11, color: "#e8f2ff" }}>{e.price}</span>}
-                                      {e.impact && <span style={{ ...mono, fontSize: 9, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}44`, background: impactColor(e.impact) + "22", padding: "2px 6px", borderRadius: 4 }}>{e.impact.toUpperCase()}</span>}
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                                        {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{e.time}</span>}
+                                        {e.price && <span style={{ ...mono, fontSize: 11, color: "#e8f2ff" }}>{e.price}</span>}
+                                        {e.impact && <span style={{ ...mono, fontSize: 9, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}44`, background: impactColor(e.impact) + "22", padding: "2px 6px", borderRadius: 4 }}>{e.impact.toUpperCase()}</span>}
+                                      </div>
+                                      {type !== "holiday" && e.symbol && (
+                                        <button onClick={() => { openModal(e.symbol, e.label); }} style={{
+                                          padding: "6px 12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+                                          borderRadius: 6, cursor: "pointer", ...font, fontSize: 12, color: "#e8f2ff",
+                                          display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
+                                        }}>🔔</button>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
