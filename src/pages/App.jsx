@@ -919,7 +919,7 @@ export default function AppPage() {
 
         {/* Search bar — full width above columns (market tab only) */}
         {tab === "market" && (
-          <div style={{ position: "relative", marginBottom: 20 }}>
+          <div style={{ position: "relative", marginBottom: isMobile ? 12 : 20 }}>
             <input
               type="text"
               placeholder="Search any symbol — AAPL, TSLA, ETH-USD..."
@@ -969,7 +969,7 @@ export default function AppPage() {
 
         {/* Pricing tab — rendered outside two-column layout for full-width centering */}
         {tab === "pricing" && (
-          <PricingPage T={T} font={font} mono={mono} currentPlan={profile?.plan || "free"} onUpgrade={handleUpgrade} />
+          <PricingPage T={T} font={font} mono={mono} currentPlan={profile?.plan || "free"} onUpgrade={handleUpgrade} isMobile={isMobile} />
         )}
 
         {/* Calendar tab — rendered outside two-column layout for full width */}
@@ -1018,7 +1018,7 @@ export default function AppPage() {
                 <div>
                   <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#5F5E5A", marginBottom: 6 }}>CALENDAR</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ ...font, fontSize: 28, fontWeight: 600, color: T.text }}>{monthName}</span>
+                    <span style={{ ...font, fontSize: isMobile ? 20 : 28, fontWeight: 600, color: T.text }}>{monthName}</span>
                     <div style={{ display: "flex", gap: 4 }}>
                       <button onClick={() => setCalMonth(p => { const d = new Date(p.year, p.month - 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${T.border}`, background: "none", cursor: "pointer", color: T.textMid, fontSize: 14 }}>‹</button>
                       <button onClick={() => setCalMonth(p => { const d = new Date(p.year, p.month + 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${T.border}`, background: "none", cursor: "pointer", color: T.textMid, fontSize: 14 }}>›</button>
@@ -1031,7 +1031,7 @@ export default function AppPage() {
               </div>
 
               {/* Filter cards — card-style toggles with counts */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8, marginBottom: 20 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(6, 1fr)", gap: 8, marginBottom: 20 }}>
                 {eventTypes.map(([id, lbl, col, icon]) => {
                   const active = calFilters[id];
                   const count = eventCounts[id] || 0;
@@ -1074,40 +1074,43 @@ export default function AppPage() {
                         <div key={d} onClick={() => setCalSelectedDay(d)} style={{
                           background: isToday ? T.bgDeep : T.bg,
                           border: isSel ? "2px solid #0a1f4a" : "2px solid transparent",
-                          padding: 8, minHeight: 90, cursor: "pointer", transition: "all 0.15s",
+                          padding: isMobile ? 4 : 8, minHeight: isMobile ? 60 : 90, cursor: "pointer", transition: "all 0.15s",
                         }}>
-                          <div style={{ fontSize: 16, fontWeight: isToday ? 700 : 500, color: isWeekend ? T.textFaint : T.text, marginBottom: 5 }}>
+                          <div style={{ fontSize: isMobile ? 12 : 16, fontWeight: isToday ? 700 : 500, color: isWeekend ? T.textFaint : T.text, marginBottom: isMobile ? 2 : 5 }}>
                             {isToday ? (
-                              <span style={{ background: "#5F5E5A", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>{d}</span>
+                              <span style={{ background: "#5F5E5A", color: "#fff", width: isMobile ? 20 : 28, height: isMobile ? 20 : 28, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? 10 : 14 }}>{d}</span>
                             ) : d}
                           </div>
                           {(() => {
                             const typeOrd = { economic: 0, earnings: 1, ipo: 2, split: 3, dividend: 4, holiday: 5 };
                             const sorted = [...evts].sort((a, b) => (typeOrd[a.type] ?? 9) - (typeOrd[b.type] ?? 9));
-                            return sorted.slice(0, 3).map((e, j) => (
-                            <div key={j} style={{ fontSize: 12, color: T.textMid, display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 3 }}>
-                              <span style={{ width: 7, height: 7, borderRadius: "50%", background: dotColor(e.type), flexShrink: 0 }} />
-                              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{e.type === "earnings" ? e.symbol : e.type === "ipo" ? "IPO" : e.type === "split" ? e.symbol : e.type === "dividend" ? e.symbol : (e.label || "").split(" ").slice(0, 3).join(" ")}</span>
+                            const maxShow = isMobile ? 2 : 3;
+                            return sorted.slice(0, maxShow).map((e, j) => (
+                            <div key={j} style={{ fontSize: isMobile ? 8 : 12, color: T.textMid, display: "flex", alignItems: "center", gap: isMobile ? 2 : 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: isMobile ? 1 : 3 }}>
+                              <span style={{ width: isMobile ? 4 : 7, height: isMobile ? 4 : 7, borderRadius: "50%", background: dotColor(e.type), flexShrink: 0 }} />
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{e.type === "earnings" ? e.symbol : e.type === "ipo" ? "IPO" : e.type === "split" ? e.symbol : e.type === "dividend" ? e.symbol : (e.label || "").split(" ").slice(0, isMobile ? 1 : 3).join(" ")}</span>
                             </div>
                           ));
                           })()}
-                          {evts.length > 3 && (() => {
+                          {evts.length > (isMobile ? 2 : 3) && (() => {
+                            const remaining = evts.length - (isMobile ? 2 : 3);
+                            if (isMobile) return <div style={{ ...mono, fontSize: 7, color: T.textFaint, marginTop: 1 }}>+{remaining}</div>;
                             const counts = {};
                             evts.forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
                             const icons = { economic: "📅", earnings: "📊", ipo: "🚀", split: "✂️", dividend: "💰", holiday: "🏖️" };
                             const parts = Object.entries(counts).map(([t, c]) => `${c}${icons[t] || ""}`).join(" · ");
-                            return <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 2 }}>+{evts.length - 3} more ({parts})</div>;
+                            return <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 2 }}>+{remaining} more ({parts})</div>;
                           })()}
                         </div>
                       );
                     })}
                     {Array.from({ length: (7 - (firstDow + daysInMonth) % 7) % 7 }).map((_, i) => (
-                      <div key={`f${i}`} style={{ background: T.bg, padding: 10, minHeight: 90 }} />
+                      <div key={`f${i}`} style={{ background: T.bg, padding: isMobile ? 4 : 10, minHeight: isMobile ? 60 : 90 }} />
                     ))}
                   </div>
 
                   {/* Detail panel below — cobalt style */}
-                  <div style={{ marginTop: 20, background: "#0a1f4a", borderRadius: 14, padding: "22px 28px" }}>
+                  <div style={{ marginTop: isMobile ? 12 : 20, background: "#0a1f4a", borderRadius: isMobile ? 10 : 14, padding: isMobile ? "14px 16px" : "22px 28px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                       <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.35)", letterSpacing: "2px" }}>
                         EVENTS · {new Date(yr, mo, calSelectedDay).toLocaleDateString("en-US", { month: "long", day: "numeric" }).toUpperCase()}
@@ -1199,7 +1202,7 @@ export default function AppPage() {
                           )}
 
                           {type === "earnings" && (
-                            <div style={{ display: "grid", gridTemplateColumns: items.length === 1 ? "1fr" : "1fr 1fr", gap: 8 }}>
+                            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : items.length === 1 ? "1fr" : "1fr 1fr", gap: 8 }}>
                               {items.map((e, i) => (
                                 <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${col}`, borderRadius: 8, padding: "12px 16px" }}>
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -1234,7 +1237,7 @@ export default function AppPage() {
                           )}
 
                           {(type === "ipo" || type === "split" || type === "dividend" || type === "holiday") && (
-                            <div style={{ display: "grid", gridTemplateColumns: items.length === 1 ? "1fr" : "1fr 1fr", gap: 8 }}>
+                            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : items.length === 1 ? "1fr" : "1fr 1fr", gap: 8 }}>
                               {items.map((e, i) => (
                                 <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${col}`, borderRadius: 8, padding: "12px 16px" }}>
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1315,14 +1318,17 @@ export default function AppPage() {
                   {isExpanded && (
                     <div style={{ paddingBottom: 14 }}>
                       {/* Chart */}
-                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, padding: 12, marginBottom: 8 }}>
+                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, overflow: "hidden" }}>
                         {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: T.textFaint }}>Loading chart...</div>}
                         {!chartLoading && chartData.length > 0 && (
-                          <div>
-                            <canvas id="mobileChartCanvas" width="350" height="140" style={{ width: "100%", height: 140 }} />
+                          <div style={{ overflowX: "auto" }}>
+                            <CandlestickChart data={chartData} T={T} range={chartRange} />
                           </div>
                         )}
-                        <div style={{ display: "flex", gap: 4, justifyContent: "center", marginTop: 8 }}>
+                        {!chartLoading && chartData.length === 0 && (
+                          <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textFaint }}>No chart data</div>
+                        )}
+                        <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "8px 12px" }}>
                           {["1D","5D","1M","3M","1Y","5Y"].map(r => (
                             <span key={r} onClick={() => setChartRange(r)} style={{
                               padding: "4px 10px", borderRadius: 5, ...mono, fontSize: 10, cursor: "pointer",
@@ -1427,6 +1433,43 @@ export default function AppPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Mobile alerts tab */}
+        {isMobile && tab === "alerts" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {loading && <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...font, fontSize: 14 }}>Loading...</div>}
+            {!loading && alerts.filter(a => a.status !== "deleted").map((a) => (
+              <div key={a.id} style={{
+                background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10,
+                padding: "14px 16px", display: "flex", alignItems: "center", gap: 12,
+                position: "relative", overflow: "hidden",
+              }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${T.accent},transparent)` }} />
+                <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+                  background: a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ ...font, fontSize: 16, fontWeight: 500, color: T.text }}>{a.asset}</div>
+                  <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>{a.trigger_type?.replace(/_/g, " ")}</div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ ...mono, fontSize: 9, color: a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green,
+                    border: `1px solid ${a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green}33`,
+                    background: `${a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green}11`,
+                    padding: "3px 8px", borderRadius: 4 }}>
+                    {a.status.toUpperCase()}
+                  </div>
+                  <button onClick={() => togglePause(a.id)} style={{ background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 14 }}>
+                    {a.status === "paused" ? "▶" : "⏸"}
+                  </button>
+                  <button onClick={() => deleteAlert(a.id)} style={{ background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 16 }}>×</button>
+                </div>
+              </div>
+            ))}
+            {!loading && alerts.filter(a => a.status !== "deleted").length === 0 && (
+              <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...font, fontSize: 14 }}>No alerts yet — create one above</div>
+            )}
           </div>
         )}
 
@@ -1808,7 +1851,7 @@ export default function AppPage() {
       {calEventAlert && (
         <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div onClick={() => { setCalEventAlert(null); setCalAlertTiming("1day"); }} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />
-          <div style={{ position: "relative", width: 480, maxHeight: "90vh", overflowY: "auto", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+          <div style={{ position: "relative", width: isMobile ? "95vw" : 480, maxHeight: "90vh", overflowY: "auto", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
             {/* Header */}
             <div style={{ background: "#0a1f4a", padding: "18px 24px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
@@ -2575,7 +2618,7 @@ function CandlestickChart({ data, T, range }) {
 
 // ── Pricing page (inline) ─────────────────────────────────────────────────────
 
-function PricingPage({ T, font, mono, currentPlan, onUpgrade }) {
+function PricingPage({ T, font, mono, currentPlan, onUpgrade, isMobile }) {
   const isFree = !currentPlan || currentPlan === "free";
   const proPriceId = import.meta.env.VITE_STRIPE_PRO_PRICE_ID;
 
@@ -2584,12 +2627,12 @@ function PricingPage({ T, font, mono, currentPlan, onUpgrade }) {
 
   return (
     <div>
-      <div style={{ textAlign: "center", marginBottom: 40 }}>
+      <div style={{ textAlign: "center", marginBottom: isMobile ? 20 : 40 }}>
         <div style={{ ...mono, fontSize: 10, letterSpacing: "3px", color: T.textFaint, marginBottom: 10 }}>PRICING</div>
-        <div style={{ ...font, fontSize: 36, fontWeight: 500, color: T.text }}>Simple, transparent pricing</div>
-        <div style={{ ...font, fontSize: 15, color: T.textMid, marginTop: 8 }}>Start free. Upgrade when you need more power.</div>
+        <div style={{ ...font, fontSize: isMobile ? 24 : 36, fontWeight: 500, color: T.text }}>Simple, transparent pricing</div>
+        <div style={{ ...font, fontSize: isMobile ? 13 : 15, color: T.textMid, marginTop: 8 }}>Start free. Upgrade when you need more power.</div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 16 : 24, maxWidth: 900, margin: "0 auto" }}>
         {/* Free card */}
         <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 16, padding: "36px 32px" }}>
           <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>FREE</div>
