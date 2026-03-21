@@ -702,6 +702,11 @@ export default function AppPage() {
           </div>
         )}
 
+        {/* Pricing tab — rendered outside two-column layout for full-width centering */}
+        {tab === "pricing" && (
+          <PricingPage T={T} font={font} mono={mono} currentPlan={profile?.plan || "free"} onUpgrade={handleUpgrade} />
+        )}
+
         {/* Two-column layout */}
         <div style={{ display: "flex", gap: 20 }}>
 
@@ -1081,11 +1086,6 @@ export default function AppPage() {
             ))}
             {history.length === 0 && <div style={{ textAlign: "center", padding: 60, color: T.textFaint, fontSize: 18 }}>No history yet</div>}
           </div>
-        )}
-
-        {/* Pricing tab */}
-        {tab === "pricing" && (
-          <PricingPage T={T} font={font} mono={mono} currentPlan={profile?.plan || "free"} onUpgrade={handleUpgrade} />
         )}
 
         </div>{/* end main content */}
