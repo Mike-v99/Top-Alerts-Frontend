@@ -502,11 +502,11 @@ export default function AppPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 36 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 38, color: "#cc2222", lineHeight: 1 }}>◈</span>
+              <span style={{ fontSize: 38, color: "#5F5E5A", lineHeight: 1 }}>◈</span>
               <span style={{ fontSize: 45, letterSpacing: "1px" }}>
-                <span style={{ color: T.text }}>TOP</span>
-                <span style={{ color: "#1a8a44" }}>-</span>
-                <span style={{ color: T.text }}>ALERTS</span>
+                <span style={{ color: "#5F5E5A" }}>TOP</span>
+                <span style={{ color: "#5F5E5A" }}>-</span>
+                <span style={{ color: "#5F5E5A" }}>ALERTS</span>
               </span>
             </div>
             <div style={{ ...mono, fontSize: 9, letterSpacing: "3px", color: "#378ADD", marginTop: 2 }}>INTELLIGENT PRICE ALERTS</div>
@@ -540,8 +540,8 @@ export default function AppPage() {
               </button>
             ) : (
               <button onClick={() => navigate("/login")} style={{
-                ...font, fontSize: 18, background: "#0a1f4a", border: "none",
-                borderRadius: 8, padding: "6px 16px", cursor: "pointer", color: "#e8f2ff",
+                ...font, fontSize: 18, background: "none", border: "1px solid #5F5E5A",
+                borderRadius: 8, padding: "6px 16px", cursor: "pointer", color: "#5F5E5A",
               }}>
                 SIGN IN
               </button>
