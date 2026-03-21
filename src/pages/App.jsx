@@ -102,7 +102,7 @@ export default function AppPage() {
   const [calSelectedDay, setCalSelectedDay] = useState(new Date().getDate());
   const [calEvents, setCalEvents] = useState([]); // merged array of all event types
   const [calLoading, setCalLoading] = useState(false);
-  const [calFilters, setCalFilters] = useState({ earnings: true, economic: true, ipo: true, split: true, dividend: true });
+  const [calFilters, setCalFilters] = useState({ earnings: true, economic: true, ipo: true, split: true, dividend: true, holiday: true });
 
   const MARKET_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
@@ -393,17 +393,20 @@ export default function AppPage() {
     const base = "https://finnhub.io/api/v1";
 
     try {
-      const [earningsRes, economicRes, ipoRes] = await Promise.allSettled([
+      const [earningsRes, economicRes, ipoRes, holidayRes] = await Promise.allSettled([
         fetch(`${base}/calendar/earnings?from=${from}&to=${to}&token=${key}`).then(r => r.json()),
         fetch(`${base}/calendar/economic?from=${from}&to=${to}&token=${key}`).then(r => r.json()),
         fetch(`${base}/calendar/ipo?from=${from}&to=${to}&token=${key}`).then(r => r.json()),
+        fetch(`${base}/stock/market-holiday?exchange=US&token=${key}`).then(r => r.json()),
       ]);
 
       const merged = [];
 
       // Earnings
-      if (earningsRes.status === "fulfilled" && earningsRes.value?.earningsCalendar) {
-        earningsRes.value.earningsCalendar.forEach(e => {
+      if (earningsRes.status === "fulfilled") {
+        const earnings = earningsRes.value?.earningsCalendar || [];
+        console.log("[Calendar] Earnings:", earnings.length, "events");
+        earnings.forEach(e => {
           merged.push({
             type: "earnings", date: e.date, symbol: e.symbol,
             label: `${e.symbol} Q${e.quarter || "?"} Earnings`,
@@ -415,22 +418,33 @@ export default function AppPage() {
         });
       }
 
-      // Economic
-      if (economicRes.status === "fulfilled" && economicRes.value?.economicCalendar) {
-        economicRes.value.economicCalendar.forEach(e => {
+      // Economic — handle both response structures
+      if (economicRes.status === "fulfilled") {
+        const ecoData = economicRes.value?.economicCalendar || economicRes.value?.result || economicRes.value || [];
+        const ecoArray = Array.isArray(ecoData) ? ecoData : [];
+        console.log("[Calendar] Economic response:", JSON.stringify(economicRes.value).slice(0, 200));
+        console.log("[Calendar] Economic events:", ecoArray.length);
+        ecoArray.forEach(e => {
+          const dateStr = e.time?.split("T")[0] || e.date || "";
+          if (!dateStr) return;
           merged.push({
-            type: "economic", date: e.time?.split("T")[0] || e.date,
-            label: e.event, impact: e.impact === 3 ? "high" : e.impact === 2 ? "medium" : "low",
+            type: "economic", date: dateStr,
+            label: e.event || e.name || "Economic Event",
+            impact: e.impact === 3 ? "high" : e.impact === 2 ? "medium" : e.impact === 1 ? "low" : e.importance === "high" ? "high" : e.importance === "medium" ? "medium" : "low",
             time: e.time ? new Date(e.time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "",
-            prev: e.prev, est: e.estimate, actual: e.actual,
-            country: e.country,
+            prev: e.prev ?? e.previous ?? null,
+            est: e.estimate ?? e.forecast ?? null,
+            actual: e.actual ?? null,
+            country: e.country || "US",
           });
         });
       }
 
       // IPOs
-      if (ipoRes.status === "fulfilled" && ipoRes.value?.ipoCalendar) {
-        ipoRes.value.ipoCalendar.forEach(e => {
+      if (ipoRes.status === "fulfilled") {
+        const ipos = ipoRes.value?.ipoCalendar || [];
+        console.log("[Calendar] IPOs:", ipos.length, "events");
+        ipos.forEach(e => {
           merged.push({
             type: "ipo", date: e.date, symbol: e.symbol || "",
             label: `${e.name || e.symbol || "TBD"} IPO`,
@@ -440,6 +454,29 @@ export default function AppPage() {
         });
       }
 
+      // Market Holidays
+      if (holidayRes.status === "fulfilled") {
+        const holidays = holidayRes.value?.data || holidayRes.value || [];
+        const holidayArray = Array.isArray(holidays) ? holidays : [];
+        console.log("[Calendar] Holidays:", holidayArray.length, "events");
+        holidayArray.forEach(h => {
+          const hDate = h.atDate || h.date || "";
+          if (!hDate) return;
+          // Only include holidays for this month
+          const hMonth = parseInt(hDate.split("-")[1], 10) - 1;
+          const hYear = parseInt(hDate.split("-")[0], 10);
+          if (hMonth === month && hYear === year) {
+            merged.push({
+              type: "holiday", date: hDate,
+              label: h.eventName || h.holiday || "Market Holiday",
+              time: h.tradingHour || "Closed",
+              impact: "high",
+            });
+          }
+        });
+      }
+
+      console.log("[Calendar] Total merged events:", merged.length);
       setCalEvents(merged);
     } catch (e) { console.error("Calendar fetch failed", e); }
     setCalLoading(false);
@@ -796,7 +833,7 @@ export default function AppPage() {
           const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
           const fullDayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
-          const dotColor = t => t === "earnings" ? "#378ADD" : t === "economic" ? "#f5a623" : t === "ipo" ? "#1a8a44" : t === "split" ? "#9b59b6" : "#cc2222";
+          const dotColor = t => t === "earnings" ? "#378ADD" : t === "economic" ? "#f5a623" : t === "ipo" ? "#1a8a44" : t === "split" ? "#9b59b6" : t === "holiday" ? "#5F5E5A" : "#cc2222";
           const impactColor = i => i === "high" ? "#cc2222" : i === "medium" ? "#f5a623" : T.textFaint;
 
           const eventsByDay = {};
@@ -826,7 +863,7 @@ export default function AppPage() {
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                  {[["earnings","Earnings","#378ADD"],["economic","Economic","#f5a623"],["ipo","IPO","#1a8a44"],["split","Split","#9b59b6"],["dividend","Dividend","#cc2222"]].map(([id,lbl,col]) => (
+                  {[["earnings","Earnings","#378ADD"],["economic","Economic","#f5a623"],["ipo","IPO","#1a8a44"],["split","Split","#9b59b6"],["dividend","Dividend","#cc2222"],["holiday","Holiday","#5F5E5A"]].map(([id,lbl,col]) => (
                     <button key={id} onClick={() => setCalFilters(f => ({ ...f, [id]: !f[id] }))} style={{
                       display: "flex", alignItems: "center", gap: 5, padding: "3px 8px", borderRadius: 5, cursor: "pointer",
                       border: `1px solid ${calFilters[id] ? col + "55" : T.border}`, background: calFilters[id] ? col + "11" : "transparent",
