@@ -1365,7 +1365,7 @@ export default function AppPage() {
                         }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                             <span style={{ fontSize: 12 }}>📰</span>
-                            <span style={{ ...mono, fontSize: 11, letterSpacing: "1px", color: "#1a1200", fontWeight: 500 }}>LATEST NEWS</span>
+                            <span style={{ ...mono, fontSize: 11, letterSpacing: "1px", color: "#0a1f4a", fontWeight: 600 }}>LATEST NEWS</span>
                             <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>({tickerNews.length})</span>
                           </div>
                           <span style={{ ...font, fontSize: 12, color: mobileNewsOpen ? "#1a1200" : "#6a6050" }}>{mobileNewsOpen ? "▲ Collapse" : "▼ Expand"}</span>
