@@ -709,7 +709,7 @@ export default function AppPage() {
           <div style={{ width: 210, flexShrink: 0 }}>
             {tab === "market" && (
               <div>
-                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>WATCHLIST</div>
+                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: "#5F5E5A", marginBottom: 10 }}>WATCHLIST</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                   {MARKET_SYMBOLS.map(m => {
                     const d   = marketData[m.id];
