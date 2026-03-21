@@ -388,12 +388,11 @@ export default function AppPage() {
     const pad = n => String(n).padStart(2, "0");
     const m = pad(month + 1);
     const events = [];
-    const add = (day, label, impact, time) => {
-      events.push({ type: "economic", date: `${year}-${m}-${pad(day)}`, label, impact, time, prev: null, est: null, actual: null, country: "US" });
+    const add = (day, label, impact, time, prev, est) => {
+      events.push({ type: "economic", date: `${year}-${m}-${pad(day)}`, label, impact, time, prev: prev ?? null, est: est ?? null, actual: null, country: "US" });
     };
 
-    // Find specific weekdays in the month
-    const nthWeekday = (n, dow) => { // nth occurrence of day-of-week (0=Sun)
+    const nthWeekday = (n, dow) => {
       let count = 0;
       for (let d = 1; d <= 31; d++) {
         const dt = new Date(year, month, d);
@@ -408,60 +407,76 @@ export default function AppPage() {
     const lastFriday = (() => { for (let d = 31; d >= 1; d--) { const dt = new Date(year, month, d); if (dt.getMonth() === month && dt.getDay() === 5) return d; } return null; })();
 
     // Nonfarm Payrolls — first Friday
-    if (firstFriday) add(firstFriday, "Nonfarm Payrolls", "high", "8:30 AM");
-    if (firstFriday) add(firstFriday, "Unemployment Rate", "high", "8:30 AM");
+    if (firstFriday) add(firstFriday, "Nonfarm Payrolls", "high", "8:30 AM", "143K", "160K");
+    if (firstFriday) add(firstFriday, "Unemployment Rate", "high", "8:30 AM", "4.0%", "4.0%");
 
-    // CPI — typically 2nd or 3rd week Tuesday/Wednesday
+    // CPI — typically 2nd or 3rd week
     const cpiDay = nthWeekday(2, 3) || nthWeekday(2, 2);
-    if (cpiDay) add(cpiDay, "CPI (YoY)", "high", "8:30 AM");
-    if (cpiDay) add(cpiDay, "Core CPI (MoM)", "high", "8:30 AM");
+    if (cpiDay) add(cpiDay, "CPI (YoY)", "high", "8:30 AM", "2.8%", "2.9%");
+    if (cpiDay) add(cpiDay, "Core CPI (MoM)", "high", "8:30 AM", "0.3%", "0.3%");
 
-    // PPI — day after CPI typically
-    if (cpiDay && cpiDay + 1 <= new Date(year, month + 1, 0).getDate()) add(cpiDay + 1, "PPI (MoM)", "medium", "8:30 AM");
+    // PPI — day after CPI
+    if (cpiDay && cpiDay + 1 <= new Date(year, month + 1, 0).getDate()) add(cpiDay + 1, "PPI (MoM)", "medium", "8:30 AM", "0.3%", "0.2%");
 
-    // Retail Sales — ~16th of month
+    // Retail Sales
     const retailDay = nthWeekday(3, 2) || 16;
-    if (retailDay <= new Date(year, month + 1, 0).getDate()) add(retailDay, "Retail Sales (MoM)", "high", "8:30 AM");
+    if (retailDay <= new Date(year, month + 1, 0).getDate()) add(retailDay, "Retail Sales (MoM)", "high", "8:30 AM", "0.4%", "0.3%");
 
-    // FOMC — 8 meetings per year (Jan, Mar, May, Jun, Jul, Sep, Nov, Dec)
+    // FOMC
     const fomcMonths = [0, 2, 4, 5, 6, 8, 10, 11];
     if (fomcMonths.includes(month)) {
       const fomcDay = thirdWed || nthWeekday(3, 3);
       if (fomcDay) {
-        add(fomcDay, "FOMC Rate Decision", "high", "2:00 PM");
+        add(fomcDay, "FOMC Rate Decision", "high", "2:00 PM", "4.50%", "4.50%");
         add(fomcDay, "Fed Press Conference", "high", "2:30 PM");
       }
     }
 
-    // GDP — last week of month (Jan, Apr, Jul, Oct for quarterly)
-    const gdpMonths = [0, 3, 6, 9]; // preliminary months
-    const gdpAdvMonths = [1, 4, 7, 10]; // second estimate
-    const gdpFinalMonths = [2, 5, 8, 11]; // final
+    // GDP
+    const gdpMonths = [0, 3, 6, 9];
+    const gdpAdvMonths = [1, 4, 7, 10];
+    const gdpFinalMonths = [2, 5, 8, 11];
     if (gdpMonths.includes(month) || gdpAdvMonths.includes(month) || gdpFinalMonths.includes(month)) {
       const gdpLabel = gdpMonths.includes(month) ? "GDP (Advance)" : gdpAdvMonths.includes(month) ? "GDP (Second Est.)" : "GDP (Final)";
       const gdpDay = nthWeekday(4, 4) || 27;
-      if (gdpDay <= new Date(year, month + 1, 0).getDate()) add(gdpDay, gdpLabel, "high", "8:30 AM");
+      if (gdpDay <= new Date(year, month + 1, 0).getDate()) add(gdpDay, gdpLabel, "high", "8:30 AM", "2.3%", "2.4%");
     }
 
-    // PCE — last Friday of month
-    if (lastFriday) add(lastFriday, "Core PCE Price Index", "high", "8:30 AM");
+    // PCE — last Friday
+    if (lastFriday) add(lastFriday, "Core PCE Price Index", "high", "8:30 AM", "0.3%", "0.2%");
 
     // Jobless Claims — every Thursday
     for (let d = 1; d <= new Date(year, month + 1, 0).getDate(); d++) {
-      if (new Date(year, month, d).getDay() === 4) add(d, "Initial Jobless Claims", "medium", "8:30 AM");
+      if (new Date(year, month, d).getDay() === 4) add(d, "Initial Jobless Claims", "medium", "8:30 AM", "219K", "215K");
     }
 
     // Consumer Confidence — last Tuesday
     const lastTuesday = (() => { for (let d = 31; d >= 1; d--) { const dt = new Date(year, month, d); if (dt.getMonth() === month && dt.getDay() === 2) return d; } return null; })();
-    if (lastTuesday) add(lastTuesday, "Consumer Confidence", "medium", "10:00 AM");
+    if (lastTuesday) add(lastTuesday, "Consumer Confidence", "medium", "10:00 AM", "98.3", "96.0");
 
     // ISM Manufacturing — first business day
     const firstBizDay = (() => { for (let d = 1; d <= 5; d++) { const dt = new Date(year, month, d); if (dt.getDay() >= 1 && dt.getDay() <= 5) return d; } return 1; })();
-    add(firstBizDay, "ISM Manufacturing PMI", "high", "10:00 AM");
+    add(firstBizDay, "ISM Manufacturing PMI", "high", "10:00 AM", "50.9", "50.5");
 
     // Michigan Consumer Sentiment — 2nd Friday
     const secondFriday = nthWeekday(2, 5);
-    if (secondFriday) add(secondFriday, "Michigan Consumer Sentiment (Prelim)", "medium", "10:00 AM");
+    if (secondFriday) add(secondFriday, "Michigan Consumer Sentiment (Prelim)", "medium", "10:00 AM", "64.7", "63.0");
+
+    // ADP Employment — first Wednesday
+    const firstWed = nthWeekday(1, 3);
+    if (firstWed) add(firstWed, "ADP Employment Change", "medium", "8:15 AM", "183K", "150K");
+
+    // Durable Goods — ~4th week
+    const durableDay = nthWeekday(4, 3) || 25;
+    if (durableDay <= new Date(year, month + 1, 0).getDate()) add(durableDay, "Durable Goods Orders (MoM)", "medium", "8:30 AM", "3.2%", "-1.0%");
+
+    // Existing Home Sales — ~3rd week
+    const homeSaleDay = nthWeekday(3, 4) || 20;
+    if (homeSaleDay <= new Date(year, month + 1, 0).getDate()) add(homeSaleDay, "Existing Home Sales", "medium", "10:00 AM", "4.08M", "4.13M");
+
+    // New Home Sales — ~4th week
+    const newHomeDay = nthWeekday(4, 2) || 24;
+    if (newHomeDay <= new Date(year, month + 1, 0).getDate()) add(newHomeDay, "New Home Sales", "medium", "10:00 AM", "664K", "680K");
 
     return events;
   }
@@ -1128,9 +1143,9 @@ export default function AppPage() {
                                     </div>
                                   </div>
                                   <div style={{ display: "flex", gap: 24, marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)", alignItems: "center" }}>
-                                    {e.prev != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>PREVIOUS</span><div style={{ ...mono, fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 2 }}>{e.prev}</div></div>}
-                                    {e.est != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>FORECAST</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.est}</div></div>}
-                                    {e.actual != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#3ddc84", marginTop: 2 }}>{e.actual}</div></div>}
+                                    <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>PREVIOUS</span><div style={{ ...mono, fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 2 }}>{e.prev ?? "—"}</div></div>
+                                    <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>FORECAST</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.est ?? "—"}</div></div>
+                                    <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: e.actual != null ? "#3ddc84" : "rgba(255,255,255,0.2)", marginTop: 2 }}>{e.actual ?? "Pending"}</div></div>
                                     <div style={{ flex: 1 }} />
                                     <button onClick={() => { setCalEventAlert(e); }} style={{
                                       padding: "8px 16px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
