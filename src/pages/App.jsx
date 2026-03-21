@@ -1570,6 +1570,9 @@ function FlyingCard({ card, chartPanelRef, T, onDone }) {
 
 // ── Candlestick Chart ────────────────────────────────────────────────────────
 function CandlestickChart({ data, T, range }) {
+  const [hover, setHover] = useState(null); // { x, y, candle, svgX, svgY }
+  const svgRef = useRef(null);
+
   const W = range === "1M" ? 700 : 600, H = 200, PAD = { top: 10, right: 10, bottom: 24, left: 52 };
   const cW = W - PAD.left - PAD.right;
   const cH = H - PAD.top - PAD.bottom;
@@ -1581,42 +1584,34 @@ function CandlestickChart({ data, T, range }) {
   const priceRange = maxP - minP || 1;
 
   const scaleY  = p => cH - ((p - minP) / priceRange) * cH;
-  // For 5Y (monthly candles) squeeze tighter so all ~60 fit
   const barW    = range === "1M"
     ? Math.max(1, (cW / data.length) * 0.5)
     : Math.max(1, Math.min(12, (cW / data.length) * 0.7));
   const spacing = cW / data.length;
 
-  const fmt = n => n >= 1000
+  const fmtPrice = n => n >= 1000
     ? `$${(n/1000).toFixed(1)}k`
     : `$${Number(n).toFixed(2)}`;
 
-  // Y axis labels
   const yTicks = 4;
   const yLabels = Array.from({ length: yTicks + 1 }, (_, i) => minP + (priceRange * i) / yTicks);
 
-  // X axis label formatter — changes based on range
   function formatXLabel(ts) {
     const dt = new Date(ts);
-    if (range === "1M") {
-      // 5Y chart — monthly candles → show year only
-      return dt.getFullYear().toString();
-    } else if (range === "1W") {
-      // 1Y chart — weekly candles → show "Jan '25" style
-      return dt.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-    } else if (range === "1D") {
-      // 1M chart — daily candles → show "Mar 5"
-      return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    } else {
-      // 5D chart — 15min candles → show "Mar 5"
-      return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    }
+    if (range === "1M") return dt.getFullYear().toString();
+    else if (range === "1W") return dt.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+    else if (range === "1D") return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    else return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
 
-  // X axis: for 5Y deduplicate so we only label each year once
+  function formatTooltipDate(ts) {
+    const dt = new Date(ts);
+    if (range === "15m") return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+
   function getXLabels() {
     if (range === "1M") {
-      // Group candles by year, pick the middle candle of each year for centering
       const byYear = {};
       data.forEach((d, i) => {
         const year = new Date(d.t).getFullYear();
@@ -1628,7 +1623,6 @@ function CandlestickChart({ data, T, range }) {
         return candles[mid];
       });
     }
-    // All other ranges: ~5 evenly spaced
     const xStep = Math.ceil(data.length / 5);
     return data
       .map((d, i) => ({ d, i }))
@@ -1637,55 +1631,134 @@ function CandlestickChart({ data, T, range }) {
 
   const xLabels = getXLabels();
 
+  function handleMouseMove(e) {
+    if (!svgRef.current || !data.length) return;
+    const svg = svgRef.current;
+    const rect = svg.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleYr = H / rect.height;
+    const svgX = (e.clientX - rect.left) * scaleX;
+    const svgY = (e.clientY - rect.top) * scaleYr;
+
+    // Find closest candle
+    const idx = Math.round((svgX - PAD.left - spacing / 2) / spacing);
+    const clampedIdx = Math.max(0, Math.min(data.length - 1, idx));
+    const candle = data[clampedIdx];
+    const candleX = PAD.left + clampedIdx * spacing + spacing / 2;
+
+    // Interpolate price from Y position
+    const priceAtY = minP + ((cH - (svgY - PAD.top)) / cH) * priceRange;
+
+    setHover({ svgX: candleX, svgY, candle, priceAtY, idx: clampedIdx });
+  }
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
-      <text x="300" y="9" textAnchor="middle" fontSize="8" fill="#aaa" fontFamily="monospace">{`${data.length} candles · ${data.length > 0 ? new Date(data[0].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""} → ${data.length > 0 ? new Date(data[data.length-1].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""}`}</text>
-      {/* Y grid lines + labels */}
-      {yLabels.map((v, i) => {
-        const y = PAD.top + scaleY(v);
-        return (
-          <g key={i}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={y} y2={y}
-              stroke={T.border} strokeWidth="0.5" strokeDasharray="3,3" />
-            <text x={PAD.left - 4} y={y + 4} textAnchor="end"
-              fontSize="9" fill={T.textFaint} fontFamily="'DM Mono',monospace">
-              {fmt(v)}
+    <div style={{ position: "relative" }} onMouseLeave={() => setHover(null)}>
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${W} ${H}`}
+        style={{ width: "100%", height: "auto", display: "block", cursor: hover ? "crosshair" : "default" }}
+        onMouseMove={handleMouseMove}
+      >
+        <text x="300" y="9" textAnchor="middle" fontSize="8" fill="#aaa" fontFamily="monospace">{`${data.length} candles · ${data.length > 0 ? new Date(data[0].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""} → ${data.length > 0 ? new Date(data[data.length-1].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""}`}</text>
+        {/* Y grid lines + labels */}
+        {yLabels.map((v, i) => {
+          const y = PAD.top + scaleY(v);
+          return (
+            <g key={i}>
+              <line x1={PAD.left} x2={W - PAD.right} y1={y} y2={y}
+                stroke={T.border} strokeWidth="0.5" strokeDasharray="3,3" />
+              <text x={PAD.left - 4} y={y + 4} textAnchor="end"
+                fontSize="9" fill={T.textFaint} fontFamily="'DM Mono',monospace">
+                {fmtPrice(v)}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Candles */}
+        {data.map((d, i) => {
+          const x     = PAD.left + i * spacing + spacing / 2;
+          const up    = d.c >= d.o;
+          const col   = up ? T.green : T.red;
+          const top   = PAD.top + scaleY(Math.max(d.o, d.c));
+          const bot   = PAD.top + scaleY(Math.min(d.o, d.c));
+          const hHi   = PAD.top + scaleY(d.h);
+          const hLo   = PAD.top + scaleY(d.l);
+          const bodyH = Math.max(1, bot - top);
+
+          return (
+            <g key={i}>
+              <line x1={x} x2={x} y1={hHi} y2={hLo} stroke={col} strokeWidth="1" />
+              <rect x={x - barW/2} y={top} width={barW} height={bodyH}
+                fill={col} stroke={col} strokeWidth="0.5" fillOpacity={0.9} />
+            </g>
+          );
+        })}
+
+        {/* Crosshair */}
+        {hover && hover.svgY >= PAD.top && hover.svgY <= H - PAD.bottom && (
+          <g style={{ pointerEvents: "none" }}>
+            {/* Vertical line */}
+            <line x1={hover.svgX} x2={hover.svgX} y1={PAD.top} y2={H - PAD.bottom}
+              stroke={T.textFaint} strokeWidth="0.5" strokeDasharray="4,3" opacity="0.7" />
+            {/* Horizontal line */}
+            <line x1={PAD.left} x2={W - PAD.right} y1={hover.svgY} y2={hover.svgY}
+              stroke={T.textFaint} strokeWidth="0.5" strokeDasharray="4,3" opacity="0.7" />
+            {/* Price label on Y axis */}
+            <rect x={0} y={hover.svgY - 8} width={PAD.left - 2} height={16} rx="3" fill={T.text} />
+            <text x={PAD.left - 6} y={hover.svgY + 3.5} textAnchor="end" fontSize="8" fill={T.bg} fontFamily="'DM Mono',monospace" fontWeight="500">
+              {fmtPrice(hover.priceAtY)}
             </text>
+            {/* Date label on X axis */}
+            {hover.candle && (
+              <>
+                <rect x={hover.svgX - 32} y={H - PAD.bottom + 2} width={64} height={16} rx="3" fill={T.text} />
+                <text x={hover.svgX} y={H - PAD.bottom + 13} textAnchor="middle" fontSize="7.5" fill={T.bg} fontFamily="'DM Mono',monospace" fontWeight="500">
+                  {formatTooltipDate(hover.candle.t)}
+                </text>
+              </>
+            )}
+            {/* Dot at crosshair intersection */}
+            <circle cx={hover.svgX} cy={hover.svgY} r="3" fill={T.text} stroke={T.bg} strokeWidth="1.5" />
           </g>
-        );
-      })}
+        )}
 
-      {/* Candles */}
-      {data.map((d, i) => {
-        const x     = PAD.left + i * spacing + spacing / 2;
-        const up    = d.c >= d.o;
-        const col   = up ? T.green : T.red;
-        const top   = PAD.top + scaleY(Math.max(d.o, d.c));
-        const bot   = PAD.top + scaleY(Math.min(d.o, d.c));
-        const hHi   = PAD.top + scaleY(d.h);
-        const hLo   = PAD.top + scaleY(d.l);
-        const bodyH = Math.max(1, bot - top);
+        {/* X axis labels */}
+        {xLabels.map(({ d, i }) => {
+          const x = PAD.left + i * spacing + spacing / 2;
+          return (
+            <text key={i} x={x} y={H - 4} textAnchor="middle"
+              fontSize="9" fill={T.textFaint} fontFamily="'DM Mono',monospace">
+              {formatXLabel(d.t)}
+            </text>
+          );
+        })}
+      </svg>
 
-        return (
-          <g key={i}>
-            <line x1={x} x2={x} y1={hHi} y2={hLo} stroke={col} strokeWidth="1" />
-            <rect x={x - barW/2} y={top} width={barW} height={bodyH}
-              fill={col} stroke={col} strokeWidth="0.5" fillOpacity={0.9} />
-          </g>
-        );
-      })}
-
-      {/* X axis labels */}
-      {xLabels.map(({ d, i }) => {
-        const x = PAD.left + i * spacing + spacing / 2;
-        return (
-          <text key={i} x={x} y={H - 4} textAnchor="middle"
-            fontSize="9" fill={T.textFaint} fontFamily="'DM Mono',monospace">
-            {formatXLabel(d.t)}
-          </text>
-        );
-      })}
-    </svg>
+      {/* OHLC tooltip */}
+      {hover && hover.candle && hover.svgY >= PAD.top && hover.svgY <= H - PAD.bottom && (
+        <div style={{
+          position: "absolute", top: 4, right: 4, pointerEvents: "none",
+          background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 6,
+          padding: "6px 10px", display: "flex", gap: 12,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: T.textFaint }}>
+            O <span style={{ color: T.text, fontWeight: 500 }}>{fmtPrice(hover.candle.o)}</span>
+          </div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: T.textFaint }}>
+            H <span style={{ color: T.green, fontWeight: 500 }}>{fmtPrice(hover.candle.h)}</span>
+          </div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: T.textFaint }}>
+            L <span style={{ color: T.red, fontWeight: 500 }}>{fmtPrice(hover.candle.l)}</span>
+          </div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: T.textFaint }}>
+            C <span style={{ color: hover.candle.c >= hover.candle.o ? T.green : T.red, fontWeight: 500 }}>{fmtPrice(hover.candle.c)}</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
