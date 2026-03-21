@@ -841,13 +841,14 @@ export default function AppPage() {
               {calLoading && <div style={{ textAlign: "center", padding: 60, color: T.textFaint, ...mono, fontSize: 13 }}>Loading calendar...</div>}
 
               {!calLoading && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 20 }}>
+                <div>
+                  {/* Calendar grid — full width */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 1, background: T.border, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
                     {dayNames.map(d => (
-                      <div key={d} style={{ background: T.bgCard, padding: 8, textAlign: "center", ...mono, fontSize: 10, color: T.textFaint, letterSpacing: "1px" }}>{d.toUpperCase()}</div>
+                      <div key={d} style={{ background: T.bgCard, padding: 10, textAlign: "center", ...mono, fontSize: 11, color: T.textFaint, letterSpacing: "1px" }}>{d.toUpperCase()}</div>
                     ))}
                     {Array.from({ length: firstDow }).map((_, i) => (
-                      <div key={`e${i}`} style={{ background: T.bg, padding: 8, minHeight: 80 }} />
+                      <div key={`e${i}`} style={{ background: T.bg, padding: 10, minHeight: 90 }} />
                     ))}
                     {Array.from({ length: daysInMonth }).map((_, i) => {
                       const d = i + 1;
@@ -858,73 +859,71 @@ export default function AppPage() {
                       return (
                         <div key={d} onClick={() => setCalSelectedDay(d)} style={{
                           background: isSel ? "#0a1f4a" : isToday ? T.bgDeep : T.bg,
-                          padding: 8, minHeight: 80, cursor: "pointer", transition: "background 0.15s",
+                          padding: 10, minHeight: 90, cursor: "pointer", transition: "background 0.15s",
                         }}>
-                          <div style={{ fontSize: 13, fontWeight: isToday ? 700 : 400, color: isSel ? "#e8f2ff" : isWeekend ? T.textFaint : T.text, marginBottom: 4 }}>
+                          <div style={{ fontSize: 14, fontWeight: isToday ? 700 : 400, color: isSel ? "#e8f2ff" : isWeekend ? T.textFaint : T.text, marginBottom: 5 }}>
                             {isToday ? (
-                              <span style={{ background: isSel ? "#378ADD" : "#5F5E5A", color: "#fff", width: 24, height: 24, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{d}</span>
+                              <span style={{ background: isSel ? "#378ADD" : "#5F5E5A", color: "#fff", width: 26, height: 26, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>{d}</span>
                             ) : d}
                           </div>
                           {evts.slice(0, 3).map((e, j) => (
-                            <div key={j} style={{ fontSize: 9, color: isSel ? "rgba(255,255,255,0.6)" : T.textMid, display: "flex", alignItems: "center", gap: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 1 }}>
-                              <span style={{ width: 5, height: 5, borderRadius: "50%", background: isSel ? "rgba(255,255,255,0.5)" : dotColor(e.type), flexShrink: 0 }} />
-                              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{e.type === "earnings" ? e.symbol : e.type === "ipo" ? "IPO" : e.type === "split" ? e.symbol : e.type === "dividend" ? e.symbol : (e.label || "").split(" ").slice(0, 2).join(" ")}</span>
+                            <div key={j} style={{ fontSize: 10, color: isSel ? "rgba(255,255,255,0.6)" : T.textMid, display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }}>
+                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: isSel ? "rgba(255,255,255,0.5)" : dotColor(e.type), flexShrink: 0 }} />
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{e.type === "earnings" ? e.symbol : e.type === "ipo" ? "IPO" : e.type === "split" ? e.symbol : e.type === "dividend" ? e.symbol : (e.label || "").split(" ").slice(0, 3).join(" ")}</span>
                             </div>
                           ))}
-                          {evts.length > 3 && <div style={{ ...mono, fontSize: 7, color: isSel ? "rgba(255,255,255,0.3)" : T.textFaint }}>+{evts.length - 3} more</div>}
+                          {evts.length > 3 && <div style={{ ...mono, fontSize: 8, color: isSel ? "rgba(255,255,255,0.3)" : T.textFaint, marginTop: 2 }}>+{evts.length - 3} more</div>}
                         </div>
                       );
                     })}
                     {Array.from({ length: (7 - (firstDow + daysInMonth) % 7) % 7 }).map((_, i) => (
-                      <div key={`f${i}`} style={{ background: T.bg, padding: 8, minHeight: 80 }} />
+                      <div key={`f${i}`} style={{ background: T.bg, padding: 10, minHeight: 90 }} />
                     ))}
                   </div>
 
-                  <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: 18, alignSelf: "start", position: "sticky", top: 20 }}>
-                    <div style={{ ...mono, fontSize: 10, color: T.textFaint, letterSpacing: "1px", marginBottom: 4 }}>
-                      {new Date(yr, mo, calSelectedDay).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-                    </div>
-                    <div style={{ ...font, fontSize: 18, fontWeight: 600, color: T.text, marginBottom: 16 }}>
-                      {fullDayNames[new Date(yr, mo, calSelectedDay).getDay()]}
+                  {/* Detail panel below — cobalt style */}
+                  <div style={{ marginTop: 20, background: "#0a1f4a", borderRadius: 14, padding: "22px 28px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                      <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.35)", letterSpacing: "2px" }}>
+                        EVENTS · {new Date(yr, mo, calSelectedDay).toLocaleDateString("en-US", { month: "long", day: "numeric" }).toUpperCase()}
+                      </div>
+                      <div style={{ ...font, fontSize: 16, fontWeight: 500, color: "#e8f2ff" }}>
+                        {fullDayNames[new Date(yr, mo, calSelectedDay).getDay()]}, {new Date(yr, mo, calSelectedDay).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                      </div>
                     </div>
 
                     {selEvents.length === 0 && (
-                      <div style={{ padding: "32px 0", textAlign: "center", color: T.textFaint, ...font, fontSize: 14 }}>No events this day</div>
+                      <div style={{ padding: "24px 0", textAlign: "center", color: "rgba(255,255,255,0.3)", ...font, fontSize: 14 }}>No events on this day — click a day above</div>
                     )}
 
-                    {[["earnings","EARNINGS","#378ADD"],["economic","ECONOMIC","#f5a623"],["ipo","IPOs","#1a8a44"],["split","SPLITS","#9b59b6"],["dividend","DIVIDENDS","#cc2222"]].map(([type,label,col]) => {
-                      const filtered = selEvents.filter(e => e.type === type);
-                      if (!filtered.length) return null;
-                      return (
-                        <div key={type} style={{ marginBottom: 14 }}>
-                          <div style={{ ...mono, fontSize: 9, letterSpacing: "1.5px", color: col, marginBottom: 8 }}>{label}</div>
-                          {filtered.map((e, i) => (
-                            <div key={i} style={{ background: T.bg, border: `1px solid ${T.border}`, borderLeft: `3px solid ${col}`, borderRadius: 8, padding: "10px 12px", marginBottom: 6 }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <div>
-                                  {e.symbol && <span style={{ ...font, fontSize: 14, fontWeight: 600, color: T.text }}>{e.symbol}</span>}
-                                  <span style={{ ...font, fontSize: e.symbol ? 12 : 13, fontWeight: e.symbol ? 400 : 500, color: e.symbol ? T.textMid : T.text, marginLeft: e.symbol ? 8 : 0 }}>{e.label}</span>
-                                </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                  {e.impact && <span style={{ ...mono, fontSize: 8, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}33`, background: impactColor(e.impact) + "11", padding: "1px 5px", borderRadius: 3 }}>{e.impact.toUpperCase()}</span>}
-                                  {e.time && <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>{e.time}</span>}
+                    {selEvents.length > 0 && (
+                      <div style={{ display: "grid", gridTemplateColumns: selEvents.length === 1 ? "1fr" : "1fr 1fr", gap: 10 }}>
+                        {selEvents.map((e, i) => (
+                          <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${dotColor(e.type)}`, borderRadius: 8, padding: "12px 14px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <div>
+                                <span style={{ ...mono, fontSize: 8, letterSpacing: "1px", color: dotColor(e.type) }}>{e.type.toUpperCase()}</span>
+                                <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 3 }}>
+                                  {e.symbol ? `${e.symbol} — ${e.label}` : e.label}
                                 </div>
                               </div>
-                              {(e.est || e.actual || e.prev != null || e.price) && (
-                                <div style={{ display: "flex", gap: 14, marginTop: 6 }}>
-                                  {e.prev != null && <div><span style={{ ...mono, fontSize: 8, color: T.textFaint }}>PREV</span><div style={{ ...mono, fontSize: 11, color: T.text, marginTop: 1 }}>{e.prev}</div></div>}
-                                  {e.est && <div><span style={{ ...mono, fontSize: 8, color: T.textFaint }}>{type === "earnings" ? "EST EPS" : "EST"}</span><div style={{ ...font, fontSize: 12, fontWeight: 500, color: T.text, marginTop: 1 }}>{e.est}</div></div>}
-                                  {e.actual && <div><span style={{ ...mono, fontSize: 8, color: T.textFaint }}>ACTUAL</span><div style={{ ...font, fontSize: 12, fontWeight: 500, color: T.green, marginTop: 1 }}>{e.actual}</div></div>}
-                                  {e.price && <div><span style={{ ...mono, fontSize: 8, color: T.textFaint }}>PRICE</span><div style={{ ...font, fontSize: 12, fontWeight: 500, color: T.text, marginTop: 1 }}>{e.price}</div></div>}
-                                </div>
-                              )}
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                                {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{e.time}</span>}
+                                {e.impact && <span style={{ ...mono, fontSize: 8, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}44`, background: impactColor(e.impact) + "22", padding: "1px 5px", borderRadius: 3 }}>{e.impact.toUpperCase()}</span>}
+                              </div>
                             </div>
-                          ))}
-                        </div>
-                      );
-                    })}
-
-                    <div style={{ ...mono, fontSize: 9, color: T.textFaint, textAlign: "center", marginTop: 12 }}>Click any day to see events</div>
+                            {(e.est || e.actual || e.prev != null || e.price) && (
+                              <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
+                                {e.prev != null && <div><span style={{ ...mono, fontSize: 8, color: "rgba(255,255,255,0.3)" }}>PREV</span><div style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 1 }}>{e.prev}</div></div>}
+                                {e.est && <div><span style={{ ...mono, fontSize: 8, color: "rgba(255,255,255,0.3)" }}>{e.type === "earnings" ? "EST EPS" : "EST"}</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#e8f2ff", marginTop: 1 }}>{e.est}</div></div>}
+                                {e.actual && <div><span style={{ ...mono, fontSize: 8, color: "rgba(255,255,255,0.3)" }}>ACTUAL</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#3ddc84", marginTop: 1 }}>{e.actual}</div></div>}
+                                {e.price && <div><span style={{ ...mono, fontSize: 8, color: "rgba(255,255,255,0.3)" }}>PRICE</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#e8f2ff", marginTop: 1 }}>{e.price}</div></div>}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
