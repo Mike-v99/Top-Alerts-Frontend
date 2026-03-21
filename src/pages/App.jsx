@@ -97,6 +97,13 @@ export default function AppPage() {
   const [modalSearchLoading, setModalSearchLoading] = useState(false);
   const [modalPrice,  setModalPrice]  = useState(null); // { price, change, changePct, marketOpen }
 
+  // ── Calendar state ─────────────────────────────────────────────────────────
+  const [calMonth, setCalMonth] = useState(() => { const n = new Date(); return { year: n.getFullYear(), month: n.getMonth() }; });
+  const [calSelectedDay, setCalSelectedDay] = useState(new Date().getDate());
+  const [calEvents, setCalEvents] = useState([]); // merged array of all event types
+  const [calLoading, setCalLoading] = useState(false);
+  const [calFilters, setCalFilters] = useState({ earnings: true, economic: true, ipo: true, split: true, dividend: true });
+
   const MARKET_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
     { id: "SPY",   label: "S&P 500", symbol: "SPY"  },
@@ -374,6 +381,75 @@ export default function AppPage() {
     setNewsLoading(false);
   }
 
+  // ── Calendar data fetching ──────────────────────────────────────────────
+  async function fetchCalendarData(year, month) {
+    setCalLoading(true);
+    const key = import.meta.env.VITE_FINNHUB_KEY || "";
+    if (!key) { setCalLoading(false); return; }
+    const pad = n => String(n).padStart(2, "0");
+    const from = `${year}-${pad(month + 1)}-01`;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const to = `${year}-${pad(month + 1)}-${pad(lastDay)}`;
+    const base = "https://finnhub.io/api/v1";
+
+    try {
+      const [earningsRes, economicRes, ipoRes] = await Promise.allSettled([
+        fetch(`${base}/calendar/earnings?from=${from}&to=${to}&token=${key}`).then(r => r.json()),
+        fetch(`${base}/calendar/economic?from=${from}&to=${to}&token=${key}`).then(r => r.json()),
+        fetch(`${base}/calendar/ipo?from=${from}&to=${to}&token=${key}`).then(r => r.json()),
+      ]);
+
+      const merged = [];
+
+      // Earnings
+      if (earningsRes.status === "fulfilled" && earningsRes.value?.earningsCalendar) {
+        earningsRes.value.earningsCalendar.forEach(e => {
+          merged.push({
+            type: "earnings", date: e.date, symbol: e.symbol,
+            label: `${e.symbol} Q${e.quarter || "?"} Earnings`,
+            est: e.epsEstimate != null ? `$${e.epsEstimate}` : "—",
+            actual: e.epsActual != null ? `$${e.epsActual}` : null,
+            revEst: e.revenueEstimate,
+            time: e.hour === "bmo" ? "BMO" : e.hour === "amc" ? "AMC" : e.hour || "",
+          });
+        });
+      }
+
+      // Economic
+      if (economicRes.status === "fulfilled" && economicRes.value?.economicCalendar) {
+        economicRes.value.economicCalendar.forEach(e => {
+          merged.push({
+            type: "economic", date: e.time?.split("T")[0] || e.date,
+            label: e.event, impact: e.impact === 3 ? "high" : e.impact === 2 ? "medium" : "low",
+            time: e.time ? new Date(e.time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "",
+            prev: e.prev, est: e.estimate, actual: e.actual,
+            country: e.country,
+          });
+        });
+      }
+
+      // IPOs
+      if (ipoRes.status === "fulfilled" && ipoRes.value?.ipoCalendar) {
+        ipoRes.value.ipoCalendar.forEach(e => {
+          merged.push({
+            type: "ipo", date: e.date, symbol: e.symbol || "",
+            label: `${e.name || e.symbol || "TBD"} IPO`,
+            price: e.price ? `$${e.price}` : e.numberOfShares ? `${(e.numberOfShares / 1e6).toFixed(1)}M shares` : "—",
+            time: e.exchange || "",
+          });
+        });
+      }
+
+      setCalEvents(merged);
+    } catch (e) { console.error("Calendar fetch failed", e); }
+    setCalLoading(false);
+  }
+
+  // Fetch calendar on month change or tab switch
+  useEffect(() => {
+    if (tab === "calendar") fetchCalendarData(calMonth.year, calMonth.month);
+  }, [tab, calMonth.year, calMonth.month]);
+
 
   function openChart(symbol, label, e) {
     // Magnetic pull animation: record card position, animate flying clone to chart panel
@@ -633,7 +709,7 @@ export default function AppPage() {
 
         {/* Tabs */}
         <div style={{ display: "flex", marginBottom: 28, borderBottom: `1px solid ${T.border}` }}>
-          {["market","alerts","history","pricing"].map(t => (
+          {["market","alerts","calendar","pricing"].map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: "10px 22px", background: "none", border: "none", cursor: "pointer",
               ...font, fontSize: 20, letterSpacing: "1px",
@@ -706,6 +782,155 @@ export default function AppPage() {
         {tab === "pricing" && (
           <PricingPage T={T} font={font} mono={mono} currentPlan={profile?.plan || "free"} onUpgrade={handleUpgrade} />
         )}
+
+        {/* Calendar tab — rendered outside two-column layout for full width */}
+        {tab === "calendar" && (() => {
+          const yr = calMonth.year;
+          const mo = calMonth.month;
+          const daysInMonth = new Date(yr, mo + 1, 0).getDate();
+          const firstDow = new Date(yr, mo, 1).getDay();
+          const today = new Date();
+          const isCurrentMonth = yr === today.getFullYear() && mo === today.getMonth();
+          const todayDate = isCurrentMonth ? today.getDate() : -1;
+          const monthName = new Date(yr, mo).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+          const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+          const fullDayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+          const dotColor = t => t === "earnings" ? "#378ADD" : t === "economic" ? "#f5a623" : t === "ipo" ? "#1a8a44" : t === "split" ? "#9b59b6" : "#cc2222";
+          const impactColor = i => i === "high" ? "#cc2222" : i === "medium" ? "#f5a623" : T.textFaint;
+
+          const eventsByDay = {};
+          calEvents.filter(e => calFilters[e.type]).forEach(e => {
+            const d = parseInt(e.date?.split("-")[2], 10);
+            if (d >= 1 && d <= daysInMonth) {
+              if (!eventsByDay[d]) eventsByDay[d] = [];
+              eventsByDay[d].push(e);
+            }
+          });
+          const selEvents = eventsByDay[calSelectedDay] || [];
+
+          return (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <div>
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#5F5E5A", marginBottom: 6 }}>CALENDAR</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ ...font, fontSize: 28, fontWeight: 600, color: T.text }}>{monthName}</span>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <button onClick={() => setCalMonth(p => { const d = new Date(p.year, p.month - 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${T.border}`, background: "none", cursor: "pointer", color: T.textMid, fontSize: 14 }}>‹</button>
+                      <button onClick={() => setCalMonth(p => { const d = new Date(p.year, p.month + 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${T.border}`, background: "none", cursor: "pointer", color: T.textMid, fontSize: 14 }}>›</button>
+                    </div>
+                    {!isCurrentMonth && (
+                      <button onClick={() => { const n = new Date(); setCalMonth({ year: n.getFullYear(), month: n.getMonth() }); setCalSelectedDay(n.getDate()); }} style={{ padding: "4px 12px", border: "2px solid #5F5E5A", borderRadius: 6, background: "none", cursor: "pointer", ...font, fontSize: 12, color: "#5F5E5A" }}>Today</button>
+                    )}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  {[["earnings","Earnings","#378ADD"],["economic","Economic","#f5a623"],["ipo","IPO","#1a8a44"],["split","Split","#9b59b6"],["dividend","Dividend","#cc2222"]].map(([id,lbl,col]) => (
+                    <button key={id} onClick={() => setCalFilters(f => ({ ...f, [id]: !f[id] }))} style={{
+                      display: "flex", alignItems: "center", gap: 5, padding: "3px 8px", borderRadius: 5, cursor: "pointer",
+                      border: `1px solid ${calFilters[id] ? col + "55" : T.border}`, background: calFilters[id] ? col + "11" : "transparent",
+                    }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: calFilters[id] ? col : T.border }} />
+                      <span style={{ ...font, fontSize: 11, color: calFilters[id] ? T.text : T.textFaint }}>{lbl}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {calLoading && <div style={{ textAlign: "center", padding: 60, color: T.textFaint, ...mono, fontSize: 13 }}>Loading calendar...</div>}
+
+              {!calLoading && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 20 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 1, background: T.border, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
+                    {dayNames.map(d => (
+                      <div key={d} style={{ background: T.bgCard, padding: 8, textAlign: "center", ...mono, fontSize: 10, color: T.textFaint, letterSpacing: "1px" }}>{d.toUpperCase()}</div>
+                    ))}
+                    {Array.from({ length: firstDow }).map((_, i) => (
+                      <div key={`e${i}`} style={{ background: T.bg, padding: 8, minHeight: 80 }} />
+                    ))}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                      const d = i + 1;
+                      const evts = eventsByDay[d] || [];
+                      const isSel = d === calSelectedDay;
+                      const isToday = d === todayDate;
+                      const isWeekend = (d + firstDow - 1) % 7 === 0 || (d + firstDow - 1) % 7 === 6;
+                      return (
+                        <div key={d} onClick={() => setCalSelectedDay(d)} style={{
+                          background: isSel ? "#0a1f4a" : isToday ? T.bgDeep : T.bg,
+                          padding: 8, minHeight: 80, cursor: "pointer", transition: "background 0.15s",
+                        }}>
+                          <div style={{ fontSize: 13, fontWeight: isToday ? 700 : 400, color: isSel ? "#e8f2ff" : isWeekend ? T.textFaint : T.text, marginBottom: 4 }}>
+                            {isToday ? (
+                              <span style={{ background: isSel ? "#378ADD" : "#5F5E5A", color: "#fff", width: 24, height: 24, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{d}</span>
+                            ) : d}
+                          </div>
+                          {evts.slice(0, 3).map((e, j) => (
+                            <div key={j} style={{ fontSize: 9, color: isSel ? "rgba(255,255,255,0.6)" : T.textMid, display: "flex", alignItems: "center", gap: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 1 }}>
+                              <span style={{ width: 5, height: 5, borderRadius: "50%", background: isSel ? "rgba(255,255,255,0.5)" : dotColor(e.type), flexShrink: 0 }} />
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{e.type === "earnings" ? e.symbol : e.type === "ipo" ? "IPO" : e.type === "split" ? e.symbol : e.type === "dividend" ? e.symbol : (e.label || "").split(" ").slice(0, 2).join(" ")}</span>
+                            </div>
+                          ))}
+                          {evts.length > 3 && <div style={{ ...mono, fontSize: 7, color: isSel ? "rgba(255,255,255,0.3)" : T.textFaint }}>+{evts.length - 3} more</div>}
+                        </div>
+                      );
+                    })}
+                    {Array.from({ length: (7 - (firstDow + daysInMonth) % 7) % 7 }).map((_, i) => (
+                      <div key={`f${i}`} style={{ background: T.bg, padding: 8, minHeight: 80 }} />
+                    ))}
+                  </div>
+
+                  <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: 18, alignSelf: "start", position: "sticky", top: 20 }}>
+                    <div style={{ ...mono, fontSize: 10, color: T.textFaint, letterSpacing: "1px", marginBottom: 4 }}>
+                      {new Date(yr, mo, calSelectedDay).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                    </div>
+                    <div style={{ ...font, fontSize: 18, fontWeight: 600, color: T.text, marginBottom: 16 }}>
+                      {fullDayNames[new Date(yr, mo, calSelectedDay).getDay()]}
+                    </div>
+
+                    {selEvents.length === 0 && (
+                      <div style={{ padding: "32px 0", textAlign: "center", color: T.textFaint, ...font, fontSize: 14 }}>No events this day</div>
+                    )}
+
+                    {[["earnings","EARNINGS","#378ADD"],["economic","ECONOMIC","#f5a623"],["ipo","IPOs","#1a8a44"],["split","SPLITS","#9b59b6"],["dividend","DIVIDENDS","#cc2222"]].map(([type,label,col]) => {
+                      const filtered = selEvents.filter(e => e.type === type);
+                      if (!filtered.length) return null;
+                      return (
+                        <div key={type} style={{ marginBottom: 14 }}>
+                          <div style={{ ...mono, fontSize: 9, letterSpacing: "1.5px", color: col, marginBottom: 8 }}>{label}</div>
+                          {filtered.map((e, i) => (
+                            <div key={i} style={{ background: T.bg, border: `1px solid ${T.border}`, borderLeft: `3px solid ${col}`, borderRadius: 8, padding: "10px 12px", marginBottom: 6 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div>
+                                  {e.symbol && <span style={{ ...font, fontSize: 14, fontWeight: 600, color: T.text }}>{e.symbol}</span>}
+                                  <span style={{ ...font, fontSize: e.symbol ? 12 : 13, fontWeight: e.symbol ? 400 : 500, color: e.symbol ? T.textMid : T.text, marginLeft: e.symbol ? 8 : 0 }}>{e.label}</span>
+                                </div>
+                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                  {e.impact && <span style={{ ...mono, fontSize: 8, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}33`, background: impactColor(e.impact) + "11", padding: "1px 5px", borderRadius: 3 }}>{e.impact.toUpperCase()}</span>}
+                                  {e.time && <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>{e.time}</span>}
+                                </div>
+                              </div>
+                              {(e.est || e.actual || e.prev != null || e.price) && (
+                                <div style={{ display: "flex", gap: 14, marginTop: 6 }}>
+                                  {e.prev != null && <div><span style={{ ...mono, fontSize: 8, color: T.textFaint }}>PREV</span><div style={{ ...mono, fontSize: 11, color: T.text, marginTop: 1 }}>{e.prev}</div></div>}
+                                  {e.est && <div><span style={{ ...mono, fontSize: 8, color: T.textFaint }}>{type === "earnings" ? "EST EPS" : "EST"}</span><div style={{ ...font, fontSize: 12, fontWeight: 500, color: T.text, marginTop: 1 }}>{e.est}</div></div>}
+                                  {e.actual && <div><span style={{ ...mono, fontSize: 8, color: T.textFaint }}>ACTUAL</span><div style={{ ...font, fontSize: 12, fontWeight: 500, color: T.green, marginTop: 1 }}>{e.actual}</div></div>}
+                                  {e.price && <div><span style={{ ...mono, fontSize: 8, color: T.textFaint }}>PRICE</span><div style={{ ...font, fontSize: 12, fontWeight: 500, color: T.text, marginTop: 1 }}>{e.price}</div></div>}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+
+                    <div style={{ ...mono, fontSize: 9, color: T.textFaint, textAlign: "center", marginTop: 12 }}>Click any day to see events</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Two-column layout */}
         <div style={{ display: "flex", gap: 20 }}>
@@ -1064,27 +1289,6 @@ export default function AppPage() {
             {!loading && alerts.filter(a => a.status !== "deleted").length === 0 && (
               <div style={{ textAlign: "center", padding: 60, color: T.textFaint, fontSize: 18 }}>No alerts yet — create one above</div>
             )}
-          </div>
-        )}
-
-        {/* History tab */}
-        {tab === "history" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {history.map((h, i) => (
-              <div key={i} style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 11, padding: "18px 22px", display: "flex", alignItems: "center", gap: 16, position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${T.accent},transparent)` }} />
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: T.accent, flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 20 }}>{h.asset}</div>
-                  <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 3 }}>{h.trigger_type?.replace(/_/g," ")}</div>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ ...mono, fontSize: 11, color: T.textFaint }}>{new Date(h.fired_at).toLocaleString()}</div>
-                  {h.price_at_fire && <div style={{ ...mono, fontSize: 11, color: T.accent, marginTop: 2 }}>${Number(h.price_at_fire).toLocaleString()}</div>}
-                </div>
-              </div>
-            ))}
-            {history.length === 0 && <div style={{ textAlign: "center", padding: 60, color: T.textFaint, fontSize: 18 }}>No history yet</div>}
           </div>
         )}
 
