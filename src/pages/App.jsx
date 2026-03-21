@@ -490,12 +490,14 @@ export default function AppPage() {
         const earnings = earningsRes.value?.earningsCalendar || [];
         console.log("[Calendar] Earnings:", earnings.length, "events");
         earnings.forEach(e => {
+          const fmtRev = v => v >= 1e9 ? `$${(v/1e9).toFixed(1)}B` : v >= 1e6 ? `$${(v/1e6).toFixed(0)}M` : v ? `$${v}` : null;
           merged.push({
             type: "earnings", date: e.date, symbol: e.symbol,
-            label: `${e.symbol} Q${e.quarter || "?"} Earnings`,
+            label: `Q${e.quarter || "?"} ${e.year || ""} Earnings`,
             est: e.epsEstimate != null ? `$${e.epsEstimate}` : "—",
             actual: e.epsActual != null ? `$${e.epsActual}` : null,
-            revEst: e.revenueEstimate,
+            revEst: fmtRev(e.revenueEstimate),
+            revActual: fmtRev(e.revenueActual),
             time: e.hour === "bmo" ? "BMO" : e.hour === "amc" ? "AMC" : e.hour || "",
           });
         });
@@ -1018,12 +1020,16 @@ export default function AppPage() {
                               <span style={{ background: "#5F5E5A", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>{d}</span>
                             ) : d}
                           </div>
-                          {evts.slice(0, 3).map((e, j) => (
+                          {(() => {
+                            const typeOrd = { economic: 0, earnings: 1, ipo: 2, split: 3, dividend: 4, holiday: 5 };
+                            const sorted = [...evts].sort((a, b) => (typeOrd[a.type] ?? 9) - (typeOrd[b.type] ?? 9));
+                            return sorted.slice(0, 3).map((e, j) => (
                             <div key={j} style={{ fontSize: 12, color: T.textMid, display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 3 }}>
                               <span style={{ width: 7, height: 7, borderRadius: "50%", background: dotColor(e.type), flexShrink: 0 }} />
                               <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{e.type === "earnings" ? e.symbol : e.type === "ipo" ? "IPO" : e.type === "split" ? e.symbol : e.type === "dividend" ? e.symbol : (e.label || "").split(" ").slice(0, 3).join(" ")}</span>
                             </div>
-                          ))}
+                          ));
+                          })()}
                           {evts.length > 3 && <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>+{evts.length - 3} more</div>}
                         </div>
                       );
@@ -1050,35 +1056,91 @@ export default function AppPage() {
 
                     {selEvents.length > 0 && (() => {
                       const typeOrder = { economic: 0, earnings: 1, ipo: 2, split: 3, dividend: 4, holiday: 5 };
+                      const typeLabels = { economic: "ECONOMIC EVENTS", earnings: "EARNINGS REPORTS", ipo: "IPOs", split: "STOCK SPLITS", dividend: "DIVIDENDS", holiday: "MARKET HOLIDAYS" };
+                      const typeIcons = { economic: "📅", earnings: "📊", ipo: "🚀", split: "✂️", dividend: "💰", holiday: "🏖️" };
                       const sorted = [...selEvents].sort((a, b) => (typeOrder[a.type] ?? 9) - (typeOrder[b.type] ?? 9));
-                      return (
-                      <div style={{ display: "grid", gridTemplateColumns: sorted.length === 1 ? "1fr" : "1fr 1fr", gap: 10 }}>
-                        {sorted.map((e, i) => (
-                          <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${dotColor(e.type)}`, borderRadius: 8, padding: "12px 14px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <div>
-                                <span style={{ ...mono, fontSize: 8, letterSpacing: "1px", color: dotColor(e.type) }}>{e.type.toUpperCase()}</span>
-                                <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 3 }}>
-                                  {e.symbol ? `${e.symbol} — ${e.label}` : e.label}
-                                </div>
-                              </div>
-                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                                {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{e.time}</span>}
-                                {e.impact && <span style={{ ...mono, fontSize: 8, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}44`, background: impactColor(e.impact) + "22", padding: "1px 5px", borderRadius: 3 }}>{e.impact.toUpperCase()}</span>}
-                              </div>
-                            </div>
-                            {(e.est || e.actual || e.prev != null || e.price) && (
-                              <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
-                                {e.prev != null && <div><span style={{ ...mono, fontSize: 8, color: "rgba(255,255,255,0.3)" }}>PREV</span><div style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 1 }}>{e.prev}</div></div>}
-                                {e.est && <div><span style={{ ...mono, fontSize: 8, color: "rgba(255,255,255,0.3)" }}>{e.type === "earnings" ? "EST EPS" : "EST"}</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#e8f2ff", marginTop: 1 }}>{e.est}</div></div>}
-                                {e.actual && <div><span style={{ ...mono, fontSize: 8, color: "rgba(255,255,255,0.3)" }}>ACTUAL</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#3ddc84", marginTop: 1 }}>{e.actual}</div></div>}
-                                {e.price && <div><span style={{ ...mono, fontSize: 8, color: "rgba(255,255,255,0.3)" }}>PRICE</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#e8f2ff", marginTop: 1 }}>{e.price}</div></div>}
-                              </div>
-                            )}
+
+                      // Group by type
+                      const groups = {};
+                      sorted.forEach(e => {
+                        if (!groups[e.type]) groups[e.type] = [];
+                        groups[e.type].push(e);
+                      });
+
+                      return Object.entries(groups).map(([type, items]) => (
+                        <div key={type} style={{ marginBottom: 18 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                            <span style={{ fontSize: 14 }}>{typeIcons[type]}</span>
+                            <span style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: dotColor(type) }}>{typeLabels[type] || type.toUpperCase()}</span>
+                            <span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.2)" }}>({items.length})</span>
                           </div>
-                        ))}
-                      </div>
-                      );
+
+                          {type === "economic" && (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                              {items.map((e, i) => (
+                                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${dotColor(type)}`, borderRadius: 8, padding: "12px 16px" }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <div style={{ ...font, fontSize: 15, fontWeight: 500, color: "#e8f2ff" }}>{e.label}</div>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                      {e.impact && <span style={{ ...mono, fontSize: 9, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}44`, background: impactColor(e.impact) + "22", padding: "2px 8px", borderRadius: 4 }}>{e.impact.toUpperCase()}</span>}
+                                      {e.time && <span style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{e.time}</span>}
+                                    </div>
+                                  </div>
+                                  {(e.prev != null || e.est != null || e.actual != null) && (
+                                    <div style={{ display: "flex", gap: 24, marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                                      {e.prev != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>PREVIOUS</span><div style={{ ...mono, fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 2 }}>{e.prev}</div></div>}
+                                      {e.est != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>FORECAST</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.est}</div></div>}
+                                      {e.actual != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#3ddc84", marginTop: 2 }}>{e.actual}</div></div>}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {type === "earnings" && (
+                            <div style={{ display: "grid", gridTemplateColumns: items.length === 1 ? "1fr" : "1fr 1fr", gap: 8 }}>
+                              {items.map((e, i) => (
+                                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${dotColor(type)}`, borderRadius: 8, padding: "12px 16px" }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                    <div>
+                                      <div style={{ ...font, fontSize: 16, fontWeight: 600, color: "#e8f2ff" }}>{e.symbol}</div>
+                                      <div style={{ ...font, fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{e.label}</div>
+                                    </div>
+                                    {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.06)", padding: "2px 8px", borderRadius: 4 }}>{e.time}</span>}
+                                  </div>
+                                  <div style={{ display: "flex", gap: 20, marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                                    <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>EST EPS</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.est || "—"}</div></div>
+                                    {e.actual && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL EPS</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#3ddc84", marginTop: 2 }}>{e.actual}</div></div>}
+                                    {e.revEst && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>REV EST</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.revEst}</div></div>}
+                                    {e.revActual && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>REV ACTUAL</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#3ddc84", marginTop: 2 }}>{e.revActual}</div></div>}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {(type === "ipo" || type === "split" || type === "dividend" || type === "holiday") && (
+                            <div style={{ display: "grid", gridTemplateColumns: items.length === 1 ? "1fr" : "1fr 1fr", gap: 8 }}>
+                              {items.map((e, i) => (
+                                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${dotColor(type)}`, borderRadius: 8, padding: "12px 16px" }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <div>
+                                      {e.symbol && <div style={{ ...font, fontSize: 15, fontWeight: 600, color: "#e8f2ff" }}>{e.symbol}</div>}
+                                      <div style={{ ...font, fontSize: 13, color: e.symbol ? "rgba(255,255,255,0.45)" : "#e8f2ff", marginTop: e.symbol ? 2 : 0 }}>{e.label}</div>
+                                    </div>
+                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                                      {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{e.time}</span>}
+                                      {e.price && <span style={{ ...mono, fontSize: 11, color: "#e8f2ff" }}>{e.price}</span>}
+                                      {e.impact && <span style={{ ...mono, fontSize: 9, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}44`, background: impactColor(e.impact) + "22", padding: "2px 6px", borderRadius: 4 }}>{e.impact.toUpperCase()}</span>}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ));
                     })()}
                   </div>
                 </div>
