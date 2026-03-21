@@ -1040,49 +1040,45 @@ export default function AppPage() {
             {/* Step 1 — Triggers */}
             {step === 1 && (
               <div>
-                {/* Prompt to search if no asset selected */}
-                {!form.asset && (
-                  <div style={{ padding: "28px 24px", textAlign: "center" }}>
-                    <div style={{ ...mono, fontSize: 11, color: T.textFaint }}>Search and select a symbol above to see triggers</div>
-                  </div>
-                )}
-
-                {/* Triggers — only shown when asset is selected */}
-                {form.asset && (
-                  <div style={{ padding: "20px 24px" }}>
-                    <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>FREE TRIGGERS</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
-                      {FREE_TRIGGERS.map(t => {
-                        const iconBg  = t.id === "price_above" ? "rgba(26,138,68,0.12)" : t.id === "price_below" ? "rgba(204,34,34,0.12)" : "rgba(138,106,0,0.12)";
-                        const iconCol = t.id === "price_above" ? T.green : t.id === "price_below" ? T.red : T.accent;
-                        return (
-                          <button key={t.id} onClick={() => { setForm(f => ({ ...f, trigger: t })); setStep(2); }} style={{
-                            padding: "10px 14px", borderRadius: 10,
-                            border: `1px solid ${T.border}`,
-                            background: T.bgCard,
-                            color: T.text, cursor: "pointer", ...font,
-                            textAlign: "left", display: "flex", gap: 12, alignItems: "center",
-                          }}>
-                            <div style={{ width: 32, height: 32, borderRadius: 7, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16, color: iconCol }}>{t.icon}</div>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: 14, fontWeight: 500 }}>{t.label}</div>
-                              <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>{t.desc}</div>
-                            </div>
-                            <span style={{ fontSize: 14, color: T.textFaint }}>→</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>PRO TRIGGERS</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      {PRO_TRIGGERS.map(t => (
-                        <button key={t.id} onClick={() => { if (!isPro) { setShowModal(false); setTab("pricing"); showToast("Pro plan required", "warn"); return; } setForm(f => ({ ...f, trigger: t })); setStep(2); }} style={{
+                {/* Triggers — always visible, disabled if no asset */}
+                <div style={{ padding: "20px 24px" }}>
+                  <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>FREE TRIGGERS</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+                    {FREE_TRIGGERS.map(t => {
+                      const iconBg  = t.id === "price_above" ? "rgba(26,138,68,0.12)" : t.id === "price_below" ? "rgba(204,34,34,0.12)" : "rgba(138,106,0,0.12)";
+                      const iconCol = t.id === "price_above" ? T.green : t.id === "price_below" ? T.red : T.accent;
+                      const disabled = !form.asset;
+                      return (
+                        <button key={t.id} onClick={() => { if (disabled) return; setForm(f => ({ ...f, trigger: t })); setStep(2); }} style={{
                           padding: "10px 14px", borderRadius: 10,
                           border: `1px solid ${T.border}`,
                           background: T.bgCard,
-                          cursor: "pointer", ...font,
+                          color: T.text, cursor: disabled ? "not-allowed" : "pointer", ...font,
                           textAlign: "left", display: "flex", gap: 12, alignItems: "center",
-                          opacity: isPro ? 1 : 0.45,
+                          opacity: disabled ? 0.4 : 1, transition: "opacity 0.2s",
+                        }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 7, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16, color: iconCol }}>{t.icon}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 14, fontWeight: 500 }}>{t.label}</div>
+                            <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>{t.desc}</div>
+                          </div>
+                          <span style={{ fontSize: 14, color: T.textFaint }}>→</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>PRO TRIGGERS</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {PRO_TRIGGERS.map(t => {
+                      const disabled = !form.asset;
+                      return (
+                        <button key={t.id} onClick={() => { if (disabled) return; if (!isPro) { setShowModal(false); setTab("pricing"); showToast("Pro plan required", "warn"); return; } setForm(f => ({ ...f, trigger: t })); setStep(2); }} style={{
+                          padding: "10px 14px", borderRadius: 10,
+                          border: `1px solid ${T.border}`,
+                          background: T.bgCard,
+                          cursor: disabled ? "not-allowed" : "pointer", ...font,
+                          textAlign: "left", display: "flex", gap: 12, alignItems: "center",
+                          opacity: disabled ? 0.4 : isPro ? 1 : 0.45, transition: "opacity 0.2s",
                         }}>
                           <div style={{ width: 32, height: 32, borderRadius: 7, background: T.bgDeep, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 14, color: T.textFaint }}>{t.icon}</div>
                           <span style={{ flex: 1, fontSize: 14, color: T.text }}>{t.label}</span>
@@ -1091,10 +1087,10 @@ export default function AppPage() {
                             : <span style={{ fontSize: 14, color: T.textFaint }}>→</span>
                           }
                         </button>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                )}
+                </div>
               </div>
             )}
 
