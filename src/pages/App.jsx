@@ -540,7 +540,7 @@ export default function AppPage() {
               </button>
             ) : (
               <button onClick={() => navigate("/login")} style={{
-                ...font, fontSize: 18, background: "none", border: "1px solid #5F5E5A",
+                ...font, fontSize: 18, background: "none", border: "2px solid #5F5E5A",
                 borderRadius: 8, padding: "6px 16px", cursor: "pointer", color: "#5F5E5A",
               }}>
                 SIGN IN
