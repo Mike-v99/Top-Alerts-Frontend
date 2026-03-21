@@ -1037,10 +1037,25 @@ export default function AppPage() {
                       </div>
                     )}
                     {form.asset && !modalSearchResults.length && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, padding: "8px 12px", background: T.accentBg, border: `1px solid ${T.accentBorder}`, borderRadius: 7 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, padding: "10px 12px", background: T.accentBg, border: `1px solid ${T.accentBorder}`, borderRadius: 7 }}>
                         <span style={{ ...mono, fontSize: 11, color: T.accent, fontWeight: 500 }}>{form.asset}</span>
                         <span style={{ ...mono, fontSize: 10, color: T.textFaint, flex: 1 }}>{modalAssetLabel}</span>
-                        <span style={{ ...mono, fontSize: 9, color: T.accent }}>✓ SELECTED</span>
+                        {modalPrice ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>
+                              ${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                            {modalPrice.marketOpen ? (
+                              <span style={{ ...mono, fontSize: 9, color: modalPrice.changePct >= 0 ? T.green : T.red }}>
+                                {modalPrice.changePct >= 0 ? "▲" : "▼"} {Math.abs(modalPrice.changePct).toFixed(2)}%
+                              </span>
+                            ) : (
+                              <span style={{ ...mono, fontSize: 8, color: T.textFaint, border: `1px solid ${T.border}`, borderRadius: 3, padding: "2px 5px" }}>CLOSE</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span style={{ ...mono, fontSize: 9, color: T.accent }}>✓ SELECTED</span>
+                        )}
                       </div>
                     )}
                     {!form.asset && (
