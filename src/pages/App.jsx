@@ -988,7 +988,6 @@ export default function AppPage() {
                   );
                 })}
                 </div>
-              </div>
 
               {calLoading && <div style={{ textAlign: "center", padding: 60, color: T.textFaint, ...mono, fontSize: 13 }}>Loading calendar...</div>}
 
