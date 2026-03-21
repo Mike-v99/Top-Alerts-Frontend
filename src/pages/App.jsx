@@ -368,7 +368,7 @@ export default function AppPage() {
     try { localStorage.setItem("ta-watchlist", JSON.stringify(updated)); } catch {}
   }
 
-  function openModal(assetOverride, assetLabel) {
+  function openModal(assetOverride, assetLabel, initialPrice) {
     // Free users limited to 10 alerts — show upgrade modal on 11th attempt
     const activeAlerts = alerts.filter(a => a.status !== "deleted").length;
     if (!isPro && activeAlerts >= 10) {
@@ -377,10 +377,10 @@ export default function AppPage() {
     }
     setStep(1);
     if (assetOverride) {
-      // Opened from a card — we already know the symbol
+      // Opened from a card — seed with known price immediately, then fetch fresh
       setModalSource("card");
       setModalAssetLabel(assetLabel || assetOverride);
-      setModalPrice(null);
+      setModalPrice(initialPrice || null);
       setForm(f => ({ ...f, trigger: null, value: "", asset: assetOverride }));
       fetchModalPrice(assetOverride);
     } else {
@@ -779,7 +779,7 @@ export default function AppPage() {
                           <div style={{ ...mono, fontSize: 9, color: T.textFaint }}>
                             {d?.prevClose ? `Prev ${fmt(d.prevClose)}` : ""}
                           </div>
-                          <button onClick={() => openModal(m.symbol, m.label)} style={{
+                          <button onClick={() => openModal(m.symbol, m.label, d ? { price: d.price, change: d.change, changePct: d.changePct, marketOpen: !!d.price } : null)} style={{
                             padding: "4px 12px", background: "none",
                             border: "1px solid #5F5E5A", borderRadius: 6,
                             cursor: "pointer", ...font, fontSize: 13, color: "#5F5E5A",
@@ -849,7 +849,7 @@ export default function AppPage() {
                       <div style={{ ...mono, fontSize: 9, color: T.textFaint }}>
                         {d?.prevClose ? `Prev ${fmt(d.prevClose)}` : ""}
                       </div>
-                      <button onClick={() => openModal(m.symbol, m.label)} style={{
+                      <button onClick={() => openModal(m.symbol, m.label, d ? { price: d.price, change: d.change, changePct: d.changePct, marketOpen: !!d.price } : null)} style={{
                         padding: "4px 12px", background: "none",
                         border: "1px solid #5F5E5A", borderRadius: 6,
                         cursor: "pointer", ...font, fontSize: 13, color: "#5F5E5A",
@@ -990,15 +990,16 @@ export default function AppPage() {
                       </div>
                       <div style={{ ...mono, fontSize: 9, color: "#378ADD", border: "1px solid rgba(55,138,221,0.4)", padding: "3px 8px", borderRadius: 4, flexShrink: 0 }}>SELECTED</div>
                     </div>
-                    {modalPrice && (
-                      <div style={{ background: T.bgCard, borderTop: `1px solid ${T.border}`, padding: "7px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        {modalPrice.marketOpen
-                          ? <span style={{ ...mono, fontSize: 10, color: modalPrice.changePct >= 0 ? T.green : T.red }}>{modalPrice.changePct >= 0 ? "▲" : "▼"} {Math.abs(modalPrice.changePct).toFixed(2)}% · {modalPrice.changePct >= 0 ? "+" : ""}{Number(modalPrice.change).toFixed(2)}</span>
-                          : <span style={{ ...mono, fontSize: 9, color: T.textMid, border: `1px solid ${T.border}`, borderRadius: 3, padding: "1px 6px" }}>CLOSED</span>
-                        }
-                      </div>
-                    )}
+                    <div style={{ background: T.bgCard, borderTop: `1px solid ${T.border}`, padding: "7px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      {modalPrice
+                        ? <span style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        : <span style={{ ...mono, fontSize: 12, color: T.textFaint }}>—</span>
+                      }
+                      {modalPrice && (modalPrice.marketOpen
+                        ? <span style={{ ...mono, fontSize: 10, color: modalPrice.changePct >= 0 ? T.green : T.red }}>{modalPrice.changePct >= 0 ? "▲" : "▼"} {Math.abs(modalPrice.changePct).toFixed(2)}% · {modalPrice.changePct >= 0 ? "+" : ""}{Number(modalPrice.change).toFixed(2)}</span>
+                        : <span style={{ ...mono, fontSize: 9, color: T.textMid, border: `1px solid ${T.border}`, borderRadius: 3, padding: "1px 6px" }}>CLOSED</span>
+                      )}
+                    </div>
                   </div>
                 )}
 
