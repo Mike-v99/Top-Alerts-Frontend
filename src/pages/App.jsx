@@ -105,6 +105,7 @@ export default function AppPage() {
   const [calFilters, setCalFilters] = useState({ earnings: true, economic: true, ipo: true, split: true, dividend: true, holiday: true });
   const [calEventAlert, setCalEventAlert] = useState(null); // event object for alert popup
   const [calAlertTiming, setCalAlertTiming] = useState("1day"); // "15min" | "1hr" | "1day" | "after"
+  const [calCollapsed, setCalCollapsed] = useState({}); // { earnings: true, ipo: true, ... }
 
   const MARKET_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
@@ -1123,18 +1124,47 @@ export default function AppPage() {
                         groups[e.type].push(e);
                       });
 
-                      return Object.entries(groups).map(([type, items]) => (
-                        <div key={type} style={{ marginBottom: 18 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                            <span style={{ fontSize: 14 }}>{typeIcons[type]}</span>
-                            <span style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: dotColor(type) }}>{typeLabels[type] || type.toUpperCase()}</span>
-                            <span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.2)" }}>({items.length})</span>
+                      return Object.entries(groups).map(([type, items]) => {
+                        const isOpen = !calCollapsed[type];
+                        const col = dotColor(type);
+                        const previewItems = items.slice(0, 5);
+
+                        return (
+                        <div key={type} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                          {/* Accordion header */}
+                          <div onClick={() => setCalCollapsed(p => ({ ...p, [type]: !p[type] }))} style={{
+                            padding: "14px 0", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer",
+                            background: isOpen ? col + "08" : "transparent", margin: "0 -28px", padding: "14px 28px",
+                            transition: "background 0.15s",
+                          }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <span style={{ fontSize: 14 }}>{typeIcons[type]}</span>
+                              <span style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: col }}>{typeLabels[type] || type.toUpperCase()}</span>
+                              <span style={{ background: col + "33", color: col, ...mono, fontSize: 10, padding: "2px 8px", borderRadius: 10 }}>{items.length}</span>
+                            </div>
+                            <span style={{ ...font, fontSize: 12, color: isOpen ? col : "rgba(255,255,255,0.3)" }}>{isOpen ? "▲ Collapse" : "▼ Expand"}</span>
                           </div>
+
+                          {/* Collapsed preview — ticker pills */}
+                          {!isOpen && (
+                            <div style={{ display: "flex", gap: 6, padding: "0 0 12px", flexWrap: "wrap" }}>
+                              {previewItems.map((e, j) => (
+                                <span key={j} style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.04)", padding: "4px 10px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.06)" }}>
+                                  {e.symbol || e.label?.split(" ").slice(0, 2).join(" ")}
+                                </span>
+                              ))}
+                              {items.length > 5 && <span style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.15)", padding: "4px 0" }}>+{items.length - 5} more…</span>}
+                            </div>
+                          )}
+
+                          {/* Expanded content */}
+                          {isOpen && (
+                            <div style={{ padding: "0 0 16px" }}>
 
                           {type === "economic" && (
                             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                               {items.map((e, i) => (
-                                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${dotColor(type)}`, borderRadius: 8, padding: "12px 16px" }}>
+                                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${col}`, borderRadius: 8, padding: "12px 16px" }}>
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                     <div style={{ ...font, fontSize: 15, fontWeight: 500, color: "#e8f2ff" }}>{e.label}</div>
                                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1147,7 +1177,7 @@ export default function AppPage() {
                                     <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>FORECAST</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.est ?? "—"}</div></div>
                                     <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: e.actual != null ? "#3ddc84" : "rgba(255,255,255,0.2)", marginTop: 2 }}>{e.actual ?? "Pending"}</div></div>
                                     <div style={{ flex: 1 }} />
-                                    <button onClick={() => { setCalEventAlert(e); }} style={{
+                                    <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
                                       padding: "8px 16px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
                                       borderRadius: 8, cursor: "pointer", ...font, fontSize: 13, color: "#e8f2ff",
                                       display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
@@ -1161,7 +1191,7 @@ export default function AppPage() {
                           {type === "earnings" && (
                             <div style={{ display: "grid", gridTemplateColumns: items.length === 1 ? "1fr" : "1fr 1fr", gap: 8 }}>
                               {items.map((e, i) => (
-                                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${dotColor(type)}`, borderRadius: 8, padding: "12px 16px" }}>
+                                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${col}`, borderRadius: 8, padding: "12px 16px" }}>
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1175,7 +1205,7 @@ export default function AppPage() {
                                     </div>
                                     <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                                       {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.06)", padding: "2px 8px", borderRadius: 4 }}>{e.time}</span>}
-                                      <button onClick={() => { setCalEventAlert(e); }} style={{
+                                      <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
                                         padding: "6px 12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
                                         borderRadius: 6, cursor: "pointer", ...font, fontSize: 12, color: "#e8f2ff",
                                         display: "flex", alignItems: "center", gap: 4,
@@ -1196,7 +1226,7 @@ export default function AppPage() {
                           {(type === "ipo" || type === "split" || type === "dividend" || type === "holiday") && (
                             <div style={{ display: "grid", gridTemplateColumns: items.length === 1 ? "1fr" : "1fr 1fr", gap: 8 }}>
                               {items.map((e, i) => (
-                                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${dotColor(type)}`, borderRadius: 8, padding: "12px 16px" }}>
+                                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${col}`, borderRadius: 8, padding: "12px 16px" }}>
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                     <div>
                                       {e.symbol && <div style={{ ...font, fontSize: 15, fontWeight: 600, color: "#e8f2ff" }}>{e.symbol}</div>}
@@ -1209,7 +1239,7 @@ export default function AppPage() {
                                         {e.impact && <span style={{ ...mono, fontSize: 9, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}44`, background: impactColor(e.impact) + "22", padding: "2px 6px", borderRadius: 4 }}>{e.impact.toUpperCase()}</span>}
                                       </div>
                                       {type !== "holiday" && e.symbol && (
-                                        <button onClick={() => { setCalEventAlert(e); }} style={{
+                                        <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
                                           padding: "6px 12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
                                           borderRadius: 6, cursor: "pointer", ...font, fontSize: 12, color: "#e8f2ff",
                                           display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
@@ -1221,8 +1251,12 @@ export default function AppPage() {
                               ))}
                             </div>
                           )}
+
+                            </div>
+                          )}
                         </div>
-                      ));
+                        );
+                      });
                     })()}
                   </div>
                 </div>
