@@ -68,6 +68,16 @@ export default function AppPage() {
   const [showModal, setShowModal] = useState(false);
   const [step,      setStep]      = useState(1);
   const [toast,     setToast]     = useState(null);
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
+  const [mobileExpanded, setMobileExpanded] = useState(null); // symbol of expanded ticker
+  const [mobileNewsOpen, setMobileNewsOpen] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [marketData, setMarketData] = useState({});
   const [marketLoading, setMarketLoading] = useState(true);
   const [flashState,    setFlashState]    = useState({});
@@ -821,20 +831,20 @@ export default function AppPage() {
         </div>
       )}
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "32px 20px" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: isMobile ? "16px 16px" : "32px 20px" }}>
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 36 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isMobile ? 16 : 36 }}>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 38, color: "#5F5E5A", lineHeight: 1 }}>◈</span>
-              <span style={{ fontSize: 45, letterSpacing: "1px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 4 : 8 }}>
+              <span style={{ fontSize: isMobile ? 20 : 38, color: "#5F5E5A", lineHeight: 1 }}>◈</span>
+              <span style={{ fontSize: isMobile ? 22 : 45, letterSpacing: "1px" }}>
                 <span style={{ color: "#5F5E5A" }}>TOP</span>
                 <span style={{ color: "#5F5E5A" }}>-</span>
                 <span style={{ color: "#5F5E5A" }}>ALERTS</span>
               </span>
             </div>
-            <div style={{ ...mono, fontSize: 9, letterSpacing: "3px", color: "#5F5E5A", marginTop: 2 }}>INTELLIGENT PRICE ALERTS</div>
+            {!isMobile && <div style={{ ...mono, fontSize: 9, letterSpacing: "3px", color: "#5F5E5A", marginTop: 2 }}>INTELLIGENT PRICE ALERTS</div>}
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -887,23 +897,23 @@ export default function AppPage() {
         )}
 
         {/* Tabs */}
-        <div style={{ display: "flex", marginBottom: 28, borderBottom: `1px solid ${T.border}` }}>
+        <div style={{ display: "flex", marginBottom: isMobile ? 14 : 28, borderBottom: `1px solid ${T.border}`, overflowX: isMobile ? "auto" : "visible", whiteSpace: "nowrap" }}>
           {["market","alerts","calendar","pricing"].map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
-              padding: "10px 22px", background: "none", border: "none", cursor: "pointer",
-              ...font, fontSize: 20, letterSpacing: "1px",
+              padding: isMobile ? "8px 14px" : "10px 22px", background: "none", border: "none", cursor: "pointer",
+              ...font, fontSize: isMobile ? 13 : 20, letterSpacing: "1px",
               color: tab === t ? T.activeTab : T.textFaint,
               borderBottom: tab === t ? `2px solid ${T.activeTabBorder}` : "2px solid transparent",
-              marginBottom: -1, transition: "all 0.2s",
+              marginBottom: -1, transition: "all 0.2s", flexShrink: 0,
             }}>
               {t.toUpperCase()}
             </button>
           ))}
           <button onClick={() => openModal()} style={{
-            marginLeft: "auto", padding: "8px 22px", background: "#0a1f4a", border: "none",
-            borderRadius: 8, cursor: "pointer", ...font, fontSize: 20, color: "#e8f2ff",
+            marginLeft: "auto", padding: isMobile ? "6px 14px" : "8px 22px", background: "#0a1f4a", border: "none",
+            borderRadius: 8, cursor: "pointer", ...font, fontSize: isMobile ? 13 : 20, color: "#e8f2ff", flexShrink: 0,
           }}>
-            + NEW ALERT
+            + {isMobile ? "ALERT" : "NEW ALERT"}
           </button>
         </div>
 
@@ -1265,6 +1275,164 @@ export default function AppPage() {
           );
         })()}
 
+        {/* ── MOBILE LAYOUT ──────────────────────────────────────────────── */}
+        {isMobile && tab === "market" && (
+          <div>
+            <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: "#5F5E5A", marginBottom: 8 }}>WATCHLIST</div>
+            {MARKET_SYMBOLS.map(m => {
+              const d = marketData[m.id];
+              const up = d?.changePct >= 0;
+              const col = !d ? T.textFaint : up ? T.green : T.red;
+              const arrow = up ? "▲" : "▼";
+              const isExpanded = mobileExpanded === m.symbol;
+              const snap = d || {};
+
+              return (
+                <div key={m.id} style={{ borderBottom: `1px solid ${T.border}`, background: isExpanded ? T.bgCard : "transparent" }}>
+                  {/* Collapsed row */}
+                  <div onClick={() => {
+                    if (isExpanded) { setMobileExpanded(null); }
+                    else { setMobileExpanded(m.symbol); setMobileNewsOpen(false); openChart(m.symbol, m.label); }
+                  }} style={{ padding: "12px 0", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text }}>{m.label}</div>
+                      <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>{m.symbol}</div>
+                    </div>
+                    {!isExpanded && (
+                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 8, color: T.textFaint }}>HIGH</div><div style={{ ...mono, fontSize: 11, color: T.text }}>{snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"}</div></div>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 8, color: T.textFaint }}>LOW</div><div style={{ ...mono, fontSize: 11, color: T.text }}>{snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"}</div></div>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 8, color: T.textFaint }}>VOL</div><div style={{ ...mono, fontSize: 11, color: T.text }}>{snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : snap.volume >= 1e3 ? `${(snap.volume/1e3).toFixed(0)}K` : snap.volume) : "—"}</div></div>
+                      </div>
+                    )}
+                    <div style={{ textAlign: "right", minWidth: 75 }}>
+                      <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      <div style={{ ...mono, fontSize: 11, color: col }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
+                    </div>
+                  </div>
+
+                  {/* Expanded card */}
+                  {isExpanded && (
+                    <div style={{ paddingBottom: 14 }}>
+                      {/* Chart */}
+                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, padding: 12, marginBottom: 8 }}>
+                        {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: T.textFaint }}>Loading chart...</div>}
+                        {!chartLoading && chartData.length > 0 && (
+                          <div>
+                            <canvas id="mobileChartCanvas" width="350" height="140" style={{ width: "100%", height: 140 }} />
+                          </div>
+                        )}
+                        <div style={{ display: "flex", gap: 4, justifyContent: "center", marginTop: 8 }}>
+                          {["1D","5D","1M","3M","1Y","5Y"].map(r => (
+                            <span key={r} onClick={() => setChartRange(r)} style={{
+                              padding: "4px 10px", borderRadius: 5, ...mono, fontSize: 10, cursor: "pointer",
+                              background: chartRange === r ? "#0a1f4a" : "transparent",
+                              color: chartRange === r ? "#e8f2ff" : T.textFaint,
+                            }}>{r}</span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Fundamentals grid */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: T.border, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                        {[
+                          ["Prev. Close", snap.prevClose ? `$${Number(snap.prevClose).toFixed(2)}` : "—"],
+                          ["Open", snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"],
+                          ["Volume", snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : `${snap.volume}`) : "—"],
+                          ["Day High", snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"],
+                          ["Day Low", snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"],
+                          ["Change", d ? `${d.changePct >= 0 ? "+" : ""}${d.changePct.toFixed(2)}%` : "—"],
+                        ].map(([label, val], idx) => (
+                          <div key={idx} style={{ background: T.bg, padding: 8, textAlign: "center" }}>
+                            <div style={{ ...mono, fontSize: 8, color: T.textFaint }}>{label}</div>
+                            <div style={{ ...mono, fontSize: 12, color: T.text, marginTop: 2 }}>{val}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* News — collapsible */}
+                      <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 8 }}>
+                        <div onClick={() => setMobileNewsOpen(p => !p)} style={{
+                          padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between",
+                          cursor: "pointer", background: mobileNewsOpen ? T.bgDeep : T.bg,
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 12 }}>📰</span>
+                            <span style={{ ...mono, fontSize: 9, letterSpacing: "1px", color: "#5F5E5A" }}>LATEST NEWS</span>
+                            <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>({tickerNews.length})</span>
+                          </div>
+                          <span style={{ ...font, fontSize: 11, color: mobileNewsOpen ? "#5F5E5A" : T.textFaint }}>{mobileNewsOpen ? "▲ Collapse" : "▼ Expand"}</span>
+                        </div>
+                        {!mobileNewsOpen && tickerNews.length > 0 && (
+                          <div style={{ padding: "8px 14px", ...font, fontSize: 12, color: T.textMid, borderTop: `1px solid ${T.border}`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {tickerNews[0]?.title}
+                          </div>
+                        )}
+                        {mobileNewsOpen && tickerNews.map((n, i) => (
+                          <a key={i} href={n.article_url} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "10px 14px", borderTop: `1px solid ${T.border}`, textDecoration: "none", cursor: "pointer" }}>
+                            <div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.text, lineHeight: 1.3 }}>{n.title}</div>
+                            <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+                              <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>{n.publisher}</span>
+                              <span style={{ color: T.textFaint }}>·</span>
+                              <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
+                            </div>
+                          </a>
+                        ))}
+                        {mobileNewsOpen && tickerNews.length === 0 && (
+                          <div style={{ padding: "12px 14px", borderTop: `1px solid ${T.border}`, ...font, fontSize: 12, color: T.textFaint, textAlign: "center" }}>No news available</div>
+                        )}
+                      </div>
+
+                      {/* Action buttons */}
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={() => openModal(m.symbol, m.label)} style={{ flex: 1, padding: 10, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>+ Set Alert</button>
+                        <button onClick={() => {
+                          setWatchlist(prev => {
+                            const exists = prev.some(w => w.symbol === m.symbol);
+                            const next = exists ? prev.filter(w => w.symbol !== m.symbol) : [...prev, { symbol: m.symbol, label: m.label }];
+                            localStorage.setItem("ta-watchlist", JSON.stringify(next));
+                            return next;
+                          });
+                        }} style={{ flex: 1, padding: 10, background: "none", color: "#5F5E5A", border: "2px solid #5F5E5A", borderRadius: 8, ...font, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+                          {watchlist.some(w => w.symbol === m.symbol) ? "✓ Watchlisted" : "+ Watchlist"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* User watchlist items */}
+            {watchlist.filter(w => !MARKET_SYMBOLS.some(m => m.symbol === w.symbol)).map(w => {
+              const wd = watchData[w.symbol];
+              const up = wd?.changePct >= 0;
+              const col = !wd ? T.textFaint : up ? T.green : T.red;
+              const arrow = up ? "▲" : "▼";
+              return (
+                <div key={w.symbol} style={{ borderBottom: `1px solid ${T.border}` }}>
+                  <div onClick={() => {
+                    if (mobileExpanded === w.symbol) setMobileExpanded(null);
+                    else { setMobileExpanded(w.symbol); setMobileNewsOpen(false); openChart(w.symbol, w.label); }
+                  }} style={{ padding: "12px 0", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text }}>{w.label || w.symbol}</div>
+                      <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>{w.symbol}</div>
+                    </div>
+                    <div style={{ textAlign: "right", minWidth: 75 }}>
+                      <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      <div style={{ ...mono, fontSize: 11, color: col }}>{wd ? `${arrow} ${Math.abs(wd.changePct).toFixed(2)}%` : ""}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── DESKTOP TWO-COLUMN LAYOUT ────────────────────────────────── */}
+        {!isMobile && (
+        <>
         {/* Two-column layout */}
         <div style={{ display: "flex", gap: 20 }}>
 
@@ -1627,6 +1795,8 @@ export default function AppPage() {
 
         </div>{/* end main content */}
         </div>{/* end two-column layout */}
+        </>
+        )}{/* end !isMobile */}
       </div>
 
       {/* Upgrade modal — shown when free user hits 10 alert limit */}
