@@ -586,7 +586,7 @@ export default function AppPage() {
 
           {/* Market sidebar — style #2 left border accent */}
           <div style={{ width: 210, flexShrink: 0 }}>
-            <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>MARKETS</div>
+
             <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               {MARKET_SYMBOLS.map(m => {
                 const d   = marketData[m.id];
