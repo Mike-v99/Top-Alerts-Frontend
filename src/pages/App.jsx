@@ -103,6 +103,8 @@ export default function AppPage() {
   const [calEvents, setCalEvents] = useState([]); // merged array of all event types
   const [calLoading, setCalLoading] = useState(false);
   const [calFilters, setCalFilters] = useState({ earnings: true, economic: true, ipo: true, split: true, dividend: true, holiday: true });
+  const [calEventAlert, setCalEventAlert] = useState(null); // event object for alert popup
+  const [calAlertTiming, setCalAlertTiming] = useState("1day"); // "15min" | "1hr" | "1day" | "after"
 
   const MARKET_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
@@ -489,18 +491,51 @@ export default function AppPage() {
       if (earningsRes.status === "fulfilled") {
         const earnings = earningsRes.value?.earningsCalendar || [];
         console.log("[Calendar] Earnings:", earnings.length, "events");
+        const fmtRev = v => {
+          if (v == null) return null;
+          const n = Number(v);
+          if (isNaN(n)) return null;
+          if (Math.abs(n) >= 1e12) return `$${(n/1e12).toFixed(1)}T`;
+          if (Math.abs(n) >= 1e9) return `$${(n/1e9).toFixed(1)}B`;
+          if (Math.abs(n) >= 1e6) return `$${(n/1e6).toFixed(0)}M`;
+          if (Math.abs(n) >= 1e3) return `$${(n/1e3).toFixed(0)}K`;
+          return `$${n.toFixed(2)}`;
+        };
         earnings.forEach(e => {
-          const fmtRev = v => v >= 1e9 ? `$${(v/1e9).toFixed(1)}B` : v >= 1e6 ? `$${(v/1e6).toFixed(0)}M` : v ? `$${v}` : null;
+          const epsEst = e.epsEstimate;
+          const epsAct = e.epsActual;
+          let beatMiss = null;
+          if (epsEst != null && epsAct != null) {
+            beatMiss = epsAct > epsEst ? "beat" : epsAct < epsEst ? "miss" : "met";
+          }
           merged.push({
             type: "earnings", date: e.date, symbol: e.symbol,
+            companyName: null, // will be filled by profile lookup
             label: `Q${e.quarter || "?"} ${e.year || ""} Earnings`,
-            est: e.epsEstimate != null ? `$${e.epsEstimate}` : "—",
-            actual: e.epsActual != null ? `$${e.epsActual}` : null,
+            est: epsEst != null ? `$${epsEst}` : "—",
+            actual: epsAct != null ? `$${epsAct}` : null,
+            beatMiss,
             revEst: fmtRev(e.revenueEstimate),
             revActual: fmtRev(e.revenueActual),
             time: e.hour === "bmo" ? "BMO" : e.hour === "amc" ? "AMC" : e.hour || "",
           });
         });
+
+        // Fetch company names for visible earnings symbols (batch first 30 unique)
+        const uniqueSymbols = [...new Set(earnings.map(e => e.symbol))].slice(0, 30);
+        if (uniqueSymbols.length > 0 && key) {
+          Promise.allSettled(
+            uniqueSymbols.map(sym =>
+              fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${key}`)
+                .then(r => r.json())
+                .then(d => ({ symbol: sym, name: d.name || null }))
+            )
+          ).then(results => {
+            const nameMap = {};
+            results.forEach(r => { if (r.status === "fulfilled" && r.value.name) nameMap[r.value.symbol] = r.value.name; });
+            setCalEvents(prev => prev.map(e => e.type === "earnings" && nameMap[e.symbol] ? { ...e, companyName: nameMap[e.symbol] } : e));
+          });
+        }
       }
 
       // Economic — Finnhub may require premium, so add known US economic events as fallback
@@ -1030,7 +1065,13 @@ export default function AppPage() {
                             </div>
                           ));
                           })()}
-                          {evts.length > 3 && <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>+{evts.length - 3} more</div>}
+                          {evts.length > 3 && (() => {
+                            const counts = {};
+                            evts.forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
+                            const icons = { economic: "📅", earnings: "📊", ipo: "🚀", split: "✂️", dividend: "💰", holiday: "🏖️" };
+                            const parts = Object.entries(counts).map(([t, c]) => `${c}${icons[t] || ""}`).join(" · ");
+                            return <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 2 }}>+{evts.length - 3} more ({parts})</div>;
+                          })()}
                         </div>
                       );
                     })}
@@ -1091,7 +1132,7 @@ export default function AppPage() {
                                     {e.est != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>FORECAST</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.est}</div></div>}
                                     {e.actual != null && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#3ddc84", marginTop: 2 }}>{e.actual}</div></div>}
                                     <div style={{ flex: 1 }} />
-                                    <button onClick={() => { showToast(`Reminder set for ${e.label}`); }} style={{
+                                    <button onClick={() => { setCalEventAlert(e); }} style={{
                                       padding: "8px 16px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
                                       borderRadius: 8, cursor: "pointer", ...font, fontSize: 13, color: "#e8f2ff",
                                       display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
@@ -1107,22 +1148,28 @@ export default function AppPage() {
                               {items.map((e, i) => (
                                 <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${dotColor(type)}`, borderRadius: 8, padding: "12px 16px" }}>
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                    <div>
-                                      <div style={{ ...font, fontSize: 16, fontWeight: 600, color: "#e8f2ff" }}>{e.symbol}</div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        <span style={{ ...font, fontSize: 16, fontWeight: 600, color: "#e8f2ff" }}>{e.symbol}</span>
+                                        {e.beatMiss === "beat" && <span style={{ ...mono, fontSize: 9, color: "#3ddc84", background: "rgba(61,220,132,0.15)", border: "1px solid rgba(61,220,132,0.3)", padding: "1px 6px", borderRadius: 4 }}>▲ BEAT</span>}
+                                        {e.beatMiss === "miss" && <span style={{ ...mono, fontSize: 9, color: "#cc2222", background: "rgba(204,34,34,0.15)", border: "1px solid rgba(204,34,34,0.3)", padding: "1px 6px", borderRadius: 4 }}>▼ MISS</span>}
+                                        {e.beatMiss === "met" && <span style={{ ...mono, fontSize: 9, color: "#f5a623", background: "rgba(245,166,35,0.15)", border: "1px solid rgba(245,166,35,0.3)", padding: "1px 6px", borderRadius: 4 }}>— MET</span>}
+                                      </div>
+                                      {e.companyName && <div style={{ ...font, fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.companyName}</div>}
                                       <div style={{ ...font, fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{e.label}</div>
                                     </div>
-                                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                                    <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                                       {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.06)", padding: "2px 8px", borderRadius: 4 }}>{e.time}</span>}
-                                      <button onClick={() => { openModal(e.symbol, e.label); }} style={{
+                                      <button onClick={() => { setCalEventAlert(e); }} style={{
                                         padding: "6px 12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
                                         borderRadius: 6, cursor: "pointer", ...font, fontSize: 12, color: "#e8f2ff",
-                                        display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
+                                        display: "flex", alignItems: "center", gap: 4,
                                       }}>🔔 Alert</button>
                                     </div>
                                   </div>
-                                  <div style={{ display: "flex", gap: 20, marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                                  <div style={{ display: "flex", gap: 20, marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap" }}>
                                     <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>EST EPS</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.est || "—"}</div></div>
-                                    {e.actual && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL EPS</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#3ddc84", marginTop: 2 }}>{e.actual}</div></div>}
+                                    {e.actual && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL EPS</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: e.beatMiss === "beat" ? "#3ddc84" : e.beatMiss === "miss" ? "#cc2222" : "#e8f2ff", marginTop: 2 }}>{e.actual}</div></div>}
                                     {e.revEst && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>REV EST</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.revEst}</div></div>}
                                     {e.revActual && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>REV ACTUAL</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#3ddc84", marginTop: 2 }}>{e.revActual}</div></div>}
                                   </div>
@@ -1147,7 +1194,7 @@ export default function AppPage() {
                                         {e.impact && <span style={{ ...mono, fontSize: 9, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}44`, background: impactColor(e.impact) + "22", padding: "2px 6px", borderRadius: 4 }}>{e.impact.toUpperCase()}</span>}
                                       </div>
                                       {type !== "holiday" && e.symbol && (
-                                        <button onClick={() => { openModal(e.symbol, e.label); }} style={{
+                                        <button onClick={() => { setCalEventAlert(e); }} style={{
                                           padding: "6px 12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
                                           borderRadius: 6, cursor: "pointer", ...font, fontSize: 12, color: "#e8f2ff",
                                           display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
@@ -1536,6 +1583,110 @@ export default function AppPage() {
       {/* Upgrade modal — shown when free user hits 10 alert limit */}
       {showUpgradeModal && (
         <UpgradeModal T={T} font={font} mono={mono} onClose={() => setShowUpgradeModal(false)} onUpgrade={() => { setShowUpgradeModal(false); setTab("pricing"); }} />
+      )}
+
+      {/* Event Alert Popup */}
+      {calEventAlert && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={() => { setCalEventAlert(null); setCalAlertTiming("1day"); }} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />
+          <div style={{ position: "relative", width: 480, maxHeight: "90vh", overflowY: "auto", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+            {/* Header */}
+            <div style={{ background: "#0a1f4a", padding: "18px 24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                <div style={{ ...font, fontSize: 20, color: "#e8f2ff" }}>🔔 Set Event Alert</div>
+                <button onClick={() => { setCalEventAlert(null); setCalAlertTiming("1day"); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 22 }}>×</button>
+              </div>
+              {/* Event card */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "12px 14px" }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: `${calEventAlert.type === "earnings" ? "#378ADD" : calEventAlert.type === "economic" ? "#f5a623" : calEventAlert.type === "ipo" ? "#1a8a44" : "#9b59b6"}25`, border: `1px solid ${calEventAlert.type === "earnings" ? "#378ADD" : calEventAlert.type === "economic" ? "#f5a623" : calEventAlert.type === "ipo" ? "#1a8a44" : "#9b59b6"}55`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>
+                  {calEventAlert.type === "earnings" ? "📊" : calEventAlert.type === "economic" ? "📅" : calEventAlert.type === "ipo" ? "🚀" : "✂️"}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...font, fontSize: 15, fontWeight: 500, color: "#e8f2ff" }}>
+                    {calEventAlert.symbol ? `${calEventAlert.symbol} — ` : ""}{calEventAlert.label}
+                  </div>
+                  {calEventAlert.companyName && <div style={{ ...font, fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>{calEventAlert.companyName}</div>}
+                  <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
+                    {calEventAlert.date} {calEventAlert.time ? `· ${calEventAlert.time}` : ""}
+                  </div>
+                </div>
+                {calEventAlert.impact && (
+                  <span style={{ ...mono, fontSize: 9, color: calEventAlert.impact === "high" ? "#cc2222" : "#f5a623", border: `1px solid ${calEventAlert.impact === "high" ? "#cc2222" : "#f5a623"}44`, background: `${calEventAlert.impact === "high" ? "#cc2222" : "#f5a623"}22`, padding: "2px 8px", borderRadius: 4 }}>{calEventAlert.impact.toUpperCase()}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Body */}
+            <div style={{ background: T.bg, padding: 24 }}>
+              <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 12 }}>WHEN TO ALERT</div>
+
+              {/* Timing options */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
+                {[
+                  ["15min", "⏰", "15 min before", "Quick heads up"],
+                  ["1hr", "⏰", "1 hour before", "Time to prepare"],
+                  ["1day", "📅", "1 day before", "Plan ahead"],
+                  ["after", "📊", "After results", "Get the actual data"],
+                ].map(([id, icon, title, desc]) => (
+                  <button key={id} onClick={() => setCalAlertTiming(id)} style={{
+                    background: T.bgCard, border: calAlertTiming === id ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                    borderRadius: 10, padding: 14, cursor: "pointer", textAlign: "left",
+                  }}>
+                    <div style={{ fontSize: 20, marginBottom: 4 }}>{icon}</div>
+                    <div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>{title}</div>
+                    <div style={{ ...font, fontSize: 11, color: T.textFaint, marginTop: 2 }}>{desc}</div>
+                    {calAlertTiming === id && <div style={{ ...mono, fontSize: 9, color: "#378ADD", marginTop: 6 }}>✓ SELECTED</div>}
+                  </button>
+                ))}
+              </div>
+
+              {/* After results options — only show when "after" is selected */}
+              {calAlertTiming === "after" && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>NOTIFY WHEN</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {[
+                      ["any", "📊", "Any Result", "Notify as soon as actual data is published"],
+                      ...(calEventAlert.type === "earnings" ? [
+                        ["beat", "▲", "Beats Estimate", `Actual EPS comes in above ${calEventAlert.est || "estimate"}`],
+                        ["miss", "▼", "Misses Estimate", `Actual EPS comes in below ${calEventAlert.est || "estimate"}`],
+                      ] : []),
+                    ].map(([id, icon, title, desc]) => (
+                      <div key={id} style={{
+                        background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 8,
+                        padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
+                      }}>
+                        <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{icon}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.text }}>{title}</div>
+                          <div style={{ ...font, fontSize: 11, color: T.textFaint, marginTop: 1 }}>{desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Delivery */}
+              <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>DELIVERY</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 24 }}>
+                <div style={{ padding: "12px 16px", borderRadius: 9, border: `1px solid #f5a623`, background: "rgba(245,166,35,0.08)", ...font, fontSize: 14, color: T.text, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}>Push <span style={{ color: "#f5a623" }}>✓</span></div>
+                <div style={{ padding: "12px 16px", borderRadius: 9, border: `1px solid #f5a623`, background: "rgba(245,166,35,0.08)", ...font, fontSize: 14, color: T.text, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}>Email <span style={{ color: "#f5a623" }}>✓</span></div>
+                <div style={{ padding: "12px 16px", borderRadius: 9, border: `1px solid ${T.border}`, ...font, fontSize: 14, color: T.textFaint, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}>SMS <span style={{ ...mono, fontSize: 9, color: T.border, border: `1px solid ${T.border}`, padding: "2px 5px", borderRadius: 3 }}>PRO</span></div>
+                <div style={{ padding: "12px 16px", borderRadius: 9, border: `1px solid ${T.border}`, ...font, fontSize: 14, color: T.textFaint, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}>Webhook <span style={{ ...mono, fontSize: 9, color: T.border, border: `1px solid ${T.border}`, padding: "2px 5px", borderRadius: 3 }}>PRO</span></div>
+              </div>
+
+              <button onClick={() => {
+                const timingLabels = { "15min": "15 minutes before", "1hr": "1 hour before", "1day": "1 day before", "after": "when results are released" };
+                showToast(`Alert set for ${calEventAlert.symbol || calEventAlert.label} — ${timingLabels[calAlertTiming]}`);
+                setCalEventAlert(null);
+                setCalAlertTiming("1day");
+              }} style={{ width: "100%", padding: 14, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 10, ...font, fontSize: 16, fontWeight: 500, cursor: "pointer" }}>
+                Save Alert
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Flying card animation — ghost fade trail #8 */}
