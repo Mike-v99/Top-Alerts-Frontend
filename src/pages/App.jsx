@@ -86,6 +86,7 @@ export default function AppPage() {
   const chartPanelRef = useRef(null);
   const [flyingCard,   setFlyingCard]   = useState(null); // {x,y,label,symbol}
   const [tickerDetails, setTickerDetails] = useState(null); // { name, description, sic_description, market_cap, ... }
+  const [week52Data,    setWeek52Data]    = useState(null); // { high, low, yearChange }
   const [tickerNews,    setTickerNews]    = useState([]);
   const [newsLoading,   setNewsLoading]   = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -135,6 +136,9 @@ export default function AppPage() {
             prevClose: t.prevDay?.c || 0,
             high: t.day?.h || 0,
             low: t.day?.l || 0,
+            open: t.day?.o || 0,
+            volume: t.day?.v || 0,
+            prevVolume: t.prevDay?.v || 0,
           };
         }).filter(r => r.price !== 0);
       } catch (e) {
@@ -232,6 +236,7 @@ export default function AppPage() {
     fetchChart("DIA", "1D");
     fetchTickerDetails("DIA");
     fetchTickerNews("DIA");
+    fetch52Week("DIA");
   }, []);
 
   const [form, setForm] = useState({
@@ -333,6 +338,29 @@ export default function AppPage() {
     } catch (e) { console.error("Ticker details failed", e); }
   }
 
+  // ── 52-week data ─────────────────────────────────────────────────────────
+  async function fetch52Week(symbol) {
+    setWeek52Data(null);
+    try {
+      const key = import.meta.env.VITE_MASSIVE_KEY || "";
+      const now = new Date();
+      const pad = n => String(n).padStart(2, "0");
+      const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      const start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      const res = await fetch(`https://api.massive.com/v2/aggs/ticker/${symbol}/range/1/week/${fmt(start)}/${fmt(now)}?adjusted=true&sort=asc&limit=60&apiKey=${key}`);
+      const data = await res.json();
+      const results = data.results || [];
+      if (results.length > 0) {
+        const high = Math.max(...results.map(r => r.h));
+        const low = Math.min(...results.map(r => r.l));
+        const firstClose = results[0].c;
+        const lastClose = results[results.length - 1].c;
+        const yearChange = firstClose ? ((lastClose - firstClose) / firstClose) * 100 : 0;
+        setWeek52Data({ high, low, yearChange });
+      }
+    } catch (e) { console.error("52-week fetch failed", e); }
+  }
+
   // ── Ticker news ────────────────────────────────────────────────────────────
   async function fetchTickerNews(symbol) {
     setNewsLoading(true);
@@ -359,6 +387,7 @@ export default function AppPage() {
     fetchChart(symbol, "1D");
     fetchTickerDetails(symbol);
     fetchTickerNews(symbol);
+    fetch52Week(symbol);
   }
 
   function changeChartRange(range) {
@@ -386,6 +415,9 @@ export default function AppPage() {
             prevClose: t.prevDay?.c || 0,
             high: t.day?.h || 0,
             low: t.day?.l || 0,
+            open: t.day?.o || 0,
+            volume: t.day?.v || 0,
+            prevVolume: t.prevDay?.v || 0,
           }}));
           showToast(`${symbol} added`);
         } else {
@@ -820,24 +852,41 @@ export default function AppPage() {
                     )}
                   </div>
 
-                  {/* Fundamentals grid */}
-                  {d && (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
-                      <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 16px" }}>
-                        <div style={{ ...mono, fontSize: 9, letterSpacing: "1px", color: T.textFaint, marginBottom: 6 }}>PREV CLOSE</div>
-                        <div style={{ ...font, fontSize: 18, fontWeight: 500, color: T.text }}>{d.prevClose ? fmt(d.prevClose) : "—"}</div>
+                  {/* Fundamentals table */}
+                  {d && (() => {
+                    const fmtVol = v => v >= 1e9 ? `${(v/1e9).toFixed(2)}B` : v >= 1e6 ? `${(v/1e6).toFixed(1)}M` : v >= 1e3 ? `${(v/1e3).toFixed(0)}K` : `${v}`;
+                    const cell = (label, value) => (
+                      <div style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderRight: `1px solid ${T.borderLight}` }}>
+                        <span style={{ ...font, fontSize: 13, color: T.textMid }}>{label}</span>
+                        <span style={{ ...mono, fontSize: 13, color: T.text, fontWeight: 500, textAlign: "right" }}>{value}</span>
                       </div>
-                      <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 16px" }}>
-                        <div style={{ ...mono, fontSize: 9, letterSpacing: "1px", color: T.textFaint, marginBottom: 6 }}>DAY RANGE</div>
-                        <div style={{ ...font, fontSize: 15, fontWeight: 500, color: T.text }}>{d.low ? fmt(d.low) : "—"} – {d.high ? fmt(d.high) : "—"}</div>
+                    );
+                    return (
+                      <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", borderBottom: `1px solid ${T.borderLight}` }}>
+                          {cell("Prev. Close", d.prevClose ? fmt(d.prevClose) : "—")}
+                          {cell("Volume", d.volume ? fmtVol(d.volume) : "—")}
+                          {cell("Day's Range", d.low && d.high ? `${fmt(d.low)} – ${fmt(d.high)}` : "—")}
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", borderBottom: `1px solid ${T.borderLight}` }}>
+                          {cell("Open", d.open ? fmt(d.open) : "—")}
+                          {cell("Avg Vol. (3m)", "—")}
+                          {cell("52 Wk Range", week52Data ? `${fmt(week52Data.low)} – ${fmt(week52Data.high)}` : "—")}
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}>
+                          <div style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderRight: `1px solid ${T.borderLight}` }}>
+                            <span style={{ ...font, fontSize: 13, color: T.textMid }}>1-Year Change</span>
+                            <span style={{ ...mono, fontSize: 13, fontWeight: 500, color: week52Data?.yearChange >= 0 ? T.green : T.red }}>{week52Data ? `${week52Data.yearChange >= 0 ? "+" : ""}${week52Data.yearChange.toFixed(2)}%` : "—"}</span>
+                          </div>
+                          {cell("Change", `${d.change >= 0 ? "+" : ""}${d.change?.toFixed(2)}`)}
+                          <div style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ ...font, fontSize: 13, color: T.textMid }}>Change %</span>
+                            <span style={{ ...mono, fontSize: 13, fontWeight: 500, color: col }}>{d.changePct >= 0 ? "+" : ""}{d.changePct?.toFixed(2)}%</span>
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 16px" }}>
-                        <div style={{ ...mono, fontSize: 9, letterSpacing: "1px", color: T.textFaint, marginBottom: 6 }}>CHANGE</div>
-                        <div style={{ ...font, fontSize: 18, fontWeight: 500, color: col }}>{d.change >= 0 ? "+" : ""}{d.change?.toFixed(2)}</div>
-                        <div style={{ ...mono, fontSize: 10, color: col, marginTop: 2 }}>{d.changePct >= 0 ? "+" : ""}{d.changePct?.toFixed(2)}%</div>
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Day range bar */}
                   {d && d.high && d.low && d.high !== d.low && (() => {
