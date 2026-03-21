@@ -1772,50 +1772,64 @@ function PricingPage({ T, font, mono, currentPlan, onUpgrade }) {
   const proFeatures  = ["Unlimited alerts","All 12 trigger types","Multi-condition AND/OR","90-day backtesting","SMS & Webhook","Alert cooldown","Priority delivery"];
 
   return (
-    <div style={{ maxWidth: 520, margin: "0 auto", borderRadius: 18, overflow: "hidden", border: `1px solid ${T.border}` }}>
-      {/* Cobalt hero header */}
-      <div style={{ background: "#0a1f4a", padding: "36px 32px", textAlign: "center" }}>
-        <div style={{ ...mono, fontSize: 9, letterSpacing: "3px", color: "rgba(255,255,255,0.4)", marginBottom: 12 }}>CHOOSE YOUR PLAN</div>
-        <div style={{ ...font, fontSize: 28, color: "#e8f2ff" }}>Top-Alerts Pricing</div>
-        <div style={{ ...font, fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 8 }}>Start monitoring for free. Go Pro when you need more.</div>
+    <div>
+      <div style={{ textAlign: "center", marginBottom: 40 }}>
+        <div style={{ ...mono, fontSize: 10, letterSpacing: "3px", color: T.textFaint, marginBottom: 10 }}>PRICING</div>
+        <div style={{ ...font, fontSize: 36, fontWeight: 500, color: T.text }}>Simple, transparent pricing</div>
+        <div style={{ ...font, fontSize: 15, color: T.textMid, marginTop: 8 }}>Start free. Upgrade when you need more power.</div>
       </div>
-
-      {/* Two-column plans */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", background: T.bg }}>
-        {/* Free column */}
-        <div style={{ padding: "28px 24px", borderRight: `1px solid ${T.border}` }}>
-          <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textFaint }}>FREE</div>
-          <div style={{ ...font, fontSize: 36, color: T.text, margin: "8px 0 16px" }}>$0</div>
-          {freeFeatures.map(f => (
-            <div key={f} style={{ padding: "6px 0", ...font, fontSize: 13, color: T.textMid }}>· {f}</div>
-          ))}
-          {isFree && (
-            <div style={{ ...mono, fontSize: 10, color: T.textFaint, textAlign: "center", marginTop: 20, padding: "8px 0", border: `1px solid ${T.border}`, borderRadius: 8 }}>✓ CURRENT PLAN</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, maxWidth: 900, margin: "0 auto" }}>
+        {/* Free card */}
+        <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 16, padding: "36px 32px" }}>
+          <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>FREE</div>
+          <div style={{ ...font, fontSize: 48, fontWeight: 500, color: T.text, marginBottom: 4 }}>$0</div>
+          <div style={{ ...font, fontSize: 14, color: T.textMid, marginBottom: 28 }}>For casual watchers</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 32 }}>
+            {freeFeatures.map(f => (
+              <div key={f} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <span style={{ color: T.green, fontSize: 14 }}>✓</span>
+                <span style={{ ...font, fontSize: 15, color: T.text }}>{f}</span>
+              </div>
+            ))}
+          </div>
+          {isFree ? (
+            <div style={{ textAlign: "center", padding: 12, border: `1px solid ${T.border}`, borderRadius: 10, ...mono, fontSize: 11, color: T.textFaint }}>✓ CURRENT PLAN</div>
+          ) : (
+            <div style={{ textAlign: "center", padding: 12, border: `1px solid ${T.border}`, borderRadius: 10, ...mono, fontSize: 11, color: T.textFaint }}>FREE PLAN</div>
           )}
         </div>
 
-        {/* Pro column */}
-        <div style={{ padding: "28px 24px" }}>
-          <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#378ADD" }}>PRO</div>
-          <div style={{ ...font, fontSize: 36, color: T.text, margin: "8px 0 16px" }}>$9<span style={{ fontSize: 13, color: T.textFaint }}>/mo</span></div>
-          {proFeatures.map(f => (
-            <div key={f} style={{ padding: "6px 0", ...font, fontSize: 13, color: T.textMid }}>· {f}</div>
-          ))}
+        {/* Pro card — cobalt filled */}
+        <div style={{ background: "#0a1f4a", borderRadius: 16, padding: "36px 32px", position: "relative" }}>
+          <div style={{ position: "absolute", top: 0, right: 0, width: 150, height: 150, background: "radial-gradient(circle, rgba(55,138,221,0.15), transparent)", borderRadius: "0 16px 0 0" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#378ADD" }}>PRO</div>
+            <div style={{ ...mono, fontSize: 8, letterSpacing: "1.5px", color: "#378ADD", background: "rgba(55,138,221,0.15)", padding: "3px 8px", borderRadius: 4 }}>RECOMMENDED</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
+            <span style={{ ...font, fontSize: 48, fontWeight: 500, color: "#e8f2ff" }}>$9</span>
+            <span style={{ ...font, fontSize: 16, color: "rgba(255,255,255,0.4)" }}>/mo</span>
+          </div>
+          <div style={{ ...font, fontSize: 14, color: "rgba(255,255,255,0.5)", marginBottom: 28 }}>For serious traders</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 32 }}>
+            {proFeatures.map(f => (
+              <div key={f} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <span style={{ color: "#3ddc84", fontSize: 14 }}>✓</span>
+                <span style={{ ...font, fontSize: 15, color: "rgba(255,255,255,0.85)" }}>{f}</span>
+              </div>
+            ))}
+          </div>
           {isFree ? (
             <button onClick={() => proPriceId && onUpgrade(proPriceId)} style={{
-              width: "100%", marginTop: 20, padding: 11, background: "#0a1f4a", color: "#e8f2ff",
-              border: "none", borderRadius: 8, ...font, fontSize: 14, cursor: "pointer",
-            }}>Upgrade →</button>
+              width: "100%", padding: 14, background: "#e8f2ff", color: "#0a1f4a",
+              border: "none", borderRadius: 10, ...font, fontSize: 16, fontWeight: 500, cursor: "pointer",
+            }}>Upgrade to Pro →</button>
           ) : (
-            <div style={{ ...mono, fontSize: 10, color: "#378ADD", textAlign: "center", marginTop: 20, padding: "8px 0", border: "1px solid rgba(55,138,221,0.3)", borderRadius: 8, background: "rgba(55,138,221,0.08)" }}>✓ PRO ACTIVE</div>
+            <div style={{ textAlign: "center", padding: 12, border: "1px solid rgba(55,138,221,0.3)", borderRadius: 10, ...mono, fontSize: 11, color: "#378ADD", background: "rgba(55,138,221,0.1)" }}>✓ PRO ACTIVE</div>
           )}
         </div>
       </div>
-
-      {/* Footer */}
-      <div style={{ textAlign: "center", padding: "14px 0", borderTop: `1px solid ${T.border}`, background: T.bg }}>
-        <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>14-day money-back guarantee · Cancel anytime</span>
-      </div>
+      <div style={{ textAlign: "center", marginTop: 24, ...mono, fontSize: 10, color: T.textFaint }}>14-day money-back guarantee · Cancel anytime</div>
     </div>
   );
 }
