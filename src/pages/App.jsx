@@ -875,7 +875,7 @@ export default function AppPage() {
               </button>
             ) : (
               <button onClick={() => navigate("/login")} style={{
-                ...font, fontSize: isMobile ? 13 : 18, background: "none", border: `2px solid ${isMobile ? "#1a1200" : "#5F5E5A"}`,
+                ...font, fontSize: isMobile ? 14 : 18, background: "none", border: `2px solid ${isMobile ? "#1a1200" : "#5F5E5A"}`,
                 borderRadius: 8, padding: isMobile ? "4px 10px" : "6px 16px", cursor: "pointer", color: isMobile ? "#1a1200" : "#5F5E5A", fontWeight: isMobile ? 600 : 400,
               }}>
                 SIGN IN
@@ -901,7 +901,7 @@ export default function AppPage() {
           {["market","alerts","calendar","pricing"].map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: isMobile ? "8px 10px" : "10px 22px", background: "none", border: "none", cursor: "pointer",
-              ...font, fontSize: isMobile ? 12 : 20, letterSpacing: isMobile ? "0.5px" : "1px", fontWeight: isMobile && tab === t ? 700 : 400,
+              ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px", fontWeight: isMobile && tab === t ? 700 : 400,
               color: tab === t ? (isMobile ? "#1a1200" : T.activeTab) : (isMobile ? "#8a8070" : T.textFaint),
               borderBottom: tab === t ? `2px solid ${isMobile ? "#1a1200" : T.activeTabBorder}` : "2px solid transparent",
               marginBottom: -1, transition: "all 0.2s", flexShrink: 0,
@@ -910,8 +910,8 @@ export default function AppPage() {
             </button>
           ))}
           <button onClick={() => openModal()} style={{
-            marginLeft: "auto", padding: isMobile ? "5px 12px" : "8px 22px", background: "#0a1f4a", border: "none",
-            borderRadius: 8, cursor: "pointer", ...font, fontSize: isMobile ? 11 : 20, color: "#e8f2ff", flexShrink: 0,
+            marginLeft: "auto", padding: isMobile ? "6px 14px" : "8px 22px", background: "#0a1f4a", border: "none",
+            borderRadius: 8, cursor: "pointer", ...font, fontSize: isMobile ? 12 : 20, color: "#e8f2ff", flexShrink: 0,
             fontWeight: 600,
           }}>
             + ALERT
@@ -929,7 +929,7 @@ export default function AppPage() {
               style={{
                 width: "100%", padding: isMobile ? "10px 14px" : "12px 16px", boxSizing: "border-box",
                 background: T.bgCard, border: isMobile ? `2px solid ${search ? T.accent : "#5F5E5A"}` : `1px solid ${search ? T.accent : T.border}`,
-                borderRadius: 10, color: T.text, ...font, fontSize: isMobile ? 15 : 18,
+                borderRadius: 10, color: T.text, ...font, fontSize: isMobile ? 16 : 18,
                 outline: "none", transition: "border 0.2s",
               }}
             />
@@ -1282,7 +1282,7 @@ export default function AppPage() {
         {/* ── MOBILE LAYOUT ──────────────────────────────────────────────── */}
         {isMobile && tab === "market" && (
           <div>
-            <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#1a1200", marginBottom: 8, fontWeight: 600 }}>WATCHLIST</div>
+            <div style={{ ...mono, fontSize: 11, letterSpacing: "2px", color: "#1a1200", marginBottom: 8, fontWeight: 600 }}>WATCHLIST</div>
             {MARKET_SYMBOLS.map(m => {
               const d = marketData[m.id];
               const up = d?.changePct >= 0;
@@ -1299,19 +1299,19 @@ export default function AppPage() {
                     else { setMobileExpanded(m.symbol); setMobileNewsOpen(false); openChart(m.symbol, m.label); }
                   }} style={{ padding: "12px 0", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ ...font, fontSize: 16, fontWeight: 700, color: "#1a1200" }}>{m.label}</div>
-                      <div style={{ ...mono, fontSize: 11, color: "#6a6050" }}>{m.symbol}</div>
+                      <div style={{ ...font, fontSize: 17, fontWeight: 700, color: "#1a1200" }}>{m.label}</div>
+                      <div style={{ ...mono, fontSize: 12, color: "#6a6050" }}>{m.symbol}</div>
                     </div>
                     {!isExpanded && (
                       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 8, color: "#8a8070", fontWeight: 500 }}>HIGH</div><div style={{ ...mono, fontSize: 11, color: "#1a1200", fontWeight: 500 }}>{snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"}</div></div>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 8, color: "#8a8070", fontWeight: 500 }}>LOW</div><div style={{ ...mono, fontSize: 11, color: "#1a1200", fontWeight: 500 }}>{snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"}</div></div>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 8, color: "#8a8070", fontWeight: 500 }}>VOL</div><div style={{ ...mono, fontSize: 11, color: "#1a1200", fontWeight: 500 }}>{snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : snap.volume >= 1e3 ? `${(snap.volume/1e3).toFixed(0)}K` : snap.volume) : "—"}</div></div>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 9, color: "#8a8070", fontWeight: 500 }}>HIGH</div><div style={{ ...mono, fontSize: 12, color: "#1a1200", fontWeight: 500 }}>{snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"}</div></div>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 9, color: "#8a8070", fontWeight: 500 }}>LOW</div><div style={{ ...mono, fontSize: 12, color: "#1a1200", fontWeight: 500 }}>{snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"}</div></div>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 9, color: "#8a8070", fontWeight: 500 }}>VOL</div><div style={{ ...mono, fontSize: 12, color: "#1a1200", fontWeight: 500 }}>{snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : snap.volume >= 1e3 ? `${(snap.volume/1e3).toFixed(0)}K` : snap.volume) : "—"}</div></div>
                       </div>
                     )}
                     <div style={{ textAlign: "right", minWidth: 75 }}>
-                      <div style={{ ...font, fontSize: 17, fontWeight: 700, color: "#1a1200" }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
-                      <div style={{ ...mono, fontSize: 12, color: col, fontWeight: 600 }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
+                      <div style={{ ...font, fontSize: 18, fontWeight: 700, color: "#1a1200" }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
                     </div>
                   </div>
 
@@ -1351,8 +1351,8 @@ export default function AppPage() {
                           ["Change", d ? `${d.changePct >= 0 ? "+" : ""}${d.changePct.toFixed(2)}%` : "—"],
                         ].map(([label, val], idx) => (
                           <div key={idx} style={{ background: T.bg, padding: 8, textAlign: "center" }}>
-                            <div style={{ ...mono, fontSize: 9, color: "#6a6050", fontWeight: 500 }}>{label}</div>
-                            <div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 600, marginTop: 2 }}>{val}</div>
+                            <div style={{ ...mono, fontSize: 10, color: "#6a6050", fontWeight: 500 }}>{label}</div>
+                            <div style={{ ...mono, fontSize: 14, color: "#1a1200", fontWeight: 600, marginTop: 2 }}>{val}</div>
                           </div>
                         ))}
                       </div>
@@ -1365,34 +1365,34 @@ export default function AppPage() {
                         }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                             <span style={{ fontSize: 12 }}>📰</span>
-                            <span style={{ ...mono, fontSize: 10, letterSpacing: "1px", color: "#1a1200", fontWeight: 500 }}>LATEST NEWS</span>
-                            <span style={{ ...mono, fontSize: 9, color: "#6a6050" }}>({tickerNews.length})</span>
+                            <span style={{ ...mono, fontSize: 11, letterSpacing: "1px", color: "#1a1200", fontWeight: 500 }}>LATEST NEWS</span>
+                            <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>({tickerNews.length})</span>
                           </div>
-                          <span style={{ ...font, fontSize: 11, color: mobileNewsOpen ? "#1a1200" : "#6a6050" }}>{mobileNewsOpen ? "▲ Collapse" : "▼ Expand"}</span>
+                          <span style={{ ...font, fontSize: 12, color: mobileNewsOpen ? "#1a1200" : "#6a6050" }}>{mobileNewsOpen ? "▲ Collapse" : "▼ Expand"}</span>
                         </div>
                         {!mobileNewsOpen && tickerNews.length > 0 && (
-                          <div style={{ padding: "8px 14px", ...font, fontSize: 12, color: "#1a1200", borderTop: `1px solid ${T.border}`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          <div style={{ padding: "8px 14px", ...font, fontSize: 13, color: "#1a1200", borderTop: `1px solid ${T.border}`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {tickerNews[0]?.title}
                           </div>
                         )}
                         {mobileNewsOpen && tickerNews.map((n, i) => (
-                          <a key={i} href={n.article_url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} style={{ display: "block", padding: "10px 14px", borderTop: `1px solid ${T.border}`, textDecoration: "none", cursor: "pointer" }}>
-                            <div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{n.title}</div>
+                          <div key={i} onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); if (n.article_url) window.open(n.article_url, "_blank", "noopener,noreferrer"); }} style={{ display: "block", padding: "10px 14px", borderTop: `1px solid ${T.border}`, cursor: "pointer" }}>
+                            <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{n.title}</div>
                             <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                              <span style={{ ...mono, fontSize: 9, color: "#6a6050" }}>{n.publisher}</span>
+                              <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
                               <span style={{ color: "#6a6050" }}>·</span>
-                              <span style={{ ...mono, fontSize: 9, color: "#6a6050" }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
+                              <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
                             </div>
-                          </a>
+                          </div>
                         ))}
                         {mobileNewsOpen && tickerNews.length === 0 && (
-                          <div style={{ padding: "12px 14px", borderTop: `1px solid ${T.border}`, ...font, fontSize: 12, color: "#6a6050", textAlign: "center" }}>No news available</div>
+                          <div style={{ padding: "12px 14px", borderTop: `1px solid ${T.border}`, ...font, fontSize: 13, color: "#6a6050", textAlign: "center" }}>No news available</div>
                         )}
                       </div>
 
                       {/* Action buttons */}
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={(ev) => { ev.stopPropagation(); openModal(m.symbol, m.label); }} style={{ flex: 1, padding: 10, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>+ Set Alert</button>
+                        <button onClick={(ev) => { ev.stopPropagation(); openModal(m.symbol, m.label); }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
                         <button onClick={(ev) => {
                           ev.stopPropagation();
                           setWatchlist(prev => {
@@ -1401,7 +1401,7 @@ export default function AppPage() {
                             localStorage.setItem("ta-watchlist", JSON.stringify(next));
                             return next;
                           });
-                        }} style={{ flex: 1, padding: 10, background: "none", color: "#5F5E5A", border: "2px solid #5F5E5A", borderRadius: 8, ...font, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+                        }} style={{ flex: 1, padding: 11, background: "none", color: "#1a1200", border: "2px solid #5F5E5A", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                           {watchlist.some(w => w.symbol === m.symbol) ? "✓ Watchlisted" : "+ Watchlist"}
                         </button>
                       </div>
