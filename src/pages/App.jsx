@@ -897,23 +897,24 @@ export default function AppPage() {
         )}
 
         {/* Tabs */}
-        <div style={{ display: "flex", marginBottom: isMobile ? 14 : 28, borderBottom: `1px solid ${T.border}`, overflowX: isMobile ? "auto" : "visible", whiteSpace: "nowrap" }}>
+        <div style={{ display: "flex", flexWrap: isMobile ? "wrap" : "nowrap", gap: isMobile ? 0 : 0, marginBottom: isMobile ? 10 : 28, borderBottom: `1px solid ${T.border}` }}>
           {["market","alerts","calendar","pricing"].map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
-              padding: isMobile ? "8px 14px" : "10px 22px", background: "none", border: "none", cursor: "pointer",
-              ...font, fontSize: isMobile ? 13 : 20, letterSpacing: "1px",
-              color: tab === t ? T.activeTab : T.textFaint,
-              borderBottom: tab === t ? `2px solid ${T.activeTabBorder}` : "2px solid transparent",
+              padding: isMobile ? "8px 10px" : "10px 22px", background: "none", border: "none", cursor: "pointer",
+              ...font, fontSize: isMobile ? 12 : 20, letterSpacing: isMobile ? "0.5px" : "1px", fontWeight: isMobile && tab === t ? 700 : 400,
+              color: tab === t ? (isMobile ? "#1a1200" : T.activeTab) : (isMobile ? "#8a8070" : T.textFaint),
+              borderBottom: tab === t ? `2px solid ${isMobile ? "#1a1200" : T.activeTabBorder}` : "2px solid transparent",
               marginBottom: -1, transition: "all 0.2s", flexShrink: 0,
             }}>
               {t.toUpperCase()}
             </button>
           ))}
           <button onClick={() => openModal()} style={{
-            marginLeft: "auto", padding: isMobile ? "6px 14px" : "8px 22px", background: "#0a1f4a", border: "none",
-            borderRadius: 8, cursor: "pointer", ...font, fontSize: isMobile ? 13 : 20, color: "#e8f2ff", flexShrink: 0,
+            marginLeft: "auto", padding: isMobile ? "5px 12px" : "8px 22px", background: "#0a1f4a", border: "none",
+            borderRadius: 8, cursor: "pointer", ...font, fontSize: isMobile ? 11 : 20, color: "#e8f2ff", flexShrink: 0,
+            fontWeight: 600,
           }}>
-            + {isMobile ? "ALERT" : "NEW ALERT"}
+            + ALERT
           </button>
         </div>
 
@@ -1281,7 +1282,7 @@ export default function AppPage() {
         {/* ── MOBILE LAYOUT ──────────────────────────────────────────────── */}
         {isMobile && tab === "market" && (
           <div>
-            <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: "#5F5E5A", marginBottom: 8 }}>WATCHLIST</div>
+            <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#1a1200", marginBottom: 8, fontWeight: 600 }}>WATCHLIST</div>
             {MARKET_SYMBOLS.map(m => {
               const d = marketData[m.id];
               const up = d?.changePct >= 0;
@@ -1364,7 +1365,7 @@ export default function AppPage() {
                         }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                             <span style={{ fontSize: 12 }}>📰</span>
-                            <span style={{ ...mono, fontSize: 9, letterSpacing: "1px", color: "#5F5E5A" }}>LATEST NEWS</span>
+                            <span style={{ ...mono, fontSize: 10, letterSpacing: "1px", color: "#1a1200", fontWeight: 500 }}>LATEST NEWS</span>
                             <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>({tickerNews.length})</span>
                           </div>
                           <span style={{ ...font, fontSize: 11, color: mobileNewsOpen ? "#5F5E5A" : T.textFaint }}>{mobileNewsOpen ? "▲ Collapse" : "▼ Expand"}</span>
@@ -1965,7 +1966,7 @@ export default function AppPage() {
       {showModal && (
         <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 18, width: "100%", maxWidth: 540, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.3)" }}>
+          <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? 14 : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.3)" }}>
 
             {/* Modal header — cobalt blue with integrated search */}
             <div style={{ background: "#0a1f4a", borderRadius: "18px 18px 0 0", position: "sticky", top: 0, zIndex: 10 }}>
