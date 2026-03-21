@@ -652,6 +652,56 @@ export default function AppPage() {
           </button>
         </div>
 
+        {/* Search bar — full width above columns (market tab only) */}
+        {tab === "market" && (
+          <div style={{ position: "relative", marginBottom: 20 }}>
+            <input
+              type="text"
+              placeholder="Search any symbol — AAPL, TSLA, ETH-USD..."
+              value={search}
+              onChange={e => { setSearch(e.target.value); searchSymbols(e.target.value); }}
+              style={{
+                width: "100%", padding: "12px 16px", boxSizing: "border-box",
+                background: T.bgCard, border: `1px solid ${search ? T.accent : T.border}`,
+                borderRadius: 10, color: T.text, ...font, fontSize: 18,
+                outline: "none", transition: "border 0.2s",
+              }}
+            />
+            {search && (
+              <button onClick={() => { setSearch(""); setSearchResults([]); }} style={{
+                position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 18,
+              }}>×</button>
+            )}
+            {(searchResults.length > 0 || searchLoading) && search && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 50,
+                background: T.bgModal, border: `1px solid ${T.border}`, borderRadius: 10,
+                overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+              }}>
+                {searchLoading && (
+                  <div style={{ padding: "12px 16px", ...mono, fontSize: 11, color: T.textFaint }}>Searching...</div>
+                )}
+                {searchResults.map(r => (
+                  <div key={r.symbol} onClick={() => { addToWatchlist(r.symbol, r.description); openChart(r.symbol, r.description); }} style={{
+                    padding: "12px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
+                    borderBottom: `1px solid ${T.border}`, transition: "background 0.15s",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = T.bgDeep}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    <div style={{ ...mono, fontSize: 11, color: T.accent, minWidth: 60, fontWeight: 700 }}>{r.symbol}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ ...font, fontSize: 16, color: T.text }}>{(r.description || "").slice(0, 35)}</div>
+                      <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 1 }}>{r.type} · {r.displaySymbol}</div>
+                    </div>
+                    <div style={{ ...mono, fontSize: 9, color: T.accent, border: `1px solid ${T.accentBorder}`, padding: "2px 8px", borderRadius: 4 }}>+ ADD</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Two-column layout */}
         <div style={{ display: "flex", gap: 20 }}>
 
@@ -755,53 +805,6 @@ export default function AppPage() {
         {/* Market tab */}
         {tab === "market" && (
           <div>
-            {/* Search bar — full width */}
-            <div style={{ position: "relative", marginBottom: 20 }}>
-              <input
-                type="text"
-                placeholder="Search any symbol — AAPL, TSLA, ETH-USD..."
-                value={search}
-                onChange={e => { setSearch(e.target.value); searchSymbols(e.target.value); }}
-                style={{
-                  width: "100%", padding: "12px 16px", boxSizing: "border-box",
-                  background: T.bgCard, border: `1px solid ${search ? T.accent : T.border}`,
-                  borderRadius: 10, color: T.text, ...font, fontSize: 18,
-                  outline: "none", transition: "border 0.2s",
-                }}
-              />
-              {search && (
-                <button onClick={() => { setSearch(""); setSearchResults([]); }} style={{
-                  position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-                  background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 18,
-                }}>×</button>
-              )}
-              {(searchResults.length > 0 || searchLoading) && search && (
-                <div style={{
-                  position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 50,
-                  background: T.bgModal, border: `1px solid ${T.border}`, borderRadius: 10,
-                  overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-                }}>
-                  {searchLoading && (
-                    <div style={{ padding: "12px 16px", ...mono, fontSize: 11, color: T.textFaint }}>Searching...</div>
-                  )}
-                  {searchResults.map(r => (
-                    <div key={r.symbol} onClick={() => { addToWatchlist(r.symbol, r.description); openChart(r.symbol, r.description); }} style={{
-                      padding: "12px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
-                      borderBottom: `1px solid ${T.border}`, transition: "background 0.15s",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = T.bgDeep}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                      <div style={{ ...mono, fontSize: 11, color: T.accent, minWidth: 60, fontWeight: 700 }}>{r.symbol}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ ...font, fontSize: 16, color: T.text }}>{(r.description || "").slice(0, 35)}</div>
-                        <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 1 }}>{r.type} · {r.displaySymbol}</div>
-                      </div>
-                      <div style={{ ...mono, fontSize: 9, color: T.accent, border: `1px solid ${T.accentBorder}`, padding: "2px 8px", borderRadius: 4 }}>+ ADD</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
             {/* Chart panel — always visible, defaults to DIA */}
             {chartSymbol && (() => {
