@@ -957,38 +957,38 @@ export default function AppPage() {
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
           <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 18, width: "100%", maxWidth: 540, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.3)", overflow: "hidden" }}>
 
-            {/* Modal header — style #9 light, bold dark border bottom */}
-            <div style={{ padding: "18px 24px", borderBottom: `3px solid ${T.btnPrimary}`, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: T.bg, zIndex: 10, borderRadius: "18px 18px 0 0" }}>
+            {/* Modal header — style #9 cobalt blue */}
+            <div style={{ padding: "18px 24px", borderBottom: "1px solid #0c2550", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "#0a1f4a", zIndex: 10, borderRadius: "18px 18px 0 0" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 26, height: 26, borderRadius: "50%", background: T.btnPrimary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: T.btnText, flexShrink: 0 }}>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", border: "2px solid #378ADD", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#e8f2ff", flexShrink: 0 }}>
                   {step}
                 </div>
                 <div>
-                  <div style={{ fontSize: 20, color: T.text }}>{step === 1 ? "Choose Trigger" : step === 2 ? "Configure" : "Delivery"}</div>
+                  <div style={{ fontSize: 20, color: "#e8f2ff" }}>{step === 1 ? "Choose Trigger" : step === 2 ? "Configure" : "Delivery"}</div>
                   <div style={{ display: "flex", gap: 4, marginTop: 5 }}>
-                    {[1,2,3].map(s => <div key={s} style={{ width: s <= step ? 20 : 6, height: 3, borderRadius: 2, background: s <= step ? T.btnPrimary : T.border, transition: "all 0.3s" }} />)}
+                    {[1,2,3].map(s => <div key={s} style={{ width: s <= step ? 20 : 6, height: 3, borderRadius: 2, background: s <= step ? "#378ADD" : "rgba(255,255,255,0.15)", transition: "all 0.3s" }} />)}
                   </div>
                 </div>
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 22 }}>×</button>
+              <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 22 }}>×</button>
             </div>
 
             {/* Step 1 — Asset + Trigger */}
             {step === 1 && (
               <div style={{ padding: "22px 28px" }}>
 
-                {/* Card source: style #9 light bg, dark icon square */}
+                {/* Card source: style #9 cobalt blue header + price bar */}
                 {modalSource === "card" && (
                   <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 20 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, background: T.bgDeep, padding: "12px 16px" }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 8, background: T.btnPrimary, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <span style={{ ...mono, fontSize: 10, color: T.btnText, fontWeight: 700 }}>{form.asset?.slice(0,3)}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, background: "#0a1f4a", padding: "12px 16px" }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(55,138,221,0.25)", border: "1px solid rgba(55,138,221,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <span style={{ ...mono, fontSize: 10, color: "#378ADD", fontWeight: 700 }}>{form.asset?.slice(0,3)}</span>
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ ...font, fontSize: 16, fontWeight: 500, color: T.text }}>{form.asset}</div>
-                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
+                        <div style={{ ...font, fontSize: 16, fontWeight: 500, color: "#e8f2ff" }}>{form.asset}</div>
+                        <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
                       </div>
-                      <div style={{ ...mono, fontSize: 9, color: T.accent, border: `1px solid ${T.accentBorder}`, padding: "3px 8px", borderRadius: 4, flexShrink: 0 }}>SELECTED</div>
+                      <div style={{ ...mono, fontSize: 9, color: "#378ADD", border: "1px solid rgba(55,138,221,0.4)", padding: "3px 8px", borderRadius: 4, flexShrink: 0 }}>SELECTED</div>
                     </div>
                     {modalPrice && (
                       <div style={{ background: T.bgCard, borderTop: `1px solid ${T.border}`, padding: "7px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1126,13 +1126,13 @@ export default function AppPage() {
             {step === 2 && form.trigger && (
               <div style={{ padding: "22px 28px" }}>
                 <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 22 }}>
-                  <div style={{ background: T.bgDeep, padding: "14px 18px", display: "flex", gap: 12, alignItems: "center" }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 8, background: T.btnPrimary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
+                  <div style={{ background: "#0a1f4a", padding: "14px 18px", display: "flex", gap: 12, alignItems: "center" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 8, background: "rgba(55,138,221,0.2)", border: "1px solid rgba(55,138,221,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
                       {form.trigger.icon}
                     </div>
                     <div>
-                      <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>{form.asset}</div>
-                      <div style={{ fontSize: 18, color: T.text, marginTop: 2 }}>{form.trigger.label}</div>
+                      <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{form.asset}</div>
+                      <div style={{ fontSize: 18, color: "#e8f2ff", marginTop: 2 }}>{form.trigger.label}</div>
                     </div>
                   </div>
                   {modalPrice && (
