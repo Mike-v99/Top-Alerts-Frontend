@@ -82,9 +82,12 @@ export default function AppPage() {
   const [chartRange,    setChartRange]    = useState("1D");
   const [chartData,     setChartData]     = useState([]);
   const [chartLoading,  setChartLoading]  = useState(false);
-  const [chartLabel,    setChartLabel]    = useState("");
+  const [chartLabel,    setChartLabel]    = useState("Dow 30");
   const chartPanelRef = useRef(null);
   const [flyingCard,   setFlyingCard]   = useState(null); // {x,y,label,symbol}
+  const [tickerDetails, setTickerDetails] = useState(null); // { name, description, sic_description, market_cap, ... }
+  const [tickerNews,    setTickerNews]    = useState([]);
+  const [newsLoading,   setNewsLoading]   = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [modalSource,      setModalSource]      = useState("standalone"); // "card" | "standalone"
   const [modalAssetLabel,  setModalAssetLabel]  = useState(""); // display name from card
@@ -221,6 +224,16 @@ export default function AppPage() {
       if (ws) ws.close();
     };
   }, []);
+
+  // Default chart to DIA on mount
+  useEffect(() => {
+    setChartSymbol("DIA");
+    setChartRange("1D");
+    fetchChart("DIA", "1D");
+    fetchTickerDetails("DIA");
+    fetchTickerNews("DIA");
+  }, []);
+
   const [form, setForm] = useState({
     asset: "BTC/USD", trigger: null, value: "",
     ma: "50", bb: "Upper Band", volume: "3",
@@ -310,6 +323,29 @@ export default function AppPage() {
     setChartLoading(false);
   }
 
+  // ── Ticker details (company info) ──────────────────────────────────────────
+  async function fetchTickerDetails(symbol) {
+    try {
+      const key = import.meta.env.VITE_MASSIVE_KEY || "";
+      const res = await fetch(`https://api.massive.com/v3/reference/tickers/${symbol}?apiKey=${key}`);
+      const data = await res.json();
+      if (data.results) setTickerDetails(data.results);
+    } catch (e) { console.error("Ticker details failed", e); }
+  }
+
+  // ── Ticker news ────────────────────────────────────────────────────────────
+  async function fetchTickerNews(symbol) {
+    setNewsLoading(true);
+    setTickerNews([]);
+    try {
+      const key = import.meta.env.VITE_MASSIVE_KEY || "";
+      const res = await fetch(`https://api.massive.com/v2/reference/news?ticker=${symbol}&limit=6&sort=published_utc&order=desc&apiKey=${key}`);
+      const data = await res.json();
+      if (data.results) setTickerNews(data.results);
+    } catch (e) { console.error("Ticker news failed", e); }
+    setNewsLoading(false);
+  }
+
 
   function openChart(symbol, label, e) {
     // Magnetic pull animation: record card position, animate flying clone to chart panel
@@ -321,6 +357,8 @@ export default function AppPage() {
     setChartLabel(label || symbol);
     setChartRange("1D");
     fetchChart(symbol, "1D");
+    fetchTickerDetails(symbol);
+    fetchTickerNews(symbol);
   }
 
   function changeChartRange(range) {
@@ -509,7 +547,7 @@ export default function AppPage() {
                 <span style={{ color: "#5F5E5A" }}>ALERTS</span>
               </span>
             </div>
-            <div style={{ ...mono, fontSize: 9, letterSpacing: "3px", color: "#378ADD", marginTop: 2 }}>INTELLIGENT PRICE ALERTS</div>
+            <div style={{ ...mono, fontSize: 9, letterSpacing: "3px", color: "#5F5E5A", marginTop: 2 }}>INTELLIGENT PRICE ALERTS</div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -582,63 +620,110 @@ export default function AppPage() {
           </button>
         </div>
 
-        {/* Two-column layout for market tab */}
+        {/* Two-column layout */}
         <div style={{ display: "flex", gap: 20 }}>
 
-          {/* Market sidebar — style #2 left border accent */}
+          {/* Left column — Watchlist */}
           <div style={{ width: 210, flexShrink: 0 }}>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-              {MARKET_SYMBOLS.map(m => {
-                const d   = marketData[m.id];
-                const up  = d?.changePct >= 0;
-                const col = !d ? T.border : up ? T.green : T.red;
-                return (
-                  <div key={m.id} onClick={(e) => openChart(m.symbol, m.label, e)} style={{
-                    background: T.bgCard,
-                    border: `1px solid ${T.border}`,
-                    borderLeft: `4px solid ${col}`,
-                    borderRadius: 9,
-                    padding: "10px 12px",
-                    cursor: "pointer",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    transition: "border-left-color 0.3s",
-                  }}>
-                    <div>
-                      <div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.text }}>{m.label}</div>
-                      <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{m.symbol}</div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ overflow: "hidden" }}>
-                        <div
-                          key={d?.price}
-                          className={flashState[m.id] === "up" ? "price-slide-up" : flashState[m.id] === "down" ? "price-slide-down" : ""}
-                          style={{ ...font, fontSize: 14, fontWeight: 500, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.8s" }}>
-                          {marketLoading && !d ? "—" : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+            {tab === "market" && (
+              <div>
+                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>WATCHLIST</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  {MARKET_SYMBOLS.map(m => {
+                    const d   = marketData[m.id];
+                    const up  = d?.changePct >= 0;
+                    const col = !d ? T.border : up ? T.green : T.red;
+                    const isActive = chartSymbol === m.symbol;
+                    return (
+                      <div key={m.id} onClick={(e) => openChart(m.symbol, m.label, e)} style={{
+                        background: isActive ? T.bgDeep : T.bgCard,
+                        border: `1px solid ${isActive ? T.accent : T.border}`,
+                        borderLeft: `4px solid ${col}`,
+                        borderRadius: 9,
+                        padding: "10px 12px",
+                        cursor: "pointer",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        transition: "all 0.2s",
+                      }}>
+                        <div>
+                          <div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.text }}>{m.label}</div>
+                          <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{m.symbol}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ overflow: "hidden" }}>
+                            <div
+                              key={d?.price}
+                              className={flashState[m.id] === "up" ? "price-slide-up" : flashState[m.id] === "down" ? "price-slide-down" : ""}
+                              style={{ ...font, fontSize: 14, fontWeight: 500, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.8s" }}>
+                              {marketLoading && !d ? "—" : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                            </div>
+                          </div>
+                          {d && <div style={{ ...mono, fontSize: 10, color: col, marginTop: 1 }}>
+                            {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
+                          </div>}
                         </div>
                       </div>
-                      {d && <div style={{ ...mono, fontSize: 10, color: col, marginTop: 1 }}>
-                        {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
-                      </div>}
-                    </div>
+                    );
+                  })}
+
+                  {/* User watchlist items */}
+                  {watchlist.length > 0 && (
+                    <>
+                      <div style={{ height: 1, background: T.border, margin: "6px 0" }} />
+                      {watchlist.map(m => {
+                        const d = watchData[m.symbol];
+                        const up = d?.changePct >= 0;
+                        const col = !d ? T.border : up ? T.green : T.red;
+                        const isActive = chartSymbol === m.symbol;
+                        return (
+                          <div key={m.symbol} style={{
+                            background: isActive ? T.bgDeep : T.bgCard,
+                            border: `1px solid ${isActive ? T.accent : T.border}`,
+                            borderLeft: `4px solid ${col}`,
+                            borderRadius: 9, padding: "10px 12px", cursor: "pointer",
+                            display: "flex", justifyContent: "space-between", alignItems: "center",
+                            transition: "all 0.2s", position: "relative",
+                          }}>
+                            <div onClick={(e) => openChart(m.symbol, m.label, e)} style={{ flex: 1 }}>
+                              <div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.text }}>{m.label}</div>
+                              <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{m.symbol}</div>
+                            </div>
+                            <div style={{ textAlign: "right" }} onClick={(e) => openChart(m.symbol, m.label, e)}>
+                              <div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>
+                                {d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                              </div>
+                              {d && <div style={{ ...mono, fontSize: 10, color: col, marginTop: 1 }}>
+                                {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
+                              </div>}
+                            </div>
+                            <button onClick={() => removeFromWatchlist(m.symbol)} style={{
+                              position: "absolute", top: 2, right: 4,
+                              background: "none", border: "none", color: T.textFaint,
+                              cursor: "pointer", fontSize: 11, lineHeight: 1, opacity: 0.5,
+                            }}>×</button>
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
+
+                  <div style={{ ...mono, fontSize: 9, color: T.textFaint, textAlign: "center", marginTop: 4 }}>
+                    Live · WebSocket
                   </div>
-                );
-              })}
-              <div style={{ ...mono, fontSize: 9, color: T.textFaint, textAlign: "center", marginTop: 4 }}>
-                Live · WebSocket
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Main content */}
+          {/* Right column — Main content */}
           <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Market tab */}
         {tab === "market" && (
           <div>
-            {/* Search bar */}
+            {/* Search bar — full width */}
             <div style={{ position: "relative", marginBottom: 20 }}>
               <input
                 type="text"
@@ -658,8 +743,6 @@ export default function AppPage() {
                   background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 18,
                 }}>×</button>
               )}
-
-              {/* Search results dropdown */}
               {(searchResults.length > 0 || searchLoading) && search && (
                 <div style={{
                   position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 50,
@@ -670,10 +753,9 @@ export default function AppPage() {
                     <div style={{ padding: "12px 16px", ...mono, fontSize: 11, color: T.textFaint }}>Searching...</div>
                   )}
                   {searchResults.map(r => (
-                    <div key={r.symbol} onClick={() => addToWatchlist(r.symbol, r.description)} style={{
+                    <div key={r.symbol} onClick={() => { addToWatchlist(r.symbol, r.description); openChart(r.symbol, r.description); }} style={{
                       padding: "12px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
-                      borderBottom: `1px solid ${T.border}`,
-                      transition: "background 0.15s",
+                      borderBottom: `1px solid ${T.border}`, transition: "background 0.15s",
                     }}
                     onMouseEnter={e => e.currentTarget.style.background = T.bgDeep}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
@@ -689,180 +771,198 @@ export default function AppPage() {
               )}
             </div>
 
-            {/* Chart panel */}
-            {chartSymbol && (
-              <div ref={chartPanelRef} style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ ...font, fontSize: 16, fontWeight: 500, color: T.text }}>{chartLabel}</span>
-                    <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>{chartSymbol}</span>
+            {/* Chart panel — always visible, defaults to DIA */}
+            {chartSymbol && (() => {
+              const d = marketData[chartSymbol] || watchData[chartSymbol];
+              const up = d?.changePct >= 0;
+              const col = !d ? T.textFaint : up ? T.green : T.red;
+              const fmt = n => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+              return (
+                <div>
+                  {/* Chart */}
+                  <div ref={chartPanelRef} style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                        <span style={{ ...font, fontSize: 18, fontWeight: 500, color: T.text }}>{chartLabel}</span>
+                        <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>{chartSymbol}</span>
+                        {d && <>
+                          <span style={{ ...font, fontSize: 18, fontWeight: 500, color: T.text, marginLeft: 8 }}>{fmt(d.price)}</span>
+                          <span style={{ ...mono, fontSize: 11, color: col }}>{up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%</span>
+                        </>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r,lbl]) => (
+                          <button key={r} onClick={() => changeChartRange(r)} style={{
+                            ...mono, fontSize: 11, padding: "3px 10px", borderRadius: 6, cursor: "pointer",
+                            background: chartRange === r ? T.btnPrimary : "none",
+                            color: chartRange === r ? T.btnText : T.textFaint,
+                            border: `1px solid ${chartRange === r ? T.btnPrimary : T.border}`,
+                          }}>{lbl}</button>
+                        ))}
+                        <button onClick={() => openModal(chartSymbol, chartLabel, d ? { price: d.price, change: d.change, changePct: d.changePct, marketOpen: !!d.price } : null)} style={{
+                          padding: "5px 14px", background: "none", border: "2px solid #5F5E5A", borderRadius: 6,
+                          cursor: "pointer", ...font, fontSize: 13, color: "#5F5E5A", whiteSpace: "nowrap", marginLeft: 4,
+                        }}>+ SET ALERT</button>
+                      </div>
+                    </div>
+                    {chartLoading && (
+                      <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: T.textFaint }}>
+                        Loading chart...
+                      </div>
+                    )}
+                    {!chartLoading && chartData.length > 0 && (
+                      <CandlestickChart data={chartData} T={T} range={chartRange} />
+                    )}
+                    {!chartLoading && chartData.length === 0 && (
+                      <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: T.textFaint }}>
+                        No data available for this range
+                      </div>
+                    )}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r,lbl]) => (
-                      <button key={r} onClick={() => changeChartRange(r)} style={{
-                        ...mono, fontSize: 11, padding: "3px 10px", borderRadius: 6, cursor: "pointer",
-                        background: chartRange === r ? T.btnPrimary : "none",
-                        color: chartRange === r ? T.btnText : T.textFaint,
-                        border: `1px solid ${chartRange === r ? T.btnPrimary : T.border}`,
-                      }}>{lbl}</button>
-                    ))}
-                    <button onClick={() => { setChartSymbol(null); setChartData([]); }} style={{
-                      background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 18, marginLeft: 4,
-                    }}>×</button>
-                  </div>
-                </div>
-                {chartLoading && (
-                  <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: T.textFaint }}>
-                    Loading chart...
-                  </div>
-                )}
-                {!chartLoading && chartData.length > 0 && (
-                  <CandlestickChart data={chartData} T={T} range={chartRange} />
-                )}
-                {!chartLoading && chartData.length === 0 && (
-                  <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: T.textFaint }}>
-                    No data available for this range
-                  </div>
-                )}
-              </div>
-            )}
 
-            {/* Watchlist (user-added symbols) */}
-            {watchlist.length > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>YOUR WATCHLIST</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {watchlist.map(m => {
-                    const d        = watchData[m.symbol];
-                    const up       = d?.changePct >= 0;
-                    const col      = !d ? T.border : up ? T.green : T.red;
-                    const rangePct = d?.high && d?.low && d.high !== d.low
-                      ? Math.min(100, Math.max(0, ((d.price - d.low) / (d.high - d.low)) * 100))
-                      : null;
-                    const fmt = n => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                  {/* Fundamentals grid */}
+                  {d && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
+                      <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 16px" }}>
+                        <div style={{ ...mono, fontSize: 9, letterSpacing: "1px", color: T.textFaint, marginBottom: 6 }}>PREV CLOSE</div>
+                        <div style={{ ...font, fontSize: 18, fontWeight: 500, color: T.text }}>{d.prevClose ? fmt(d.prevClose) : "—"}</div>
+                      </div>
+                      <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 16px" }}>
+                        <div style={{ ...mono, fontSize: 9, letterSpacing: "1px", color: T.textFaint, marginBottom: 6 }}>DAY RANGE</div>
+                        <div style={{ ...font, fontSize: 15, fontWeight: 500, color: T.text }}>{d.low ? fmt(d.low) : "—"} – {d.high ? fmt(d.high) : "—"}</div>
+                      </div>
+                      <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 16px" }}>
+                        <div style={{ ...mono, fontSize: 9, letterSpacing: "1px", color: T.textFaint, marginBottom: 6 }}>CHANGE</div>
+                        <div style={{ ...font, fontSize: 18, fontWeight: 500, color: col }}>{d.change >= 0 ? "+" : ""}{d.change?.toFixed(2)}</div>
+                        <div style={{ ...mono, fontSize: 10, color: col, marginTop: 2 }}>{d.changePct >= 0 ? "+" : ""}{d.changePct?.toFixed(2)}%</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Day range bar */}
+                  {d && d.high && d.low && d.high !== d.low && (() => {
+                    const rangePct = Math.min(100, Math.max(0, ((d.price - d.low) / (d.high - d.low)) * 100));
                     return (
-                      <div key={m.symbol} style={{
-                        background: T.bgCard, border: `1px solid ${T.border}`,
-                        borderLeft: `4px solid ${col}`, borderRadius: 11, padding: "14px 16px",
-                        position: "relative",
-                      }}>
-                        <button onClick={() => removeFromWatchlist(m.symbol)} style={{
-                          position: "absolute", top: 8, right: 10,
-                          background: "none", border: "none", color: T.textFaint,
-                          cursor: "pointer", fontSize: 14, lineHeight: 1,
-                        }}>×</button>
-                        {/* Header */}
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingRight: 16, cursor: "pointer" }} onClick={(e) => openChart(m.symbol, m.label, e)}>
-                          <div>
-                            <div style={{ ...mono, fontSize: 10, color: T.accent, fontWeight: 500 }}>{m.symbol}</div>
-                            <div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text, marginTop: 1 }}>{m.label}</div>
-                          </div>
-                          {d && <div style={{ textAlign: "right" }}>
-                            <div style={{ ...mono, fontSize: 11, color: col }}>{up ? "▲" : "▼"} {Math.abs(d.changePct || 0).toFixed(2)}%</div>
-                            <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>{up ? "+" : ""}{d.change?.toFixed(2)}</div>
-                          </div>}
+                      <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
+                        <div style={{ ...mono, fontSize: 9, letterSpacing: "1px", color: T.textFaint, marginBottom: 8 }}>DAY RANGE POSITION</div>
+                        <div style={{ height: 6, background: T.bgDeep, borderRadius: 3, position: "relative" }}>
+                          <div style={{ height: "100%", width: `${rangePct.toFixed(1)}%`, background: col, borderRadius: 3, transition: "width 0.5s" }} />
+                          <div style={{ position: "absolute", top: -3, left: `${rangePct.toFixed(1)}%`, width: 12, height: 12, borderRadius: "50%", background: T.text, border: `2px solid ${T.bgCard}`, transform: "translateX(-50%)", transition: "left 0.5s" }} />
                         </div>
-                        {/* Price */}
-                        <div style={{ ...font, fontSize: 24, fontWeight: 500, color: T.text, margin: "8px 0" }}>
-                          {!d ? "Loading..." : d.price ? fmt(d.price) : "—"}
-                        </div>
-                        {/* Day range bar */}
-                        {rangePct !== null && (
-                          <div style={{ marginBottom: 8 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                              <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>L {fmt(d.low)}</span>
-                              <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>H {fmt(d.high)}</span>
-                            </div>
-                            <div style={{ height: 4, background: T.bgDeep, borderRadius: 2 }}>
-                              <div style={{ height: "100%", width: `${rangePct.toFixed(1)}%`, background: col, borderRadius: 2, transition: "width 0.5s" }} />
-                            </div>
-                          </div>
-                        )}
-                        {/* Footer */}
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div style={{ ...mono, fontSize: 9, color: T.textFaint }}>
-                            {d?.prevClose ? `Prev ${fmt(d.prevClose)}` : ""}
-                          </div>
-                          <button onClick={() => openModal(m.symbol, m.label, d ? { price: d.price, change: d.change, changePct: d.changePct, marketOpen: !!d.price } : null)} style={{
-                            padding: "4px 12px", background: "none",
-                            border: "1px solid #5F5E5A", borderRadius: 6,
-                            cursor: "pointer", ...font, fontSize: 13, color: "#5F5E5A",
-                          }}>+ SET ALERT</button>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                          <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>L {fmt(d.low)}</span>
+                          <span style={{ ...mono, fontSize: 10, color: T.text, fontWeight: 500 }}>Current {fmt(d.price)}</span>
+                          <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>H {fmt(d.high)}</span>
                         </div>
                       </div>
                     );
-                  })}
-                </div>
-              </div>
-            )}
+                  })()}
 
-            <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 14 }}>MARKET OVERVIEW</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              {MARKET_SYMBOLS.map(m => {
-                const d   = marketData[m.id];
-                const up  = d?.changePct >= 0;
-                const col = !d ? T.border : up ? T.green : T.red;
-                const rangePct = d?.high && d?.low && d.high !== d.low
-                  ? Math.min(100, Math.max(0, ((d.price - d.low) / (d.high - d.low)) * 100))
-                  : null;
-                const fmt = n => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                return (
-                  <div key={m.id} style={{
-                    background: T.bgCard, border: `1px solid ${T.border}`,
-                    borderLeft: `4px solid ${col}`,
-                    borderRadius: 11, padding: "14px 16px",
-                  }}>
-                    {/* Header */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", cursor: "pointer" }} onClick={(e) => openChart(m.symbol, m.label, e)}>
-                      <div>
-                        <div style={{ ...font, fontSize: 15, fontWeight: 500, color: T.text }}>{m.label}</div>
-                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{m.symbol}</div>
+                  {/* Ticker details — company info */}
+                  {tickerDetails && (
+                    <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, padding: "18px 18px", marginBottom: 16 }}>
+                      <div style={{ ...mono, fontSize: 9, letterSpacing: "1px", color: T.textFaint, marginBottom: 12 }}>ABOUT {chartSymbol}</div>
+                      <div style={{ ...font, fontSize: 16, fontWeight: 500, color: T.text, marginBottom: 6 }}>{tickerDetails.name}</div>
+                      {tickerDetails.description && (
+                        <div style={{ ...font, fontSize: 13, color: T.textMid, lineHeight: 1.6, marginBottom: 14 }}>
+                          {tickerDetails.description.length > 300 ? tickerDetails.description.slice(0, 300) + "..." : tickerDetails.description}
+                        </div>
+                      )}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                        {tickerDetails.sic_description && (
+                          <div>
+                            <div style={{ ...mono, fontSize: 9, color: T.textFaint, letterSpacing: "1px" }}>SECTOR</div>
+                            <div style={{ ...font, fontSize: 13, color: T.text, marginTop: 3 }}>{tickerDetails.sic_description}</div>
+                          </div>
+                        )}
+                        {tickerDetails.market_cap && (
+                          <div>
+                            <div style={{ ...mono, fontSize: 9, color: T.textFaint, letterSpacing: "1px" }}>MARKET CAP</div>
+                            <div style={{ ...font, fontSize: 13, color: T.text, marginTop: 3 }}>
+                              {tickerDetails.market_cap >= 1e12 ? `$${(tickerDetails.market_cap / 1e12).toFixed(2)}T`
+                                : tickerDetails.market_cap >= 1e9 ? `$${(tickerDetails.market_cap / 1e9).toFixed(2)}B`
+                                : `$${(tickerDetails.market_cap / 1e6).toFixed(0)}M`}
+                            </div>
+                          </div>
+                        )}
+                        {tickerDetails.total_employees && (
+                          <div>
+                            <div style={{ ...mono, fontSize: 9, color: T.textFaint, letterSpacing: "1px" }}>EMPLOYEES</div>
+                            <div style={{ ...font, fontSize: 13, color: T.text, marginTop: 3 }}>{Number(tickerDetails.total_employees).toLocaleString()}</div>
+                          </div>
+                        )}
+                        {tickerDetails.homepage_url && (
+                          <div>
+                            <div style={{ ...mono, fontSize: 9, color: T.textFaint, letterSpacing: "1px" }}>WEBSITE</div>
+                            <a href={tickerDetails.homepage_url} target="_blank" rel="noopener noreferrer" style={{ ...font, fontSize: 13, color: "#378ADD", textDecoration: "none", marginTop: 3, display: "block" }}>
+                              {tickerDetails.homepage_url.replace(/^https?:\/\/(www\.)?/, "").slice(0, 30)}
+                            </a>
+                          </div>
+                        )}
+                        {tickerDetails.list_date && (
+                          <div>
+                            <div style={{ ...mono, fontSize: 9, color: T.textFaint, letterSpacing: "1px" }}>IPO DATE</div>
+                            <div style={{ ...font, fontSize: 13, color: T.text, marginTop: 3 }}>{new Date(tickerDetails.list_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</div>
+                          </div>
+                        )}
+                        {tickerDetails.primary_exchange && (
+                          <div>
+                            <div style={{ ...mono, fontSize: 9, color: T.textFaint, letterSpacing: "1px" }}>EXCHANGE</div>
+                            <div style={{ ...font, fontSize: 13, color: T.text, marginTop: 3 }}>{tickerDetails.primary_exchange}</div>
+                          </div>
+                        )}
                       </div>
-                      {d && <div style={{ textAlign: "right" }}>
-                        <div style={{ ...mono, fontSize: 11, color: col }}>
-                          {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
-                        </div>
-                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>
-                          {up ? "+" : ""}{d.change?.toFixed(2)}
-                        </div>
-                      </div>}
                     </div>
-                    {/* Price */}
-                    <div style={{ overflow: "hidden", margin: "8px 0" }}>
-                      <div
-                        key={d?.price}
-                        className={flashState[m.id] === "up" ? "price-slide-up" : flashState[m.id] === "down" ? "price-slide-down" : ""}
-                        style={{ ...font, fontSize: 26, fontWeight: 500, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.8s" }}>
-                        {marketLoading && !d ? "Loading..." : d?.price ? fmt(d.price) : "—"}
-                      </div>
-                    </div>
-                    {/* Day range bar */}
-                    {rangePct !== null && (
-                      <div style={{ marginBottom: 10 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                          <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>L {fmt(d.low)}</span>
-                          <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>H {fmt(d.high)}</span>
-                        </div>
-                        <div style={{ height: 4, background: T.bgDeep, borderRadius: 2 }}>
-                          <div style={{ height: "100%", width: `${rangePct.toFixed(1)}%`, background: col, borderRadius: 2, transition: "width 0.5s" }} />
-                        </div>
-                      </div>
+                  )}
+
+                  {/* News */}
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 12 }}>LATEST NEWS · {chartSymbol}</div>
+                    {newsLoading && (
+                      <div style={{ padding: "20px 0", textAlign: "center", ...mono, fontSize: 11, color: T.textFaint }}>Loading news...</div>
                     )}
-                    {/* Footer */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ ...mono, fontSize: 9, color: T.textFaint }}>
-                        {d?.prevClose ? `Prev ${fmt(d.prevClose)}` : ""}
-                      </div>
-                      <button onClick={() => openModal(m.symbol, m.label, d ? { price: d.price, change: d.change, changePct: d.changePct, marketOpen: !!d.price } : null)} style={{
-                        padding: "4px 12px", background: "none",
-                        border: "1px solid #5F5E5A", borderRadius: 6,
-                        cursor: "pointer", ...font, fontSize: 13, color: "#5F5E5A",
-                      }}>+ SET ALERT</button>
-                    </div>
+                    {!newsLoading && tickerNews.length === 0 && (
+                      <div style={{ padding: "20px 0", textAlign: "center", ...mono, fontSize: 11, color: T.textFaint }}>No recent news found</div>
+                    )}
+                    {!newsLoading && tickerNews.map((article, i) => (
+                      <a key={i} href={article.article_url} target="_blank" rel="noopener noreferrer" style={{
+                        display: "flex", gap: 14, padding: "14px 0", borderBottom: i < tickerNews.length - 1 ? `1px solid ${T.border}` : "none",
+                        textDecoration: "none", color: "inherit",
+                      }}>
+                        {article.image_url && (
+                          <div style={{ width: 80, height: 56, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: T.bgDeep }}>
+                            <img src={article.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display = "none"} />
+                          </div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text, lineHeight: 1.4, marginBottom: 4 }}>
+                            {article.title?.length > 80 ? article.title.slice(0, 80) + "..." : article.title}
+                          </div>
+                          <div style={{ ...mono, fontSize: 10, color: T.textFaint, lineHeight: 1.5, marginBottom: 4 }}>
+                            {article.description?.length > 120 ? article.description.slice(0, 120) + "..." : article.description || ""}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>{article.publisher?.name || ""}</span>
+                            <span style={{ ...mono, fontSize: 9, color: T.border }}>·</span>
+                            <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>
+                              {article.published_utc ? new Date(article.published_utc).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
+                            </span>
+                            {article.insights?.[0]?.sentiment && (
+                              <>
+                                <span style={{ ...mono, fontSize: 9, color: T.border }}>·</span>
+                                <span style={{ ...mono, fontSize: 9, color: article.insights[0].sentiment === "positive" ? T.green : article.insights[0].sentiment === "negative" ? T.red : T.textFaint }}>
+                                  {article.insights[0].sentiment === "positive" ? "▲ Bullish" : article.insights[0].sentiment === "negative" ? "▼ Bearish" : "— Neutral"}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </a>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
