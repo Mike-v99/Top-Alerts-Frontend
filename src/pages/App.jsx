@@ -407,7 +407,7 @@ export default function AppPage() {
   }
 
   async function fetchModalPrice(symbol) {
-    setModalPrice(null);
+    // Don't clear existing price — keep showing it until fresh data arrives
     try {
       const key = import.meta.env.VITE_MASSIVE_KEY || "";
       const res  = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers?tickers=${symbol}&apiKey=${key}`);
@@ -975,24 +975,24 @@ export default function AppPage() {
 
             {/* Step 1 — Asset + Trigger */}
             {step === 1 && (
-              <div style={{ padding: "22px 28px" }}>
+              <div>
 
-                {/* Card source: style #9 cobalt blue header + price bar */}
+                {/* Card source — flush edge to edge, no outer padding */}
                 {modalSource === "card" && (
-                  <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 20 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, background: "#0a1f4a", padding: "12px 16px" }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(55,138,221,0.25)", border: "1px solid rgba(55,138,221,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <div style={{ borderBottom: `1px solid ${T.border}`, overflow: "hidden", marginBottom: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, background: "#0a1f4a", padding: "14px 24px" }}>
+                      <div style={{ width: 38, height: 38, borderRadius: 8, background: "rgba(55,138,221,0.25)", border: "1px solid rgba(55,138,221,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <span style={{ ...mono, fontSize: 10, color: "#378ADD", fontWeight: 700 }}>{form.asset?.slice(0,3)}</span>
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ ...font, fontSize: 16, fontWeight: 500, color: "#e8f2ff" }}>{form.asset}</div>
-                        <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
+                        <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
                       </div>
                       <div style={{ ...mono, fontSize: 9, color: "#378ADD", border: "1px solid rgba(55,138,221,0.4)", padding: "3px 8px", borderRadius: 4, flexShrink: 0 }}>SELECTED</div>
                     </div>
-                    <div style={{ background: T.bgCard, borderTop: `1px solid ${T.border}`, padding: "7px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ background: T.bgDeep, borderTop: `1px solid ${T.border}`, padding: "8px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       {modalPrice
-                        ? <span style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        ? <span style={{ ...font, fontSize: 15, fontWeight: 500, color: T.text }}>${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         : <span style={{ ...mono, fontSize: 12, color: T.textFaint }}>—</span>
                       }
                       {modalPrice && (modalPrice.marketOpen
@@ -1005,7 +1005,7 @@ export default function AppPage() {
 
                 {/* Standalone: show search bar */}
                 {modalSource === "standalone" && (
-                  <div style={{ marginBottom: 20 }}>
+                  <div style={{ padding: "20px 24px 0", marginBottom: 0 }}>
                     <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>SEARCH SYMBOL</div>
                     <div style={{ position: "relative" }}>
                       <input
@@ -1066,12 +1066,13 @@ export default function AppPage() {
                 )}
                 {/* Nudge if no symbol selected yet */}
                 {modalSource === "standalone" && !form.asset && (
-                  <div style={{ ...mono, fontSize: 11, color: T.textFaint, textAlign: "center", padding: "12px 0 8px" }}>
+                  <div style={{ ...mono, fontSize: 11, color: T.textFaint, textAlign: "center", padding: "12px 24px 8px" }}>
                     Search and select a symbol above to continue
                   </div>
                 )}
 
-                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>FREE TRIGGERS</div>
+                <div style={{ padding: "0 24px" }}>
+                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10, marginTop: 20 }}>FREE TRIGGERS</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
                   {FREE_TRIGGERS.map(t => {
                     const iconBg  = t.id === "price_above" ? "rgba(26,138,68,0.12)"  : t.id === "price_below" ? "rgba(204,34,34,0.12)"  : "rgba(138,106,0,0.12)";
@@ -1120,6 +1121,7 @@ export default function AppPage() {
                     </button>
                   ))}
                 </div>
+                </div>{/* end padding wrapper */}
               </div>
             )}
 
