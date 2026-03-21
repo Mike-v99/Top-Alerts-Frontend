@@ -224,7 +224,7 @@ export default function AppPage() {
   const [form, setForm] = useState({
     asset: "BTC/USD", trigger: null, value: "",
     ma: "50", bb: "Upper Band", volume: "3",
-    delivery: ["push"], cooldown: "60",
+    delivery: ["push"], cooldown: "60", webhook_url: "",
   });
 
   const T    = THEMES[themeName];
@@ -442,6 +442,7 @@ export default function AppPage() {
       trigger_type:  form.trigger.id,
       trigger_value: tv,
       delivery:      form.delivery,
+      webhook_url:   form.delivery.includes("webhook") ? form.webhook_url : null,
       cooldown_mins: parseInt(form.cooldown),
     });
 
@@ -1192,6 +1193,23 @@ export default function AppPage() {
                     );
                   })}
                 </div>
+
+                {/* Webhook URL input — shown when webhook is selected */}
+                {form.delivery.includes("webhook") && (
+                  <div style={{ marginBottom: 22 }}>
+                    <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>WEBHOOK URL</div>
+                    <input
+                      type="url"
+                      placeholder="https://your-server.com/webhook"
+                      value={form.webhook_url}
+                      onChange={e => setForm(f => ({ ...f, webhook_url: e.target.value }))}
+                      style={{ width: "100%", padding: "11px 14px", boxSizing: "border-box", background: T.bgInput, border: `1px solid ${form.webhook_url ? T.accent : T.border}`, borderRadius: 9, color: T.text, ...font, fontSize: 14, outline: "none" }}
+                    />
+                    <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 6, lineHeight: 1.5 }}>
+                      We'll POST a JSON payload with alert details when this alert fires.
+                    </div>
+                  </div>
+                )}
 
                 {isPro && (
                   <>
