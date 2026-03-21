@@ -845,7 +845,7 @@ export default function AppPage() {
                   {/* Calendar grid — full width */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 1, background: T.border, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
                     {dayNames.map(d => (
-                      <div key={d} style={{ background: T.bgCard, padding: 10, textAlign: "center", ...mono, fontSize: 11, color: T.textFaint, letterSpacing: "1px" }}>{d.toUpperCase()}</div>
+                      <div key={d} style={{ background: T.bgCard, padding: 10, textAlign: "center", ...mono, fontSize: 12, color: T.textFaint, letterSpacing: "1px" }}>{d.toUpperCase()}</div>
                     ))}
                     {Array.from({ length: firstDow }).map((_, i) => (
                       <div key={`e${i}`} style={{ background: T.bg, padding: 10, minHeight: 90 }} />
@@ -858,21 +858,22 @@ export default function AppPage() {
                       const isWeekend = (d + firstDow - 1) % 7 === 0 || (d + firstDow - 1) % 7 === 6;
                       return (
                         <div key={d} onClick={() => setCalSelectedDay(d)} style={{
-                          background: isSel ? "#0a1f4a" : isToday ? T.bgDeep : T.bg,
-                          padding: 10, minHeight: 90, cursor: "pointer", transition: "background 0.15s",
+                          background: isToday ? T.bgDeep : T.bg,
+                          border: isSel ? "2px solid #0a1f4a" : "2px solid transparent",
+                          padding: 8, minHeight: 90, cursor: "pointer", transition: "all 0.15s",
                         }}>
-                          <div style={{ fontSize: 14, fontWeight: isToday ? 700 : 400, color: isSel ? "#e8f2ff" : isWeekend ? T.textFaint : T.text, marginBottom: 5 }}>
+                          <div style={{ fontSize: 16, fontWeight: isToday ? 700 : 500, color: isWeekend ? T.textFaint : T.text, marginBottom: 5 }}>
                             {isToday ? (
-                              <span style={{ background: isSel ? "#378ADD" : "#5F5E5A", color: "#fff", width: 26, height: 26, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>{d}</span>
+                              <span style={{ background: "#5F5E5A", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>{d}</span>
                             ) : d}
                           </div>
                           {evts.slice(0, 3).map((e, j) => (
-                            <div key={j} style={{ fontSize: 10, color: isSel ? "rgba(255,255,255,0.6)" : T.textMid, display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }}>
-                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: isSel ? "rgba(255,255,255,0.5)" : dotColor(e.type), flexShrink: 0 }} />
+                            <div key={j} style={{ fontSize: 12, color: T.textMid, display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 3 }}>
+                              <span style={{ width: 7, height: 7, borderRadius: "50%", background: dotColor(e.type), flexShrink: 0 }} />
                               <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{e.type === "earnings" ? e.symbol : e.type === "ipo" ? "IPO" : e.type === "split" ? e.symbol : e.type === "dividend" ? e.symbol : (e.label || "").split(" ").slice(0, 3).join(" ")}</span>
                             </div>
                           ))}
-                          {evts.length > 3 && <div style={{ ...mono, fontSize: 8, color: isSel ? "rgba(255,255,255,0.3)" : T.textFaint, marginTop: 2 }}>+{evts.length - 3} more</div>}
+                          {evts.length > 3 && <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>+{evts.length - 3} more</div>}
                         </div>
                       );
                     })}
