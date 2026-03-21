@@ -1317,24 +1317,24 @@ export default function AppPage() {
 
                   {/* Expanded card */}
                   {isExpanded && (
-                    <div style={{ paddingBottom: 14 }}>
+                    <div onClick={(ev) => ev.stopPropagation()} style={{ paddingBottom: 14 }}>
                       {/* Chart */}
                       <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, overflow: "hidden" }}>
-                        {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: T.textFaint }}>Loading chart...</div>}
+                        {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: "#6a6050" }}>Loading chart...</div>}
                         {!chartLoading && chartData.length > 0 && (
                           <div style={{ overflowX: "auto" }}>
                             <CandlestickChart data={chartData} T={T} range={chartRange} />
                           </div>
                         )}
                         {!chartLoading && chartData.length === 0 && (
-                          <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textFaint }}>No chart data</div>
+                          <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: "#6a6050" }}>No chart data</div>
                         )}
                         <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "8px 12px" }}>
                           {["1D","5D","1M","3M","1Y","5Y"].map(r => (
-                            <span key={r} onClick={() => setChartRange(r)} style={{
+                            <span key={r} onClick={(ev) => { ev.stopPropagation(); setChartRange(r); }} style={{
                               padding: "4px 10px", borderRadius: 5, ...mono, fontSize: 10, cursor: "pointer",
                               background: chartRange === r ? "#0a1f4a" : "transparent",
-                              color: chartRange === r ? "#e8f2ff" : T.textFaint,
+                              color: chartRange === r ? "#e8f2ff" : "#6a6050",
                             }}>{r}</span>
                           ))}
                         </div>
@@ -1358,7 +1358,7 @@ export default function AppPage() {
                       </div>
 
                       {/* News — collapsible */}
-                      <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 8 }}>
+                      <div onClick={(ev) => ev.stopPropagation()} style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 8 }}>
                         <div onClick={() => setMobileNewsOpen(p => !p)} style={{
                           padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between",
                           cursor: "pointer", background: mobileNewsOpen ? T.bgDeep : T.bg,
@@ -1366,34 +1366,35 @@ export default function AppPage() {
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                             <span style={{ fontSize: 12 }}>📰</span>
                             <span style={{ ...mono, fontSize: 10, letterSpacing: "1px", color: "#1a1200", fontWeight: 500 }}>LATEST NEWS</span>
-                            <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>({tickerNews.length})</span>
+                            <span style={{ ...mono, fontSize: 9, color: "#6a6050" }}>({tickerNews.length})</span>
                           </div>
-                          <span style={{ ...font, fontSize: 11, color: mobileNewsOpen ? "#5F5E5A" : T.textFaint }}>{mobileNewsOpen ? "▲ Collapse" : "▼ Expand"}</span>
+                          <span style={{ ...font, fontSize: 11, color: mobileNewsOpen ? "#1a1200" : "#6a6050" }}>{mobileNewsOpen ? "▲ Collapse" : "▼ Expand"}</span>
                         </div>
                         {!mobileNewsOpen && tickerNews.length > 0 && (
-                          <div style={{ padding: "8px 14px", ...font, fontSize: 12, color: T.textMid, borderTop: `1px solid ${T.border}`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          <div style={{ padding: "8px 14px", ...font, fontSize: 12, color: "#1a1200", borderTop: `1px solid ${T.border}`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {tickerNews[0]?.title}
                           </div>
                         )}
                         {mobileNewsOpen && tickerNews.map((n, i) => (
-                          <a key={i} href={n.article_url} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "10px 14px", borderTop: `1px solid ${T.border}`, textDecoration: "none", cursor: "pointer" }}>
-                            <div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.text, lineHeight: 1.3 }}>{n.title}</div>
+                          <a key={i} href={n.article_url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} style={{ display: "block", padding: "10px 14px", borderTop: `1px solid ${T.border}`, textDecoration: "none", cursor: "pointer" }}>
+                            <div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{n.title}</div>
                             <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                              <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>{n.publisher}</span>
-                              <span style={{ color: T.textFaint }}>·</span>
-                              <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
+                              <span style={{ ...mono, fontSize: 9, color: "#6a6050" }}>{n.publisher}</span>
+                              <span style={{ color: "#6a6050" }}>·</span>
+                              <span style={{ ...mono, fontSize: 9, color: "#6a6050" }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
                             </div>
                           </a>
                         ))}
                         {mobileNewsOpen && tickerNews.length === 0 && (
-                          <div style={{ padding: "12px 14px", borderTop: `1px solid ${T.border}`, ...font, fontSize: 12, color: T.textFaint, textAlign: "center" }}>No news available</div>
+                          <div style={{ padding: "12px 14px", borderTop: `1px solid ${T.border}`, ...font, fontSize: 12, color: "#6a6050", textAlign: "center" }}>No news available</div>
                         )}
                       </div>
 
                       {/* Action buttons */}
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => openModal(m.symbol, m.label)} style={{ flex: 1, padding: 10, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>+ Set Alert</button>
-                        <button onClick={() => {
+                        <button onClick={(ev) => { ev.stopPropagation(); openModal(m.symbol, m.label); }} style={{ flex: 1, padding: 10, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>+ Set Alert</button>
+                        <button onClick={(ev) => {
+                          ev.stopPropagation();
                           setWatchlist(prev => {
                             const exists = prev.some(w => w.symbol === m.symbol);
                             const next = exists ? prev.filter(w => w.symbol !== m.symbol) : [...prev, { symbol: m.symbol, label: m.label }];
