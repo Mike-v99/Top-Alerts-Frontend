@@ -837,21 +837,21 @@ export default function AppPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isMobile ? 16 : 36 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 4 : 8 }}>
-              <span style={{ fontSize: isMobile ? 20 : 38, color: "#5F5E5A", lineHeight: 1 }}>◈</span>
-              <span style={{ fontSize: isMobile ? 22 : 45, letterSpacing: "1px" }}>
-                <span style={{ color: "#5F5E5A" }}>TOP</span>
-                <span style={{ color: "#5F5E5A" }}>-</span>
-                <span style={{ color: "#5F5E5A" }}>ALERTS</span>
+              <span style={{ fontSize: isMobile ? 20 : 38, color: isMobile ? "#1a1200" : "#5F5E5A", lineHeight: 1 }}>◈</span>
+              <span style={{ fontSize: isMobile ? 22 : 45, letterSpacing: "1px", fontWeight: isMobile ? 700 : 400 }}>
+                <span style={{ color: isMobile ? "#1a1200" : "#5F5E5A" }}>TOP</span>
+                <span style={{ color: isMobile ? "#1a1200" : "#5F5E5A" }}>-</span>
+                <span style={{ color: isMobile ? "#1a1200" : "#5F5E5A" }}>ALERTS</span>
               </span>
             </div>
             {!isMobile && <div style={{ ...mono, fontSize: 9, letterSpacing: "3px", color: "#5F5E5A", marginTop: 2 }}>INTELLIGENT PRICE ALERTS</div>}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 4 : 8 }}>
             {/* Theme toggle */}
             <button onClick={() => setThemeName(t => t === "paper" ? "charcoal" : "paper")} style={{
-              ...font, fontSize: 18, background: T.bgCard, border: `1px solid ${T.border}`,
-              borderRadius: 8, padding: "6px 12px", cursor: "pointer",
+              ...font, fontSize: isMobile ? 14 : 18, background: T.bgCard, border: `1px solid ${T.border}`,
+              borderRadius: 8, padding: isMobile ? "4px 8px" : "6px 12px", cursor: "pointer",
             }}>
               <span style={{ color: themeName === "paper" ? "#f5a623" : "#ffffff" }}>{T.icon}</span>
             </button>
@@ -859,24 +859,24 @@ export default function AppPage() {
             {/* Plan badge */}
             <div style={{ ...mono, fontSize: 9, letterSpacing: "1.5px",
               background: isPro ? T.accentBg : "transparent",
-              color: isPro ? T.accent : T.textFaint,
-              border: `1px solid ${isPro ? T.accentBorder : T.border}`,
-              padding: "6px 12px", borderRadius: 8 }}>
+              color: isPro ? T.accent : isMobile ? "#6a6050" : T.textFaint,
+              border: `1px solid ${isPro ? T.accentBorder : isMobile ? "#8a8070" : T.border}`,
+              padding: isMobile ? "4px 8px" : "6px 12px", borderRadius: 8 }}>
               {profile?.plan?.toUpperCase() || "FREE"}
             </div>
 
             {/* User + sign out */}
             {user ? (
               <button onClick={() => { signOut(); navigate("/"); }} style={{
-                ...font, fontSize: 16, background: T.bgCard, border: `1px solid ${T.border}`,
-                borderRadius: 8, padding: "6px 12px", cursor: "pointer", color: T.textFaint,
+                ...font, fontSize: isMobile ? 12 : 16, background: T.bgCard, border: `1px solid ${T.border}`,
+                borderRadius: 8, padding: isMobile ? "4px 8px" : "6px 12px", cursor: "pointer", color: T.textFaint,
               }}>
                 {user?.email?.split("@")[0]} ↩
               </button>
             ) : (
               <button onClick={() => navigate("/login")} style={{
-                ...font, fontSize: 18, background: "none", border: "2px solid #5F5E5A",
-                borderRadius: 8, padding: "6px 16px", cursor: "pointer", color: "#5F5E5A",
+                ...font, fontSize: isMobile ? 13 : 18, background: "none", border: `2px solid ${isMobile ? "#1a1200" : "#5F5E5A"}`,
+                borderRadius: 8, padding: isMobile ? "4px 10px" : "6px 16px", cursor: "pointer", color: isMobile ? "#1a1200" : "#5F5E5A", fontWeight: isMobile ? 600 : 400,
               }}>
                 SIGN IN
               </button>
@@ -922,13 +922,13 @@ export default function AppPage() {
           <div style={{ position: "relative", marginBottom: isMobile ? 12 : 20 }}>
             <input
               type="text"
-              placeholder="Search any symbol — AAPL, TSLA, ETH-USD..."
+              placeholder={isMobile ? "Search any symbol" : "Search any symbol — AAPL, TSLA, ETH-USD..."}
               value={search}
               onChange={e => { setSearch(e.target.value); searchSymbols(e.target.value); }}
               style={{
-                width: "100%", padding: "12px 16px", boxSizing: "border-box",
-                background: T.bgCard, border: `1px solid ${search ? T.accent : T.border}`,
-                borderRadius: 10, color: T.text, ...font, fontSize: 18,
+                width: "100%", padding: isMobile ? "10px 14px" : "12px 16px", boxSizing: "border-box",
+                background: T.bgCard, border: isMobile ? `2px solid ${search ? T.accent : "#5F5E5A"}` : `1px solid ${search ? T.accent : T.border}`,
+                borderRadius: 10, color: T.text, ...font, fontSize: isMobile ? 15 : 18,
                 outline: "none", transition: "border 0.2s",
               }}
             />
@@ -1298,19 +1298,19 @@ export default function AppPage() {
                     else { setMobileExpanded(m.symbol); setMobileNewsOpen(false); openChart(m.symbol, m.label); }
                   }} style={{ padding: "12px 0", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text }}>{m.label}</div>
-                      <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>{m.symbol}</div>
+                      <div style={{ ...font, fontSize: 16, fontWeight: 700, color: "#1a1200" }}>{m.label}</div>
+                      <div style={{ ...mono, fontSize: 11, color: "#6a6050" }}>{m.symbol}</div>
                     </div>
                     {!isExpanded && (
-                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 8, color: T.textFaint }}>HIGH</div><div style={{ ...mono, fontSize: 11, color: T.text }}>{snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"}</div></div>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 8, color: T.textFaint }}>LOW</div><div style={{ ...mono, fontSize: 11, color: T.text }}>{snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"}</div></div>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 8, color: T.textFaint }}>VOL</div><div style={{ ...mono, fontSize: 11, color: T.text }}>{snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : snap.volume >= 1e3 ? `${(snap.volume/1e3).toFixed(0)}K` : snap.volume) : "—"}</div></div>
+                      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 8, color: "#8a8070", fontWeight: 500 }}>HIGH</div><div style={{ ...mono, fontSize: 11, color: "#1a1200", fontWeight: 500 }}>{snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"}</div></div>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 8, color: "#8a8070", fontWeight: 500 }}>LOW</div><div style={{ ...mono, fontSize: 11, color: "#1a1200", fontWeight: 500 }}>{snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"}</div></div>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 8, color: "#8a8070", fontWeight: 500 }}>VOL</div><div style={{ ...mono, fontSize: 11, color: "#1a1200", fontWeight: 500 }}>{snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : snap.volume >= 1e3 ? `${(snap.volume/1e3).toFixed(0)}K` : snap.volume) : "—"}</div></div>
                       </div>
                     )}
                     <div style={{ textAlign: "right", minWidth: 75 }}>
-                      <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
-                      <div style={{ ...mono, fontSize: 11, color: col }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
+                      <div style={{ ...font, fontSize: 17, fontWeight: 700, color: "#1a1200" }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      <div style={{ ...mono, fontSize: 12, color: col, fontWeight: 600 }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
                     </div>
                   </div>
 
@@ -1340,7 +1340,7 @@ export default function AppPage() {
                       </div>
 
                       {/* Fundamentals grid */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: T.border, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: "#c0b8a8", borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
                         {[
                           ["Prev. Close", snap.prevClose ? `$${Number(snap.prevClose).toFixed(2)}` : "—"],
                           ["Open", snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"],
@@ -1350,8 +1350,8 @@ export default function AppPage() {
                           ["Change", d ? `${d.changePct >= 0 ? "+" : ""}${d.changePct.toFixed(2)}%` : "—"],
                         ].map(([label, val], idx) => (
                           <div key={idx} style={{ background: T.bg, padding: 8, textAlign: "center" }}>
-                            <div style={{ ...mono, fontSize: 8, color: T.textFaint }}>{label}</div>
-                            <div style={{ ...mono, fontSize: 12, color: T.text, marginTop: 2 }}>{val}</div>
+                            <div style={{ ...mono, fontSize: 9, color: "#6a6050", fontWeight: 500 }}>{label}</div>
+                            <div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 600, marginTop: 2 }}>{val}</div>
                           </div>
                         ))}
                       </div>
