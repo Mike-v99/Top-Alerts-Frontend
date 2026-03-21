@@ -369,6 +369,9 @@ export default function AppPage() {
   }
 
   function openModal(assetOverride, assetLabel, initialPrice) {
+    // Guard: ignore non-string arguments (e.g. React click events passed accidentally)
+    if (assetOverride && typeof assetOverride !== "string") assetOverride = undefined;
+
     // Free users limited to 10 alerts — show upgrade modal on 11th attempt
     const activeAlerts = alerts.filter(a => a.status !== "deleted").length;
     if (!isPro && activeAlerts >= 10) {
@@ -570,7 +573,7 @@ export default function AppPage() {
               {t.toUpperCase()}
             </button>
           ))}
-          <button onClick={openModal} style={{
+          <button onClick={() => openModal()} style={{
             marginLeft: "auto", padding: "8px 22px", background: T.btnPrimary, border: "none",
             borderRadius: 8, cursor: "pointer", ...font, fontSize: 20, color: T.btnText,
           }}>
