@@ -381,6 +381,89 @@ export default function AppPage() {
     setNewsLoading(false);
   }
 
+  // ── Known US Economic Events (fallback when API doesn't provide) ──────
+  function getKnownEconomicEvents(year, month) {
+    const pad = n => String(n).padStart(2, "0");
+    const m = pad(month + 1);
+    const events = [];
+    const add = (day, label, impact, time) => {
+      events.push({ type: "economic", date: `${year}-${m}-${pad(day)}`, label, impact, time, prev: null, est: null, actual: null, country: "US" });
+    };
+
+    // Find specific weekdays in the month
+    const nthWeekday = (n, dow) => { // nth occurrence of day-of-week (0=Sun)
+      let count = 0;
+      for (let d = 1; d <= 31; d++) {
+        const dt = new Date(year, month, d);
+        if (dt.getMonth() !== month) break;
+        if (dt.getDay() === dow) { count++; if (count === n) return d; }
+      }
+      return null;
+    };
+    const firstFriday = nthWeekday(1, 5);
+    const secondWed = nthWeekday(2, 3);
+    const thirdWed = nthWeekday(3, 3);
+    const lastFriday = (() => { for (let d = 31; d >= 1; d--) { const dt = new Date(year, month, d); if (dt.getMonth() === month && dt.getDay() === 5) return d; } return null; })();
+
+    // Nonfarm Payrolls — first Friday
+    if (firstFriday) add(firstFriday, "Nonfarm Payrolls", "high", "8:30 AM");
+    if (firstFriday) add(firstFriday, "Unemployment Rate", "high", "8:30 AM");
+
+    // CPI — typically 2nd or 3rd week Tuesday/Wednesday
+    const cpiDay = nthWeekday(2, 3) || nthWeekday(2, 2);
+    if (cpiDay) add(cpiDay, "CPI (YoY)", "high", "8:30 AM");
+    if (cpiDay) add(cpiDay, "Core CPI (MoM)", "high", "8:30 AM");
+
+    // PPI — day after CPI typically
+    if (cpiDay && cpiDay + 1 <= new Date(year, month + 1, 0).getDate()) add(cpiDay + 1, "PPI (MoM)", "medium", "8:30 AM");
+
+    // Retail Sales — ~16th of month
+    const retailDay = nthWeekday(3, 2) || 16;
+    if (retailDay <= new Date(year, month + 1, 0).getDate()) add(retailDay, "Retail Sales (MoM)", "high", "8:30 AM");
+
+    // FOMC — 8 meetings per year (Jan, Mar, May, Jun, Jul, Sep, Nov, Dec)
+    const fomcMonths = [0, 2, 4, 5, 6, 8, 10, 11];
+    if (fomcMonths.includes(month)) {
+      const fomcDay = thirdWed || nthWeekday(3, 3);
+      if (fomcDay) {
+        add(fomcDay, "FOMC Rate Decision", "high", "2:00 PM");
+        add(fomcDay, "Fed Press Conference", "high", "2:30 PM");
+      }
+    }
+
+    // GDP — last week of month (Jan, Apr, Jul, Oct for quarterly)
+    const gdpMonths = [0, 3, 6, 9]; // preliminary months
+    const gdpAdvMonths = [1, 4, 7, 10]; // second estimate
+    const gdpFinalMonths = [2, 5, 8, 11]; // final
+    if (gdpMonths.includes(month) || gdpAdvMonths.includes(month) || gdpFinalMonths.includes(month)) {
+      const gdpLabel = gdpMonths.includes(month) ? "GDP (Advance)" : gdpAdvMonths.includes(month) ? "GDP (Second Est.)" : "GDP (Final)";
+      const gdpDay = nthWeekday(4, 4) || 27;
+      if (gdpDay <= new Date(year, month + 1, 0).getDate()) add(gdpDay, gdpLabel, "high", "8:30 AM");
+    }
+
+    // PCE — last Friday of month
+    if (lastFriday) add(lastFriday, "Core PCE Price Index", "high", "8:30 AM");
+
+    // Jobless Claims — every Thursday
+    for (let d = 1; d <= new Date(year, month + 1, 0).getDate(); d++) {
+      if (new Date(year, month, d).getDay() === 4) add(d, "Initial Jobless Claims", "medium", "8:30 AM");
+    }
+
+    // Consumer Confidence — last Tuesday
+    const lastTuesday = (() => { for (let d = 31; d >= 1; d--) { const dt = new Date(year, month, d); if (dt.getMonth() === month && dt.getDay() === 2) return d; } return null; })();
+    if (lastTuesday) add(lastTuesday, "Consumer Confidence", "medium", "10:00 AM");
+
+    // ISM Manufacturing — first business day
+    const firstBizDay = (() => { for (let d = 1; d <= 5; d++) { const dt = new Date(year, month, d); if (dt.getDay() >= 1 && dt.getDay() <= 5) return d; } return 1; })();
+    add(firstBizDay, "ISM Manufacturing PMI", "high", "10:00 AM");
+
+    // Michigan Consumer Sentiment — 2nd Friday
+    const secondFriday = nthWeekday(2, 5);
+    if (secondFriday) add(secondFriday, "Michigan Consumer Sentiment (Prelim)", "medium", "10:00 AM");
+
+    return events;
+  }
+
   // ── Calendar data fetching ──────────────────────────────────────────────
   async function fetchCalendarData(year, month) {
     setCalLoading(true);
@@ -418,19 +501,18 @@ export default function AppPage() {
         });
       }
 
-      // Economic — handle both response structures
+      // Economic — Finnhub may require premium, so add known US economic events as fallback
       if (economicRes.status === "fulfilled") {
-        const ecoData = economicRes.value?.economicCalendar || economicRes.value?.result || economicRes.value || [];
+        const ecoData = economicRes.value?.economicCalendar || economicRes.value?.result || [];
         const ecoArray = Array.isArray(ecoData) ? ecoData : [];
-        console.log("[Calendar] Economic response:", JSON.stringify(economicRes.value).slice(0, 200));
-        console.log("[Calendar] Economic events:", ecoArray.length);
+        console.log("[Calendar] Economic API response:", JSON.stringify(economicRes.value).slice(0, 300));
         ecoArray.forEach(e => {
           const dateStr = e.time?.split("T")[0] || e.date || "";
           if (!dateStr) return;
           merged.push({
             type: "economic", date: dateStr,
             label: e.event || e.name || "Economic Event",
-            impact: e.impact === 3 ? "high" : e.impact === 2 ? "medium" : e.impact === 1 ? "low" : e.importance === "high" ? "high" : e.importance === "medium" ? "medium" : "low",
+            impact: e.impact === 3 ? "high" : e.impact === 2 ? "medium" : "low",
             time: e.time ? new Date(e.time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "",
             prev: e.prev ?? e.previous ?? null,
             est: e.estimate ?? e.forecast ?? null,
@@ -438,6 +520,13 @@ export default function AppPage() {
             country: e.country || "US",
           });
         });
+
+        // If no economic events from API, add known US economic schedule
+        if (ecoArray.length === 0) {
+          console.log("[Calendar] No economic data from API, using known US schedule");
+          const knownEvents = getKnownEconomicEvents(year, month);
+          knownEvents.forEach(e => merged.push(e));
+        }
       }
 
       // IPOs
@@ -846,9 +935,23 @@ export default function AppPage() {
           });
           const selEvents = eventsByDay[calSelectedDay] || [];
 
+          // Count events by type for the filter cards
+          const eventCounts = {};
+          calEvents.forEach(e => { eventCounts[e.type] = (eventCounts[e.type] || 0) + 1; });
+
+          // Event type config — Economic first
+          const eventTypes = [
+            ["economic","Economic","#f5a623","📅"],
+            ["earnings","Earnings","#378ADD","📊"],
+            ["ipo","IPO","#1a8a44","🚀"],
+            ["split","Split","#9b59b6","✂️"],
+            ["dividend","Dividend","#cc2222","💰"],
+            ["holiday","Holiday","#5F5E5A","🏖️"],
+          ];
+
           return (
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
                 <div>
                   <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#5F5E5A", marginBottom: 6 }}>CALENDAR</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -862,16 +965,28 @@ export default function AppPage() {
                     )}
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                  {[["earnings","Earnings","#378ADD"],["economic","Economic","#f5a623"],["ipo","IPO","#1a8a44"],["split","Split","#9b59b6"],["dividend","Dividend","#cc2222"],["holiday","Holiday","#5F5E5A"]].map(([id,lbl,col]) => (
+              </div>
+
+              {/* Filter cards — card-style toggles with counts */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8, marginBottom: 20 }}>
+                {eventTypes.map(([id, lbl, col, icon]) => {
+                  const active = calFilters[id];
+                  const count = eventCounts[id] || 0;
+                  return (
                     <button key={id} onClick={() => setCalFilters(f => ({ ...f, [id]: !f[id] }))} style={{
-                      display: "flex", alignItems: "center", gap: 5, padding: "3px 8px", borderRadius: 5, cursor: "pointer",
-                      border: `1px solid ${calFilters[id] ? col + "55" : T.border}`, background: calFilters[id] ? col + "11" : "transparent",
+                      background: T.bgCard, border: `2px solid ${active ? col : T.border}`,
+                      borderRadius: 12, padding: "12px 14px", cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: 10, textAlign: "left",
+                      opacity: active ? 1 : 0.5, transition: "all 0.15s",
                     }}>
-                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: calFilters[id] ? col : T.border }} />
-                      <span style={{ ...font, fontSize: 11, color: calFilters[id] ? T.text : T.textFaint }}>{lbl}</span>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: active ? col + "18" : T.bgDeep, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{icon}</div>
+                      <div>
+                        <div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>{lbl}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>{count} events</div>
+                      </div>
                     </button>
-                  ))}
+                  );
+                })}
                 </div>
               </div>
 
@@ -934,9 +1049,12 @@ export default function AppPage() {
                       <div style={{ padding: "24px 0", textAlign: "center", color: "rgba(255,255,255,0.3)", ...font, fontSize: 14 }}>No events on this day — click a day above</div>
                     )}
 
-                    {selEvents.length > 0 && (
-                      <div style={{ display: "grid", gridTemplateColumns: selEvents.length === 1 ? "1fr" : "1fr 1fr", gap: 10 }}>
-                        {selEvents.map((e, i) => (
+                    {selEvents.length > 0 && (() => {
+                      const typeOrder = { economic: 0, earnings: 1, ipo: 2, split: 3, dividend: 4, holiday: 5 };
+                      const sorted = [...selEvents].sort((a, b) => (typeOrder[a.type] ?? 9) - (typeOrder[b.type] ?? 9));
+                      return (
+                      <div style={{ display: "grid", gridTemplateColumns: sorted.length === 1 ? "1fr" : "1fr 1fr", gap: 10 }}>
+                        {sorted.map((e, i) => (
                           <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${dotColor(e.type)}`, borderRadius: 8, padding: "12px 14px" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                               <div>
@@ -961,7 +1079,8 @@ export default function AppPage() {
                           </div>
                         ))}
                       </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 </div>
               )}
