@@ -980,23 +980,25 @@ export default function AppPage() {
                 {/* Card source — flush edge to edge, price inline with stock name */}
                 {modalSource === "card" && (
                   <div style={{ borderBottom: `1px solid ${T.border}`, overflow: "hidden" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, background: "#0a1f4a", padding: "14px 24px" }}>
-                      <div style={{ width: 38, height: 38, borderRadius: 8, background: "rgba(55,138,221,0.25)", border: "1px solid rgba(55,138,221,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <span style={{ ...mono, fontSize: 10, color: "#378ADD", fontWeight: 700 }}>{form.asset?.slice(0,3)}</span>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ ...font, fontSize: 16, fontWeight: 500, color: "#e8f2ff" }}>{form.asset}</div>
-                        <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ ...font, fontSize: 15, fontWeight: 500, color: "#e8f2ff" }}>
-                          {modalPrice ? `$${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
+                    <div style={{ background: "#0a1f4a", padding: "14px 24px 18px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 14px" }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(55,138,221,0.25)", border: "1px solid rgba(55,138,221,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <span style={{ ...mono, fontSize: 10, color: "#378ADD", fontWeight: 700 }}>{form.asset?.slice(0,3)}</span>
                         </div>
-                        <div style={{ marginTop: 2 }}>
-                          {modalPrice && (modalPrice.marketOpen
-                            ? <span style={{ ...mono, fontSize: 9, color: modalPrice.changePct >= 0 ? "#3ddc84" : "#ff5a5a" }}>{modalPrice.changePct >= 0 ? "▲" : "▼"} {Math.abs(modalPrice.changePct).toFixed(2)}%</span>
-                            : <span style={{ ...mono, fontSize: 8, color: "rgba(255,255,255,0.3)" }}>CLOSED</span>
-                          )}
+                        <div style={{ flex: 1 }}>
+                          <div style={{ ...font, fontSize: 15, fontWeight: 500, color: "#e8f2ff" }}>{form.asset}</div>
+                          <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ ...font, fontSize: 15, fontWeight: 500, color: "#e8f2ff" }}>
+                            {modalPrice ? `$${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
+                          </div>
+                          <div style={{ marginTop: 2 }}>
+                            {modalPrice && (modalPrice.marketOpen
+                              ? <span style={{ ...mono, fontSize: 9, color: modalPrice.changePct >= 0 ? "#3ddc84" : "#ff5a5a" }}>{modalPrice.changePct >= 0 ? "▲" : "▼"} {Math.abs(modalPrice.changePct).toFixed(2)}%</span>
+                              : <span style={{ ...mono, fontSize: 8, color: "rgba(255,255,255,0.3)" }}>CLOSED</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
