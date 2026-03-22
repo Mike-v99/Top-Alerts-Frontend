@@ -2712,9 +2712,10 @@ export default function AppPage() {
                           </div>
                         )}
                         {mobileProTriggersOpen && (
-                          <div style={{ padding: "6px 14px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
+                          <div style={{ padding: "6px 14px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
                             {PRO_TRIGGERS.map(t => {
                               const isSelected = form.trigger?.id === t.id;
+                              const iconBg = T.bgDeep;
                               return (
                               <div key={t.id}>
                               <button onClick={() => {
@@ -2722,19 +2723,20 @@ export default function AppPage() {
                                 if (!isPro) { setShowModal(false); setTab("pricing"); showToast("Pro plan required", "warn"); return; }
                                 setForm(f => ({ ...f, trigger: t }));
                               }} style={{
-                                width: "100%", padding: "12px 14px", borderRadius: 10,
+                                width: "100%", padding: 16, borderRadius: 12,
                                 border: isSelected ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
                                 background: T.bgCard, cursor: !form.asset ? "not-allowed" : "pointer", ...font,
                                 textAlign: "left", display: "flex", gap: 12, alignItems: "center",
                                 opacity: !form.asset ? 0.4 : isPro ? 1 : 0.45,
                               }}>
-                                <div style={{ width: 36, height: 36, borderRadius: 7, background: T.bgDeep, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16, color: T.textFaint }}>{t.icon}</div>
+                                <div style={{ width: isMobile ? 44 : 38, height: isMobile ? 44 : 38, borderRadius: 8, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: isMobile ? 20 : 18, color: T.textFaint }}>{t.icon}</div>
                                 <div style={{ flex: 1 }}>
-                                  <div style={{ fontSize: isMobile ? 16 : 14, color: T.text, fontWeight: isSelected ? 600 : 400 }}>{t.label}</div>
-                                  <div style={{ ...mono, fontSize: 11, color: T.textMid, marginTop: 2 }}>{t.desc}</div>
+                                  <div style={{ fontSize: isMobile ? 20 : 16, color: T.text, fontWeight: isSelected ? 600 : 500 }}>{t.label}</div>
+                                  <div style={{ ...mono, fontSize: isMobile ? 13 : 11, color: T.textMid, marginTop: 3 }}>{t.desc}</div>
                                 </div>
                                 {!isPro && <span style={{ ...mono, fontSize: 10, color: T.textFaint, border: `1px solid ${T.border}`, padding: "2px 6px", borderRadius: 3 }}>PRO</span>}
                                 {isSelected && <span style={{ ...mono, fontSize: 13, color: "#0a1f4a", fontWeight: 600 }}>✓</span>}
+                                {!isSelected && isPro && <span style={{ fontSize: isMobile ? 18 : 14, color: T.textFaint }}>→</span>}
                               </button>
                               {/* Inline input for selected Pro trigger */}
                               {isSelected && t.input === "ma" && (
