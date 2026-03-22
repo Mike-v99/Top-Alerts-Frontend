@@ -70,6 +70,8 @@ const DELIVERY   = [
 
 export default function AppPage() {
   const navigate = useNavigate();
+  const { user, profile, isPro, signOut } = useAuth();
+  const { alerts, history, loading, createAlert, deleteAlert, togglePause } = useAlerts();
 
   // Clear localStorage if ?reset is in the URL
   useEffect(() => {
@@ -77,13 +79,10 @@ export default function AppPage() {
       localStorage.removeItem("ta-card-order");
       localStorage.removeItem("ta-local-alerts");
       localStorage.removeItem("ta-watchlist");
-      console.log("[TopAlerts] localStorage cleared via ?reset");
       window.history.replaceState({}, "", window.location.pathname);
+      window.location.reload();
     }
   }, []);
-
-  const { user, profile, isPro, signOut } = useAuth();
-  const { alerts, history, loading, createAlert, deleteAlert, togglePause } = useAlerts();
 
   // Local alerts for unauthenticated users
   const [localAlerts, setLocalAlerts] = useState(() => {
