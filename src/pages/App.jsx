@@ -537,28 +537,34 @@ export default function AppPage() {
       try {
         const res = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/gainers?apiKey=${key}`);
         const data = await res.json();
-        const topGainers = (data.tickers || []).filter(t => (t.lastTrade?.p || t.day?.c || t.prevDay?.c || 0) > 1).slice(0, 10).map(t => {
+        console.log("[Hotlist] Gainers response:", data.status, "count:", (data.tickers||[]).length);
+        if (data.tickers?.[0]) console.log("[Hotlist] First gainer raw:", JSON.stringify(data.tickers[0]).slice(0, 500));
+        const topGainers = (data.tickers || []).slice(0, 20).map(t => {
+          const price = t.lastTrade?.p || t.day?.c || t.prevDay?.c || 0;
           const isLive = !!(t.lastTrade?.p || (t.day?.c && t.day.c !== 0));
           return {
             symbol: t.ticker, name: t.ticker,
-            price: isLive ? (t.lastTrade?.p || t.day?.c || 0) : (t.prevDay?.c || 0),
+            price,
             changePct: t.todaysChangePerc || (t.prevDay?.c && t.prevDay?.o ? ((t.prevDay.c - t.prevDay.o) / t.prevDay.o) * 100 : 0),
             change: t.todaysChange || (t.prevDay?.c && t.prevDay?.o ? t.prevDay.c - t.prevDay.o : 0),
             volume: t.day?.v || t.prevDay?.v || 0,
           };
-        });
+        }).filter(t => t.price > 1).slice(0, 10);
         const res2 = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/losers?apiKey=${key}`);
         const data2 = await res2.json();
-        const topLosers = (data2.tickers || []).filter(t => (t.lastTrade?.p || t.day?.c || t.prevDay?.c || 0) > 1).slice(0, 10).map(t => {
+        console.log("[Hotlist] Losers response:", data2.status, "count:", (data2.tickers||[]).length);
+        const topLosers = (data2.tickers || []).slice(0, 20).map(t => {
+          const price = t.lastTrade?.p || t.day?.c || t.prevDay?.c || 0;
           const isLive = !!(t.lastTrade?.p || (t.day?.c && t.day.c !== 0));
           return {
             symbol: t.ticker, name: t.ticker,
-            price: isLive ? (t.lastTrade?.p || t.day?.c || 0) : (t.prevDay?.c || 0),
+            price,
             changePct: t.todaysChangePerc || (t.prevDay?.c && t.prevDay?.o ? ((t.prevDay.c - t.prevDay.o) / t.prevDay.o) * 100 : 0),
             change: t.todaysChange || (t.prevDay?.c && t.prevDay?.o ? t.prevDay.c - t.prevDay.o : 0),
             volume: t.day?.v || t.prevDay?.v || 0,
           };
-        });
+        }).filter(t => t.price > 1).slice(0, 10);
+        console.log("[Hotlist] Processed:", topGainers.length, "gainers,", topLosers.length, "losers");
         setHotlistData({ gainers: topGainers, losers: topLosers });
       } catch (e) { console.error("Hotlist fetch error:", e); }
     })();
