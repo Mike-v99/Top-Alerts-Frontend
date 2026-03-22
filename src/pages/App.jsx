@@ -61,31 +61,6 @@ const DELIVERY   = [
 export default function AppPage() {
   const navigate = useNavigate();
   const { user, profile, isPro, signOut } = useAuth();
-
-  // Sync local alerts to server when user logs in
-  useEffect(() => {
-    if (!user) return;
-    const locals = JSON.parse(localStorage.getItem("ta-local-alerts") || "[]");
-    if (locals.length === 0) return;
-    (async () => {
-      for (const la of locals) {
-        try {
-          await createAlert({
-            asset: la.asset,
-            asset_type: la.asset_type,
-            trigger_type: la.trigger_type,
-            trigger_value: la.trigger_value,
-            delivery: la.delivery,
-            webhook_url: la.webhook_url,
-            cooldown_mins: la.cooldown_mins,
-          });
-        } catch (e) { console.error("Sync local alert failed:", e); }
-      }
-      localStorage.removeItem("ta-local-alerts");
-      setLocalAlerts([]);
-      showToast(`${locals.length} alert${locals.length > 1 ? "s" : ""} synced to your account`);
-    })();
-  }, [user]);
   const { alerts, history, loading, createAlert, deleteAlert, togglePause } = useAlerts();
 
   // Local alerts for unauthenticated users
@@ -515,6 +490,31 @@ export default function AppPage() {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   }
+
+  // Sync local alerts to server when user logs in
+  useEffect(() => {
+    if (!user) return;
+    const locals = JSON.parse(localStorage.getItem("ta-local-alerts") || "[]");
+    if (locals.length === 0) return;
+    (async () => {
+      for (const la of locals) {
+        try {
+          await createAlert({
+            asset: la.asset,
+            asset_type: la.asset_type,
+            trigger_type: la.trigger_type,
+            trigger_value: la.trigger_value,
+            delivery: la.delivery,
+            webhook_url: la.webhook_url,
+            cooldown_mins: la.cooldown_mins,
+          });
+        } catch (e) { console.error("Sync local alert failed:", e); }
+      }
+      localStorage.removeItem("ta-local-alerts");
+      setLocalAlerts([]);
+      showToast(`${locals.length} alert${locals.length > 1 ? "s" : ""} synced to your account`);
+    })();
+  }, [user]);
 
   // ── Symbol search ──────────────────────────────────────────────────────────
   async function searchSymbols(q) {
