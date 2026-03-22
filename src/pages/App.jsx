@@ -1167,8 +1167,8 @@ export default function AppPage() {
             <button key={t} onClick={() => setTab(t)} style={{
               padding: isMobile ? "8px 10px" : "10px 22px", background: "none", border: "none", cursor: "pointer",
               ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px", fontWeight: isMobile && tab === t ? 700 : 400,
-              color: tab === t ? (isMobile ? T.text : T.activeTab) : T.textMid,
-              borderBottom: tab === t ? `2px solid ${isMobile ? T.text : T.activeTabBorder}` : "2px solid transparent",
+              color: tab === t ? (t === "alerts" ? "#cc2222" : (isMobile ? T.text : T.activeTab)) : T.textMid,
+              borderBottom: tab === t ? `2px solid ${t === "alerts" ? "#cc2222" : (isMobile ? T.text : T.activeTabBorder)}` : "2px solid transparent",
               marginBottom: -1, transition: "all 0.2s", flexShrink: 0,
             }}>
               {t.toUpperCase()}
@@ -1297,21 +1297,21 @@ export default function AppPage() {
               </div>
 
               {/* Filter cards — card-style toggles with counts */}
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(6, 1fr)", gap: 8, marginBottom: 20 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(6, 1fr)", gap: isMobile ? 6 : 8, marginBottom: 20, overflow: "hidden" }}>
                 {eventTypes.map(([id, lbl, col, icon]) => {
                   const active = calFilters[id];
                   const count = eventCounts[id] || 0;
                   return (
                     <button key={id} onClick={() => setCalFilters(f => ({ ...f, [id]: !f[id] }))} style={{
                       background: T.bgCard, border: `2px solid ${active ? col : T.border}`,
-                      borderRadius: 12, padding: "12px 14px", cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: 10, textAlign: "left",
-                      opacity: active ? 1 : 0.5, transition: "all 0.15s",
+                      borderRadius: isMobile ? 10 : 12, padding: isMobile ? "8px 6px" : "12px 14px", cursor: "pointer",
+                      display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: "center", gap: isMobile ? 4 : 10, textAlign: isMobile ? "center" : "left",
+                      opacity: active ? 1 : 0.5, transition: "all 0.15s", minWidth: 0,
                     }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 8, background: active ? col + "18" : T.bgDeep, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{icon}</div>
+                      <div style={{ width: isMobile ? 28 : 36, height: isMobile ? 28 : 36, borderRadius: 8, background: active ? col + "18" : T.bgDeep, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? 14 : 18, flexShrink: 0 }}>{icon}</div>
                       <div>
-                        <div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>{lbl}</div>
-                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>{count} events</div>
+                        <div style={{ ...font, fontSize: isMobile ? 11 : 14, fontWeight: 500, color: T.text }}>{lbl}</div>
+                        <div style={{ ...mono, fontSize: isMobile ? 9 : 10, color: T.textFaint, marginTop: 1 }}>{count}</div>
                       </div>
                     </button>
                   );
@@ -1321,14 +1321,14 @@ export default function AppPage() {
               {calLoading && <div style={{ textAlign: "center", padding: 60, color: T.textFaint, ...mono, fontSize: 13 }}>Loading calendar...</div>}
 
               {!calLoading && (
-                <div>
+                <div style={{ overflow: "hidden" }}>
                   {/* Calendar grid — full width */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 1, background: T.border, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
                     {dayNames.map(d => (
-                      <div key={d} style={{ background: T.bgCard, padding: 10, textAlign: "center", ...mono, fontSize: 12, color: T.textFaint, letterSpacing: "1px" }}>{d.toUpperCase()}</div>
+                      <div key={d} style={{ background: T.bgCard, padding: isMobile ? 6 : 10, textAlign: "center", ...mono, fontSize: isMobile ? 9 : 12, color: T.textFaint, letterSpacing: "1px" }}>{d.toUpperCase()}</div>
                     ))}
                     {Array.from({ length: firstDow }).map((_, i) => (
-                      <div key={`e${i}`} style={{ background: T.bg, padding: 10, minHeight: 90 }} />
+                      <div key={`e${i}`} style={{ background: T.bg, padding: isMobile ? 4 : 10, minHeight: isMobile ? 50 : 90 }} />
                     ))}
                     {Array.from({ length: daysInMonth }).map((_, i) => {
                       const d = i + 1;
