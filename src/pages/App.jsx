@@ -2395,9 +2395,58 @@ export default function AppPage() {
 
             {/* Step 3 — Delivery */}
             {step === 3 && (
-              <div style={{ padding: "22px 28px" }}>
-                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 12 }}>DELIVERY METHOD</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 22 }}>
+              <div style={{ padding: isMobile ? "20px" : "22px 28px" }}>
+
+                {/* Alert summary — mobile only */}
+                {isMobile && form.trigger && (
+                  <div style={{ background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: form.trigger.id === "price_above" ? "rgba(26,138,68,0.12)" : form.trigger.id === "price_below" ? "rgba(204,34,34,0.12)" : "rgba(138,106,0,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: form.trigger.id === "price_above" ? T.green : form.trigger.id === "price_below" ? T.red : T.accent, flexShrink: 0 }}>{form.trigger.icon}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{form.trigger.label}</div>
+                      <div style={{ ...mono, fontSize: 14, color: form.trigger.id === "price_above" ? T.green : form.trigger.id === "price_below" ? T.red : T.accent, fontWeight: 600, marginTop: 2 }}>{form.value ? (form.trigger.input === "percent" ? `${form.value}%` : `$${form.value}`) : ""}</div>
+                    </div>
+                    <div onClick={() => setStep(1)} style={{ ...mono, fontSize: 11, color: "#0a1f4a", fontWeight: 600, cursor: "pointer" }}>Edit ✎</div>
+                  </div>
+                )}
+
+                <div style={{ ...mono, fontSize: isMobile ? 12 : 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 12 }}>{isMobile ? "DELIVERY CHANNELS" : "DELIVERY METHOD"}</div>
+
+                {/* Mobile: toggle switches */}
+                {isMobile ? (
+                  <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", marginBottom: 20 }}>
+                    {DELIVERY.map((d, idx) => {
+                      const blocked = d.pro && !isPro;
+                      const active = form.delivery.includes(d.id) && !blocked;
+                      const emoji = d.id === "email" ? "📧" : d.id === "push" ? "🔔" : d.id === "sms" ? "💬" : "🔗";
+                      const desc = d.id === "email" ? "Account email" : d.id === "push" ? "Browser notifications" : d.id === "sms" ? "Text message" : "POST endpoint";
+                      return (
+                        <div key={d.id} onClick={() => !blocked && setForm(f => ({ ...f, delivery: active ? f.delivery.filter(x => x !== d.id) : [...f.delivery, d.id] }))}
+                          style={{
+                            padding: "18px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
+                            borderBottom: idx < DELIVERY.length - 1 ? `1px solid ${T.border}` : "none",
+                            opacity: blocked ? 0.45 : 1, cursor: blocked ? "not-allowed" : "pointer",
+                          }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <span style={{ fontSize: 22 }}>{emoji}</span>
+                            <div>
+                              <div style={{ ...font, fontSize: 18, fontWeight: active ? 600 : 500, color: T.text }}>{d.label}</div>
+                              <div style={{ ...mono, fontSize: 11, color: T.textFaint }}>{desc}</div>
+                            </div>
+                          </div>
+                          {blocked ? (
+                            <span style={{ ...mono, fontSize: 10, color: "#0a1f4a", border: "1px solid #0a1f4a", padding: "3px 8px", borderRadius: 4, fontWeight: 600 }}>PRO</span>
+                          ) : (
+                            <div style={{ width: 52, height: 30, borderRadius: 15, background: active ? "#0a1f4a" : T.border, padding: 3, display: "flex", alignItems: "center", justifyContent: active ? "flex-end" : "flex-start", transition: "all 0.2s" }}>
+                              <div style={{ width: 24, height: 24, borderRadius: 12, background: "#fff" }} />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Desktop: original 2x2 grid */
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 22 }}>
                   {DELIVERY.map(d => {
                     const blocked = d.pro && !isPro;
                     const active  = form.delivery.includes(d.id) && !blocked;
@@ -2416,12 +2465,13 @@ export default function AppPage() {
                       </button>
                     );
                   })}
-                </div>
+                  </div>
+                )}
 
                 {/* Webhook URL input — shown when webhook is selected */}
                 {form.delivery.includes("webhook") && (
                   <div style={{ marginBottom: 22 }}>
-                    <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>WEBHOOK URL</div>
+                    <div style={{ ...mono, fontSize: isMobile ? 12 : 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>WEBHOOK URL</div>
                     <input
                       type="url"
                       placeholder="https://your-server.com/webhook"
@@ -2429,7 +2479,7 @@ export default function AppPage() {
                       onChange={e => setForm(f => ({ ...f, webhook_url: e.target.value }))}
                       style={{ width: "100%", padding: "11px 14px", boxSizing: "border-box", background: T.bgInput, border: `1px solid ${form.webhook_url ? T.accent : T.border}`, borderRadius: 9, color: T.text, ...font, fontSize: 14, outline: "none" }}
                     />
-                    <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 6, lineHeight: 1.5 }}>
+                    <div style={{ ...mono, fontSize: isMobile ? 11 : 9, color: T.textFaint, marginTop: 6, lineHeight: 1.5 }}>
                       We'll POST a JSON payload with alert details when this alert fires.
                     </div>
                   </div>
@@ -2437,7 +2487,7 @@ export default function AppPage() {
 
                 {isPro && (
                   <>
-                    <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>COOLDOWN</div>
+                    <div style={{ ...mono, fontSize: isMobile ? 12 : 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>COOLDOWN</div>
                     <div style={{ display: "flex", gap: 8, marginBottom: 22 }}>
                       {[["15","15m"],["60","1h"],["240","4h"],["1440","24h"]].map(([v,l]) => (
                         <button key={v} onClick={() => setForm(f => ({ ...f, cooldown: v }))} style={{ ...chipBtn(form.cooldown === v), flex: 1, padding: "10px 0", textAlign: "center" }}>{l}</button>
@@ -2446,10 +2496,10 @@ export default function AppPage() {
                   </>
                 )}
 
-                <button onClick={handleSaveAlert} style={{ width: "100%", padding: 13, background: T.btnPrimary, border: "none", borderRadius: 9, cursor: "pointer", ...font, fontSize: 20, color: T.btnText }}>
+                <button onClick={handleSaveAlert} style={{ width: "100%", padding: isMobile ? 16 : 13, background: T.btnPrimary, border: "none", borderRadius: isMobile ? 10 : 9, cursor: "pointer", ...font, fontSize: 20, color: T.btnText }}>
                   SAVE ALERT
                 </button>
-                <button onClick={() => setStep(2)} style={{ marginTop: 8, width: "100%", padding: 10, background: "none", border: "none", color: T.textFaint, cursor: "pointer", ...font, fontSize: 16 }}>← Back</button>
+                <button onClick={() => setStep(isMobile ? 1 : 2)} style={{ marginTop: 8, width: "100%", padding: 10, background: "none", border: "none", color: T.textFaint, cursor: "pointer", ...font, fontSize: isMobile ? 14 : 16 }}>← Back</button>
               </div>
             )}
           </div>
