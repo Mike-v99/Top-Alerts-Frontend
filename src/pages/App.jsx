@@ -153,9 +153,60 @@ export default function AppPage() {
   const [mobileProTriggersOpen, setMobileProTriggersOpen] = useState(false);
   const [isLandscape, setIsLandscape] = useState(() => typeof window !== "undefined" && window.innerWidth > window.innerHeight);
 
-  function shareTicker(symbol, label, price, changePct) {
+  async function shareTicker(symbol, label, price, changePct) {
     const text = `Check out ${label || symbol} (${symbol}) on Top-Alerts — currently $${Number(price).toFixed(2)} (${changePct >= 0 ? "▲" : "▼"} ${Math.abs(changePct).toFixed(2)}% today)`;
     const url = `https://top-alerts.com?symbol=${symbol}`;
+
+    // Pro users get chart screenshot
+    if (isPro) {
+      try {
+        showToast("Capturing chart...");
+        // Dynamically load html2canvas if not loaded
+        if (!window.html2canvas) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        }
+        const cardEl = document.getElementById(`swipe-card-${symbol}`);
+        if (cardEl && window.html2canvas) {
+          const canvas = await window.html2canvas(cardEl, {
+            backgroundColor: "#faf9f6",
+            scale: 2,
+            useCORS: true,
+            logging: false,
+          });
+          const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+          const file = new File([blob], `${symbol}-chart.png`, { type: "image/png" });
+
+          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: `${label || symbol} — $${Number(price).toFixed(2)}`,
+              text,
+              url,
+              files: [file],
+            });
+            return;
+          } else {
+            // Fallback: download the image
+            const link = document.createElement("a");
+            link.href = canvas.toDataURL("image/png");
+            link.download = `${symbol}-chart.png`;
+            link.click();
+            showToast("Chart screenshot saved!");
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Screenshot share failed:", err);
+        // Fall through to text share
+      }
+    }
+
+    // Free users (or screenshot fallback): text + URL share
     if (navigator.share) {
       navigator.share({ title: `${label || symbol} — $${Number(price).toFixed(2)}`, text, url }).catch(() => {});
     } else {
