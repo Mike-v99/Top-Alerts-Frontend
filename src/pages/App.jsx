@@ -2538,10 +2538,10 @@ export default function AppPage() {
       )}
 
       {showModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, touchAction: "none", overscrollBehavior: "contain" }}
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "8px 0 0" : 20, touchAction: "none", overscrollBehavior: "contain" }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}
           onTouchMove={e => e.preventDefault()}>
-          <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? 14 : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: "90vh", boxShadow: "0 40px 80px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column", overflow: "hidden" }}
+          <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? "14px 14px 0 0" : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: isMobile ? "100%" : "90vh", height: isMobile ? "calc(100vh - 8px)" : "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column", overflow: "hidden" }}
             onTouchMove={e => e.stopPropagation()}>
 
             {/* Modal header — cobalt blue, fixed outside scroll */}
