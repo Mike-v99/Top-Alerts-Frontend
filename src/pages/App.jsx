@@ -147,6 +147,7 @@ export default function AppPage() {
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
   const [mobileExpanded, setMobileExpanded] = useState(null); // symbol of expanded ticker
   const [mobileNewsOpen, setMobileNewsOpen] = useState(false);
+  const [expandedAlert, setExpandedAlert] = useState(null); // id of expanded alert card
   const [mobileChartFull, setMobileChartFull] = useState(false); // fullscreen chart overlay
   const [mobileProTriggersOpen, setMobileProTriggersOpen] = useState(false);
   const [isLandscape, setIsLandscape] = useState(() => typeof window !== "undefined" && window.innerWidth > window.innerHeight);
@@ -1724,33 +1725,103 @@ export default function AppPage() {
         {isMobile && tab === "alerts" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {loading && <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...font, fontSize: 14 }}>Loading...</div>}
-            {!loading && allAlerts.filter(a => a.status !== "deleted").map((a) => (
+            {!loading && allAlerts.filter(a => a.status !== "deleted").map((a) => {
+              const isOpen = expandedAlert === a.id;
+              const triggerLabel = a.trigger_type?.replace(/_/g, " ") || "";
+              const triggerVal = a.trigger_value ? (a.trigger_value.price ? `$${a.trigger_value.price}` : a.trigger_value.percent ? `${a.trigger_value.percent}%` : a.trigger_value.ma_period ? `${a.trigger_value.ma_period}D MA` : a.trigger_value.band || a.trigger_value.volume_multiplier ? `${a.trigger_value.volume_multiplier}×` : "") : "";
+              const deliveryArr = Array.isArray(a.delivery) ? a.delivery : [];
+              return (
               <div key={a.id} style={{
-                background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10,
-                padding: "14px 16px", display: "flex", alignItems: "center", gap: 12,
-                position: "relative", overflow: "hidden",
+                background: T.bgCard, border: isOpen ? "2px solid #0a1f4a" : `1px solid ${T.border}`, borderRadius: 12,
+                overflow: "hidden",
               }}>
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${T.accent},transparent)` }} />
-                <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-                  background: a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ ...font, fontSize: 16, fontWeight: 500, color: T.text }}>{a.asset}</div>
-                  <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>{a.trigger_type?.replace(/_/g, " ")}</div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ ...mono, fontSize: 9, color: a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green,
-                    border: `1px solid ${a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green}33`,
-                    background: `${a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green}11`,
-                    padding: "3px 8px", borderRadius: 4 }}>
-                    {a.status.toUpperCase()}
+                {/* Collapsed row — tap to expand */}
+                <div onClick={() => setExpandedAlert(isOpen ? null : a.id)} style={{
+                  padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer",
+                }}>
+                  <div style={{ position: "relative" }}>
+                    <div style={{ width: 10, height: 10, borderRadius: "50%", flexShrink: 0,
+                      background: a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green }} />
                   </div>
-                  <button onClick={() => handleTogglePause(a.id)} style={{ background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 14 }}>
-                    {a.status === "paused" ? "▶" : "⏸"}
-                  </button>
-                  <button onClick={() => handleDeleteAlert(a.id)} style={{ background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 16 }}>×</button>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ ...font, fontSize: 18, fontWeight: 600, color: T.text }}>{a.asset}</div>
+                    <div style={{ ...mono, fontSize: 12, color: T.textMid, marginTop: 2 }}>{triggerLabel}{triggerVal ? ` · ${triggerVal}` : ""}</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ ...mono, fontSize: 10, color: a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green,
+                      border: `1px solid ${a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green}33`,
+                      background: `${a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green}11`,
+                      padding: "4px 10px", borderRadius: 4 }}>
+                      {a.status.toUpperCase()}
+                    </div>
+                    <span style={{ fontSize: 14, color: T.textFaint }}>{isOpen ? "▲" : "▼"}</span>
+                  </div>
                 </div>
+
+                {/* Expanded details */}
+                {isOpen && (
+                  <div style={{ padding: "0 16px 16px", borderTop: `1px solid ${T.border}` }}>
+                    {/* Trigger info */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 0", borderBottom: `1px solid ${T.border}` }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: triggerLabel.includes("above") ? "rgba(26,138,68,0.12)" : triggerLabel.includes("below") ? "rgba(204,34,34,0.12)" : "rgba(138,106,0,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: triggerLabel.includes("above") ? T.green : triggerLabel.includes("below") ? T.red : T.accent, flexShrink: 0 }}>
+                        {triggerLabel.includes("above") ? "↑" : triggerLabel.includes("below") ? "↓" : "±"}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{triggerLabel}</div>
+                        {triggerVal && <div style={{ ...mono, fontSize: 14, color: T.accent, fontWeight: 600, marginTop: 2 }}>{triggerVal}</div>}
+                      </div>
+                    </div>
+
+                    {/* Delivery methods */}
+                    <div style={{ padding: "14px 0", borderBottom: `1px solid ${T.border}` }}>
+                      <div style={{ ...mono, fontSize: 10, letterSpacing: "1.5px", color: T.textFaint, marginBottom: 8 }}>DELIVERY</div>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {deliveryArr.length > 0 ? deliveryArr.map(d => (
+                          <span key={d} style={{ ...mono, fontSize: 12, color: T.text, background: T.bgDeep, padding: "5px 12px", borderRadius: 6, border: `1px solid ${T.border}` }}>
+                            {d === "email" ? "📧 Email" : d === "push" ? "🔔 Push" : d === "sms" ? "💬 SMS" : d === "webhook" ? "🔗 Webhook" : d}
+                          </span>
+                        )) : <span style={{ ...mono, fontSize: 12, color: T.textFaint }}>None set</span>}
+                      </div>
+                    </div>
+
+                    {/* Created date */}
+                    {a.created_at && (
+                      <div style={{ padding: "10px 0", ...mono, fontSize: 11, color: T.textFaint }}>
+                        Created {new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </div>
+                    )}
+
+                    {/* Action buttons */}
+                    <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                      <button onClick={() => {
+                        // Open modal pre-filled with this alert's data
+                        setForm(f => ({ ...f, asset: a.asset, delivery: deliveryArr.length > 0 ? deliveryArr : ["email"] }));
+                        setModalAssetLabel(a.asset);
+                        fetchModalPrice(a.asset);
+                        setStep(3);
+                        setShowModal(true);
+                      }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                        ✎ Edit Delivery
+                      </button>
+                      <button onClick={() => handleTogglePause(a.id)} style={{
+                        flex: 1, padding: 11, background: "none",
+                        color: a.status === "paused" ? T.green : T.textMid,
+                        border: `2px solid ${a.status === "paused" ? T.green : T.textMid}`,
+                        borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                      }}>
+                        {a.status === "paused" ? "▶ Resume" : "⏸ Pause"}
+                      </button>
+                    </div>
+                    <button onClick={() => { handleDeleteAlert(a.id); setExpandedAlert(null); }} style={{
+                      marginTop: 6, width: "100%", padding: 10, background: "none",
+                      color: "#cc2222", border: "1px solid #cc2222", borderRadius: 8,
+                      ...font, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                    }}>Delete Alert</button>
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
             {!loading && allAlerts.filter(a => a.status !== "deleted").length === 0 && (
               <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...font, fontSize: 14 }}>No alerts yet — create one above</div>
             )}
@@ -2083,40 +2154,96 @@ export default function AppPage() {
         {tab === "alerts" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {loading && <div style={{ textAlign: "center", padding: 60, color: T.textFaint, fontSize: 18 }}>Loading...</div>}
-            {!loading && allAlerts.filter(a => a.status !== "deleted").map((a) => (
+            {!loading && allAlerts.filter(a => a.status !== "deleted").map((a) => {
+              const isOpen = expandedAlert === a.id;
+              const triggerLabel = a.trigger_type?.replace(/_/g, " ") || "";
+              const triggerVal = a.trigger_value ? (a.trigger_value.price ? `$${a.trigger_value.price}` : a.trigger_value.percent ? `${a.trigger_value.percent}%` : a.trigger_value.ma_period ? `${a.trigger_value.ma_period}D MA` : a.trigger_value.band || (a.trigger_value.volume_multiplier ? `${a.trigger_value.volume_multiplier}×` : "")) : "";
+              const deliveryArr = Array.isArray(a.delivery) ? a.delivery : [];
+              return (
               <div key={a.id} style={{
                 background: T.bgCard,
-                border: `1px solid ${a.status === "triggered" ? T.red + "55" : a.status === "paused" ? T.border : T.border}`,
-                borderRadius: 11, padding: "18px 22px", display: "flex", alignItems: "center", gap: 16,
-                position: "relative", overflow: "hidden",
+                border: isOpen ? "2px solid #0a1f4a" : `1px solid ${a.status === "triggered" ? T.red + "55" : T.border}`,
+                borderRadius: 11, overflow: "hidden", cursor: "pointer",
               }}>
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${T.accent},transparent)` }} />
-                <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-                  background: a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green,
-                  boxShadow: a.status === "triggered" ? T.redGlow : a.status === "paused" ? "none" : T.greenGlow }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 20 }}>{a.asset}</span>
-                    {a.is_multi && <span style={{ ...mono, fontSize: 9, background: "rgba(100,180,255,0.1)", color: "#6ab4ff", padding: "2px 7px", borderRadius: 3, letterSpacing: 1 }}>MULTI</span>}
+                {/* Collapsed row */}
+                <div onClick={() => setExpandedAlert(isOpen ? null : a.id)} style={{
+                  padding: "18px 22px", display: "flex", alignItems: "center", gap: 16,
+                }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", flexShrink: 0,
+                    background: a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green,
+                    boxShadow: a.status === "triggered" ? T.redGlow : a.status === "paused" ? "none" : T.greenGlow }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 20, color: T.text }}>{a.asset}</span>
+                      {a.is_multi && <span style={{ ...mono, fontSize: 9, background: "rgba(100,180,255,0.1)", color: "#6ab4ff", padding: "2px 7px", borderRadius: 3, letterSpacing: 1 }}>MULTI</span>}
+                    </div>
+                    <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 3 }}>
+                      {triggerLabel}{triggerVal ? ` · ${triggerVal}` : ""}
+                      {a.fire_count > 0 && <span style={{ marginLeft: 10, color: T.accent }}>Fired {a.fire_count}×</span>}
+                    </div>
                   </div>
-                  <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 3 }}>
-                    {a.trigger_type?.replace(/_/g," ")}
-                    {a.fire_count > 0 && <span style={{ marginLeft: 10, color: T.accent }}>Fired {a.fire_count}×</span>}
-                    {a.last_fired_at && <span style={{ marginLeft: 8, color: T.textFaint }}>Last: {new Date(a.last_fired_at).toLocaleDateString()}</span>}
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: 1,
+                    color: a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green,
+                    border: `1px solid ${a.status === "triggered" ? T.red + "55" : T.border}`,
+                    padding: "4px 10px", borderRadius: 4 }}>
+                    {a.status.toUpperCase()}
                   </div>
+                  <span style={{ fontSize: 14, color: T.textFaint }}>{isOpen ? "▲" : "▼"}</span>
                 </div>
-                <button onClick={() => handleTogglePause(a.id)} style={{ background: "none", border: `1px solid ${T.border}`, borderRadius: 6, color: T.textFaint, cursor: "pointer", ...font, fontSize: 14, padding: "4px 10px" }}>
-                  {a.status === "paused" ? "▶" : "⏸"}
-                </button>
-                <div style={{ ...mono, fontSize: 10, letterSpacing: 1,
-                  color: a.status === "triggered" ? T.red : a.status === "paused" ? T.textFaint : T.green,
-                  border: `1px solid ${a.status === "triggered" ? T.red + "55" : T.border}`,
-                  padding: "4px 10px", borderRadius: 4 }}>
-                  {a.status.toUpperCase()}
-                </div>
-                <button onClick={() => handleDeleteAlert(a.id)} style={{ background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 20, lineHeight: 1 }}>×</button>
+
+                {/* Expanded details */}
+                {isOpen && (
+                  <div style={{ padding: "0 22px 18px", borderTop: `1px solid ${T.border}` }}>
+                    <div style={{ display: "flex", gap: 16, padding: "16px 0", borderBottom: `1px solid ${T.border}` }}>
+                      {/* Delivery */}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ ...mono, fontSize: 9, letterSpacing: "1.5px", color: T.textFaint, marginBottom: 8 }}>DELIVERY</div>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          {deliveryArr.length > 0 ? deliveryArr.map(d => (
+                            <span key={d} style={{ ...mono, fontSize: 11, color: T.text, background: T.bgDeep, padding: "5px 12px", borderRadius: 6, border: `1px solid ${T.border}` }}>
+                              {d === "email" ? "📧 Email" : d === "push" ? "🔔 Push" : d === "sms" ? "💬 SMS" : d === "webhook" ? "🔗 Webhook" : d}
+                            </span>
+                          )) : <span style={{ ...mono, fontSize: 11, color: T.textFaint }}>None set</span>}
+                        </div>
+                      </div>
+                      {/* Meta */}
+                      <div>
+                        <div style={{ ...mono, fontSize: 9, letterSpacing: "1.5px", color: T.textFaint, marginBottom: 8 }}>INFO</div>
+                        {a.created_at && <div style={{ ...mono, fontSize: 11, color: T.textMid }}>Created {new Date(a.created_at).toLocaleDateString()}</div>}
+                        {a.last_fired_at && <div style={{ ...mono, fontSize: 11, color: T.textMid, marginTop: 4 }}>Last fired {new Date(a.last_fired_at).toLocaleDateString()}</div>}
+                        {a.fire_count > 0 && <div style={{ ...mono, fontSize: 11, color: T.accent, marginTop: 4 }}>Fired {a.fire_count}×</div>}
+                      </div>
+                    </div>
+                    {/* Actions */}
+                    <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                      <button onClick={(ev) => {
+                        ev.stopPropagation();
+                        setForm(f => ({ ...f, asset: a.asset, delivery: deliveryArr.length > 0 ? deliveryArr : ["email"] }));
+                        setModalAssetLabel(a.asset);
+                        fetchModalPrice(a.asset);
+                        setStep(3);
+                        setShowModal(true);
+                      }} style={{ padding: "8px 18px", background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                        ✎ Edit Delivery
+                      </button>
+                      <button onClick={(ev) => { ev.stopPropagation(); handleTogglePause(a.id); }} style={{
+                        padding: "8px 18px", background: "none",
+                        color: a.status === "paused" ? T.green : T.textMid,
+                        border: `1px solid ${a.status === "paused" ? T.green : T.border}`,
+                        borderRadius: 8, ...font, fontSize: 14, cursor: "pointer",
+                      }}>
+                        {a.status === "paused" ? "▶ Resume" : "⏸ Pause"}
+                      </button>
+                      <button onClick={(ev) => { ev.stopPropagation(); handleDeleteAlert(a.id); setExpandedAlert(null); }} style={{
+                        padding: "8px 18px", background: "none", color: "#cc2222", border: "1px solid #cc2222",
+                        borderRadius: 8, ...font, fontSize: 14, cursor: "pointer",
+                      }}>Delete</button>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
             {!loading && allAlerts.filter(a => a.status !== "deleted").length === 0 && (
               <div style={{ textAlign: "center", padding: 60, color: T.textFaint, fontSize: 18 }}>No alerts yet — create one above</div>
             )}
