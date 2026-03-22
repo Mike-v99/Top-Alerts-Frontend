@@ -89,27 +89,40 @@ export default function AppPage() {
     }
   }
 
+  const [swipedJustNow, setSwipedJustNow] = useState(false);
+
   function handleTouchStart(symbol, e) {
     const touch = e.touches[0];
-    setSwipeState(prev => ({ ...prev, [symbol]: { startX: touch.clientX, currentX: touch.clientX } }));
+    setSwipedJustNow(false);
+    setSwipeState(prev => ({ ...prev, [symbol]: { startX: touch.clientX, startY: touch.clientY, currentX: touch.clientX, isHorizontal: null } }));
   }
   function handleTouchMove(symbol, e) {
     const touch = e.touches[0];
     setSwipeState(prev => {
       const s = prev[symbol];
       if (!s) return prev;
-      return { ...prev, [symbol]: { ...s, currentX: touch.clientX } };
+      const dx = Math.abs(touch.clientX - s.startX);
+      const dy = Math.abs(touch.clientY - s.startY);
+      let isH = s.isHorizontal;
+      if (isH === null && (dx > 10 || dy > 10)) {
+        isH = dx > dy;
+      }
+      if (isH === false) return prev;
+      return { ...prev, [symbol]: { ...s, currentX: touch.clientX, isHorizontal: isH } };
     });
   }
   function handleTouchEnd(symbol) {
     const s = swipeState[symbol];
     if (!s) return;
     const diff = s.startX - s.currentX;
-    if (diff > 120) {
-      // Swiped far enough — remove immediately
+    if (s.isHorizontal && diff > 120) {
       removeFromWatchlist(symbol);
+      setSwipedJustNow(true);
+    } else if (s.isHorizontal && diff > 10) {
+      // Was swiping but not enough — suppress the click
+      setSwipedJustNow(true);
+      setTimeout(() => setSwipedJustNow(false), 100);
     }
-    setSwipedOpen(null);
     setSwipeState(prev => { const n = { ...prev }; delete n[symbol]; return n; });
   }
   function removeFromWatchlist(symbol) {
@@ -123,7 +136,7 @@ export default function AppPage() {
   }
   function getSwipeOffset(symbol) {
     const s = swipeState[symbol];
-    if (s) {
+    if (s && s.isHorizontal) {
       const diff = s.startX - s.currentX;
       return Math.max(0, diff);
     }
@@ -1377,6 +1390,7 @@ export default function AppPage() {
                     borderRadius: isExpanded ? 12 : 0,
                     transform: `translateX(-${getSwipeOffset(m.symbol)}px)`,
                     transition: swipeState[m.symbol] ? "none" : "transform 0.25s ease",
+                    touchAction: "pan-y",
                   }}
                     onTouchStart={(e) => handleTouchStart(m.symbol, e)}
                     onTouchMove={(e) => handleTouchMove(m.symbol, e)}
@@ -1384,6 +1398,7 @@ export default function AppPage() {
                   >
                   {/* Collapsed row */}
                   <div onClick={() => {
+                    if (swipedJustNow) return;
                     try {
                       if (isExpanded) { setMobileExpanded(null); }
                       else { setMobileExpanded(m.symbol); openChart(m.symbol, m.label); }
@@ -1495,12 +1510,14 @@ export default function AppPage() {
                     borderRadius: isExpanded ? 12 : 0,
                     transform: `translateX(-${getSwipeOffset(w.symbol)}px)`,
                     transition: swipeState[w.symbol] ? "none" : "transform 0.25s ease",
+                    touchAction: "pan-y",
                   }}
                     onTouchStart={(e) => handleTouchStart(w.symbol, e)}
                     onTouchMove={(e) => handleTouchMove(w.symbol, e)}
                     onTouchEnd={() => handleTouchEnd(w.symbol)}
                   >
                   <div onClick={() => {
+                    if (swipedJustNow) return;
                     try {
                       if (isExpanded) { setMobileExpanded(null); }
                       else { setMobileExpanded(w.symbol); openChart(w.symbol, w.label); }
