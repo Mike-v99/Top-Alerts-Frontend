@@ -105,11 +105,11 @@ export default function AppPage() {
     const s = swipeState[symbol];
     if (!s) return;
     const diff = s.startX - s.currentX;
-    if (diff > 80) {
-      setSwipedOpen(symbol);
-    } else {
-      setSwipedOpen(prev => prev === symbol ? null : prev);
+    if (diff > 120) {
+      // Swiped far enough — remove immediately
+      removeFromWatchlist(symbol);
     }
+    setSwipedOpen(null);
     setSwipeState(prev => { const n = { ...prev }; delete n[symbol]; return n; });
   }
   function removeFromWatchlist(symbol) {
@@ -125,9 +125,9 @@ export default function AppPage() {
     const s = swipeState[symbol];
     if (s) {
       const diff = s.startX - s.currentX;
-      return Math.max(0, Math.min(90, diff));
+      return Math.max(0, diff);
     }
-    return swipedOpen === symbol ? 90 : 0;
+    return 0;
   }
   useEffect(() => {
     const check = () => {
