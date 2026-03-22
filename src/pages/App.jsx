@@ -1171,7 +1171,7 @@ export default function AppPage() {
 
         {/* Tabs */}
         <div style={{ display: "flex", flexWrap: isMobile ? "wrap" : "nowrap", gap: isMobile ? 0 : 0, marginBottom: isMobile ? 10 : 28, borderBottom: `1px solid ${T.border}` }}>
-          {["market","alerts","calendar","pricing"].map(t => (
+          {(isPro ? ["market","alerts","calendar"] : ["market","alerts","calendar","pricing"]).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: isMobile ? "8px 10px" : "10px 22px", background: "none", border: "none", cursor: "pointer",
               ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px", fontWeight: isMobile && tab === t ? 700 : (t === "alerts" ? 600 : 400),
