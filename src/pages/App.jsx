@@ -912,7 +912,7 @@ export default function AppPage() {
             <button key={t} onClick={() => setTab(t)} style={{
               padding: isMobile ? "8px 10px" : "10px 22px", background: "none", border: "none", cursor: "pointer",
               ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px", fontWeight: isMobile && tab === t ? 700 : 400,
-              color: tab === t ? (isMobile ? T.text : T.activeTab) : (isMobile ? T.textFaint : T.textFaint),
+              color: tab === t ? (isMobile ? T.text : T.activeTab) : T.textMid,
               borderBottom: tab === t ? `2px solid ${isMobile ? T.text : T.activeTabBorder}` : "2px solid transparent",
               marginBottom: -1, transition: "all 0.2s", flexShrink: 0,
             }}>
@@ -1323,7 +1323,7 @@ export default function AppPage() {
                     {!isExpanded && d && (
                       <div style={{ textAlign: "center", flexShrink: 0 }}>
                         <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{d.changePct >= 0 ? "+" : "-"}${d.change != null ? `$${Math.abs(Number(d.change)).toFixed(2)}` : ""}</div>
-                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>Open {snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textMid, marginTop: 2 }}>Open {snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"}</div>
                       </div>
                     )}
                     <div style={{ textAlign: "right", minWidth: 85 }}>
@@ -1430,7 +1430,7 @@ export default function AppPage() {
                     {!isExpanded && wd && (
                       <div style={{ textAlign: "center", flexShrink: 0 }}>
                         <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{wd.changePct >= 0 ? "+" : "-"}${wd.change != null ? `$${Math.abs(Number(wd.change)).toFixed(2)}` : ""}</div>
-                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>Open {snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textMid, marginTop: 2 }}>Open {snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"}</div>
                       </div>
                     )}
                     <div style={{ textAlign: "right", minWidth: 85 }}>
@@ -2788,7 +2788,7 @@ function CandlestickChart({ data, T, range }) {
         onTouchMove={(e) => { e.preventDefault(); handleMouseMove(e); }}
         onTouchStart={(e) => { e.preventDefault(); handleMouseMove(e); }}
       >
-        <text x="300" y="9" textAnchor="middle" fontSize="8" fill="#aaa" fontFamily="monospace">{`${data.length} candles · ${data.length > 0 ? new Date(data[0].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""} → ${data.length > 0 ? new Date(data[data.length-1].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""}`}</text>
+        <text x="300" y="9" textAnchor="middle" fontSize="8" fill={T.textFaint} fontFamily="monospace">{`${data.length} candles · ${data.length > 0 ? new Date(data[0].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""} → ${data.length > 0 ? new Date(data[data.length-1].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""}`}</text>
         {/* Y grid lines + labels */}
         {yLabels.map((v, i) => {
           const y = PAD.top + scaleY(v);
