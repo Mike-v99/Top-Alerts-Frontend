@@ -2098,7 +2098,7 @@ export default function AppPage() {
                               <div style={{ width: 44, height: 44, borderRadius: 8, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: iconCol, flexShrink: 0 }}>{t.icon}</div>
                               <div style={{ flex: 1 }}>
                                 <div style={{ ...font, fontSize: 20, fontWeight: isSelected ? 600 : 500, color: T.text }}>{t.label}</div>
-                                <div style={{ ...mono, fontSize: 13, color: T.textFaint, marginTop: 3 }}>{t.desc}</div>
+                                <div style={{ ...mono, fontSize: 13, color: "#3a3a3a", marginTop: 3 }}>{t.desc}</div>
                               </div>
                               {isSelected && <span style={{ ...mono, fontSize: 13, color: "#0a1f4a", fontWeight: 600 }}>✓</span>}
                               {!isSelected && <span style={{ fontSize: 18, color: T.textFaint }}>→</span>}
@@ -2106,14 +2106,14 @@ export default function AppPage() {
                             {/* Inline input when selected */}
                             {isSelected && t.input === "price" && (
                               <div style={{ marginTop: 14 }} onClick={(ev) => ev.stopPropagation()}>
-                                <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: "#8a8070", marginBottom: 6 }}>TARGET PRICE (USD)</div>
+                                <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: "#3a3a3a", marginBottom: 6 }}>TARGET PRICE (USD)</div>
                                 <input type="number" placeholder="0.00" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
                                   style={{ width: "100%", padding: "14px 14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, ...font, fontSize: 24, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
                               </div>
                             )}
                             {isSelected && t.input === "percent" && (
                               <div style={{ marginTop: 14 }} onClick={(ev) => ev.stopPropagation()}>
-                                <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: "#8a8070", marginBottom: 6 }}>% CHANGE THRESHOLD</div>
+                                <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: "#3a3a3a", marginBottom: 6 }}>% CHANGE THRESHOLD</div>
                                 <input type="number" placeholder="5" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
                                   style={{ width: "100%", padding: "14px 14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, ...font, fontSize: 24, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
                               </div>
@@ -2122,45 +2122,56 @@ export default function AppPage() {
                         );
                       })}
 
-                      {/* Pro triggers — collapsible */}
-                      <div style={{ border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden", marginTop: 10, marginBottom: 20 }}>
+                      {/* Pro triggers — collapsible, cobalt blue promotional */}
+                      <div style={{ background: "#0a1f4a", borderRadius: 12, overflow: "hidden", marginTop: 10, marginBottom: 20 }}>
                         <div onClick={() => setMobileProTriggersOpen(p => !p)} style={{
-                          padding: "14px 14px", display: "flex", alignItems: "center", justifyContent: "space-between",
-                          cursor: "pointer", background: T.bgCard,
+                          padding: "16px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
+                          cursor: "pointer",
                         }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ ...mono, fontSize: 12, letterSpacing: "1.5px", color: "#0a1f4a", fontWeight: 600 }}>PRO TRIGGERS</span>
-                            <span style={{ ...mono, fontSize: 12, color: T.textFaint }}>({PRO_TRIGGERS.length})</span>
+                            <span style={{ fontSize: 14 }}>⚡</span>
+                            <span style={{ ...mono, fontSize: 13, letterSpacing: "1.5px", color: "#e8f2ff", fontWeight: 700 }}>PRO TRIGGERS</span>
+                            <span style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.4)" }}>({PRO_TRIGGERS.length})</span>
                           </div>
-                          <span style={{ ...font, fontSize: 14, color: mobileProTriggersOpen ? "#0a1f4a" : T.textFaint }}>{mobileProTriggersOpen ? "▲ Hide" : "▼ Show"}</span>
+                          <span style={{ ...font, fontSize: 14, color: mobileProTriggersOpen ? "#e8f2ff" : "rgba(255,255,255,0.5)" }}>{mobileProTriggersOpen ? "▲ Hide" : "▼ Show"}</span>
                         </div>
                         {!mobileProTriggersOpen && (
-                          <div style={{ padding: "6px 14px 10px", display: "flex", gap: 4, flexWrap: "wrap" }}>
-                            {PRO_TRIGGERS.slice(0, 4).map(t => (
-                              <span key={t.id} style={{ ...mono, fontSize: 12, color: "#8a8070", background: "rgba(10,31,74,0.06)", padding: "4px 10px", borderRadius: 4, border: "1px solid rgba(10,31,74,0.12)" }}>{t.label.split(" ").slice(0, 2).join(" ")}</span>
-                            ))}
-                            <span style={{ ...mono, fontSize: 12, color: T.textFaint }}>+{PRO_TRIGGERS.length - 4} more</span>
+                          <div style={{ padding: "0 16px 14px" }}>
+                            <div style={{ ...font, fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 10 }}>Unlock advanced triggers like MA crossovers, RSI, Bollinger Bands & more</div>
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              {PRO_TRIGGERS.slice(0, 4).map(t => (
+                                <span key={t.id} style={{ ...mono, fontSize: 11, color: "#e8f2ff", background: "rgba(255,255,255,0.1)", padding: "5px 10px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.15)" }}>{t.label.split(" ").slice(0, 2).join(" ")}</span>
+                              ))}
+                              <span style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.4)", padding: "5px 0" }}>+{PRO_TRIGGERS.length - 4} more</span>
+                            </div>
                           </div>
                         )}
                         {mobileProTriggersOpen && (
-                          <div style={{ padding: "0 14px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
+                          <div style={{ padding: "0 14px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
                             {PRO_TRIGGERS.map(t => (
                               <button key={t.id} onClick={() => {
                                 if (!form.asset) return;
                                 if (!isPro) { setShowModal(false); setTab("pricing"); showToast("Pro plan required", "warn"); return; }
                                 setForm(f => ({ ...f, trigger: t }));
                               }} style={{
-                                padding: "12px 14px", borderRadius: 10, border: form.trigger?.id === t.id ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
-                                background: T.bgCard, cursor: !form.asset ? "not-allowed" : "pointer", ...font,
+                                padding: "12px 14px", borderRadius: 10,
+                                border: form.trigger?.id === t.id ? "2px solid #e8f2ff" : "1px solid rgba(255,255,255,0.15)",
+                                background: "rgba(255,255,255,0.07)", cursor: !form.asset ? "not-allowed" : "pointer", ...font,
                                 textAlign: "left", display: "flex", gap: 12, alignItems: "center",
-                                opacity: !form.asset ? 0.4 : isPro ? 1 : 0.45,
+                                opacity: !form.asset ? 0.4 : isPro ? 1 : 0.7,
                               }}>
-                                <div style={{ width: 36, height: 36, borderRadius: 7, background: T.bgDeep, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16, color: T.textFaint }}>{t.icon}</div>
-                                <span style={{ flex: 1, fontSize: 16, color: T.text }}>{t.label}</span>
-                                {!isPro && <span style={{ ...mono, fontSize: 10, color: T.textFaint, border: `1px solid ${T.border}`, padding: "2px 6px", borderRadius: 3 }}>PRO</span>}
-                                {form.trigger?.id === t.id && <span style={{ ...mono, fontSize: 13, color: "#0a1f4a", fontWeight: 600 }}>✓</span>}
+                                <div style={{ width: 36, height: 36, borderRadius: 7, background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16, color: "rgba(255,255,255,0.6)" }}>{t.icon}</div>
+                                <span style={{ flex: 1, fontSize: 16, color: "#e8f2ff" }}>{t.label}</span>
+                                {!isPro && <span style={{ ...mono, fontSize: 10, color: "#e8f2ff", background: "rgba(255,255,255,0.12)", padding: "3px 8px", borderRadius: 4 }}>PRO</span>}
+                                {form.trigger?.id === t.id && <span style={{ ...mono, fontSize: 13, color: "#e8f2ff", fontWeight: 600 }}>✓</span>}
                               </button>
                             ))}
+                            {!isPro && (
+                              <button onClick={() => { setShowModal(false); setTab("pricing"); }} style={{
+                                marginTop: 6, width: "100%", padding: 12, background: "#e8f2ff", color: "#0a1f4a",
+                                border: "none", borderRadius: 8, ...font, fontSize: 15, fontWeight: 700, cursor: "pointer",
+                              }}>Upgrade to Pro →</button>
+                            )}
                           </div>
                         )}
                       </div>
