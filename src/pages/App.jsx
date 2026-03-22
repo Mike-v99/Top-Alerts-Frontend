@@ -356,26 +356,29 @@ export default function AppPage() {
     async function fetchSnapshots(symbols) {
       try {
         const tickers = symbols.join(",");
-        const url = `https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers?tickers=${tickers}&apiKey=${key}`;
-        console.log("[Massive] Fetching snapshots:", url.replace(key, "KEY"));
-        const res  = await fetch(url);
+        const res  = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers?tickers=${tickers}&apiKey=${key}`);
         const data = await res.json();
-        console.log("[Massive] Snapshot response:", res.status, "tickers:", (data.tickers || []).length, data.status, data.error || "");
-        if (data.tickers && data.tickers[0]) console.log("[Massive] First ticker raw:", JSON.stringify(data.tickers[0]).slice(0, 500));
         return (data.tickers || []).map(t => {
           const price = t.lastTrade?.p || t.day?.c || t.min?.c || t.prevDay?.c || 0;
+          const prevClose = t.prevDay?.c || 0;
+          const todayChange = t.todaysChange || 0;
+          const todayChangePct = t.todaysChangePerc || 0;
+          // If today's change is 0 but we have previous day data, calculate from prev day
+          const change = todayChange !== 0 ? todayChange : (prevClose && t.day?.c ? t.day.c - prevClose : 0);
+          const changePct = todayChangePct !== 0 ? todayChangePct : (prevClose && t.day?.c ? ((t.day.c - prevClose) / prevClose) * 100 : 0);
           return {
             id: symbolToId[t.ticker] || t.ticker,
             symbol: t.ticker,
             price,
-            change: t.todaysChange || 0,
-            changePct: t.todaysChangePerc || 0,
-            prevClose: t.prevDay?.c || 0,
+            change,
+            changePct,
+            prevClose,
             high: t.day?.h || 0,
             low: t.day?.l || 0,
             open: t.day?.o || 0,
             volume: t.day?.v || 0,
             prevVolume: t.prevDay?.v || 0,
+            marketOpen: !!(t.lastTrade?.p || t.day?.c || t.min?.c),
           };
         }).filter(r => r.price !== 0);
       } catch (e) {
@@ -387,7 +390,6 @@ export default function AppPage() {
     // Load all market symbols in one batch request
     async function loadInitialQuotes() {
       const results = await fetchSnapshots(MARKET_SYMBOLS.map(m => m.symbol));
-      console.log("[Massive] loadInitialQuotes results:", results.length, results.map(r => `${r.id}=$${r.price}`).join(", "));
       if (results.length > 0) {
         const out = {};
         results.forEach(r => { out[r.id] = r; });
