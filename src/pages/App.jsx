@@ -120,6 +120,29 @@ export default function AppPage() {
   const [step,      setStep]      = useState(1);
   const [toast,     setToast]     = useState(null);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+      window.scrollTo(0, parseInt(scrollY || "0") * -1);
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+    };
+  }, [showModal]);
+
   // Mobile detection
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
   const [mobileExpanded, setMobileExpanded] = useState(null); // symbol of expanded ticker
@@ -2158,9 +2181,11 @@ export default function AppPage() {
 
       {/* Event Alert Popup */}
       {calEventAlert && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
+          onTouchMove={e => e.preventDefault()}>
           <div onClick={() => { setCalEventAlert(null); setCalAlertTiming("1day"); }} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />
-          <div style={{ position: "relative", width: isMobile ? "95vw" : 480, maxHeight: "90vh", overflowY: "auto", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+          <div style={{ position: "relative", width: isMobile ? "95vw" : 480, maxHeight: "90vh", overflowY: "auto", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", touchAction: "pan-y", overscrollBehavior: "contain" }}
+            onTouchMove={e => e.stopPropagation()}>
             {/* Header */}
             <div style={{ background: "#0a1f4a", padding: "18px 24px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
@@ -2272,9 +2297,11 @@ export default function AppPage() {
 
       {/* Modal */}
       {showModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
-          onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? 14 : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.3)" }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, touchAction: "none", overscrollBehavior: "contain" }}
+          onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}
+          onTouchMove={e => e.preventDefault()}>
+          <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? 14 : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.3)", touchAction: "pan-y", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}
+            onTouchMove={e => e.stopPropagation()}>
 
             {/* Modal header — cobalt blue with integrated search */}
             <div style={{ background: "#0a1f4a", borderRadius: "18px 18px 0 0", position: "sticky", top: 0, zIndex: 10 }}>
@@ -2285,9 +2312,9 @@ export default function AppPage() {
                     {step}
                   </div>
                   <div>
-                    <div style={{ fontSize: isMobile ? 26 : 20, color: "#e8f2ff" }}>{isMobile ? (step === 1 ? "Set Alert" : "Delivery") : (step === 1 ? "Choose Trigger" : step === 2 ? "Configure" : "Delivery")}</div>
+                    <div style={{ fontSize: isMobile ? 26 : 20, color: "#e8f2ff" }}>{step === 1 ? "Set Alert" : "Delivery"}</div>
                     <div style={{ display: "flex", gap: 4, marginTop: 5 }}>
-                      {(isMobile ? [1,3] : [1,2,3]).map(s => <div key={s} style={{ width: s <= step ? 20 : 6, height: 3, borderRadius: 2, background: s <= step ? "#378ADD" : "rgba(255,255,255,0.15)", transition: "all 0.3s" }} />)}
+                      {[1,3].map(s => <div key={s} style={{ width: s <= step ? 20 : 6, height: 3, borderRadius: 2, background: s <= step ? "#378ADD" : "rgba(255,255,255,0.15)", transition: "all 0.3s" }} />)}
                     </div>
                   </div>
                 </div>
@@ -2358,8 +2385,7 @@ export default function AppPage() {
               <div>
                 <div style={{ padding: "20px 24px" }}>
 
-                  {/* Mobile: single-screen with trigger + input combined */}
-                  {isMobile ? (
+                  {/* Single-screen trigger + input — both mobile and desktop */}
                     <div>
                       {/* Selected trigger with inline input */}
                       {FREE_TRIGGERS.map(t => {
@@ -2461,134 +2487,7 @@ export default function AppPage() {
                         border: "none", borderRadius: 10, ...font, fontSize: 20, fontWeight: 600, cursor: form.trigger ? "pointer" : "not-allowed",
                       }}>CONTINUE →</button>
                     </div>
-                  ) : (
-                    /* Desktop: original two-step flow */
-                    <div>
-                  <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>FREE TRIGGERS</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
-                    {FREE_TRIGGERS.map(t => {
-                      const iconBg  = t.id === "price_above" ? "rgba(26,138,68,0.12)" : t.id === "price_below" ? "rgba(204,34,34,0.12)" : "rgba(138,106,0,0.12)";
-                      const iconCol = t.id === "price_above" ? T.green : t.id === "price_below" ? T.red : T.accent;
-                      const disabled = !form.asset;
-                      return (
-                        <button key={t.id} onClick={() => { if (disabled) return; setForm(f => ({ ...f, trigger: t })); setStep(2); }} style={{
-                          padding: "10px 14px", borderRadius: 10,
-                          border: `1px solid ${T.border}`,
-                          background: T.bgCard,
-                          color: T.text, cursor: disabled ? "not-allowed" : "pointer", ...font,
-                          textAlign: "left", display: "flex", gap: 12, alignItems: "center",
-                          opacity: disabled ? 0.4 : 1, transition: "opacity 0.2s",
-                        }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 7, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16, color: iconCol }}>{t.icon}</div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 14, fontWeight: 500 }}>{t.label}</div>
-                            <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>{t.desc}</div>
-                          </div>
-                          <span style={{ fontSize: 14, color: T.textFaint }}>→</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>PRO TRIGGERS</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {PRO_TRIGGERS.map(t => {
-                      const disabled = !form.asset;
-                      return (
-                        <button key={t.id} onClick={() => { if (disabled) return; if (!isPro) { setShowModal(false); setTab("pricing"); showToast("Pro plan required", "warn"); return; } setForm(f => ({ ...f, trigger: t })); setStep(2); }} style={{
-                          padding: "10px 14px", borderRadius: 10,
-                          border: `1px solid ${T.border}`,
-                          background: T.bgCard,
-                          cursor: disabled ? "not-allowed" : "pointer", ...font,
-                          textAlign: "left", display: "flex", gap: 12, alignItems: "center",
-                          opacity: disabled ? 0.4 : isPro ? 1 : 0.45, transition: "opacity 0.2s",
-                        }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 7, background: T.bgDeep, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 14, color: T.textFaint }}>{t.icon}</div>
-                          <span style={{ flex: 1, fontSize: 14, color: T.text }}>{t.label}</span>
-                          {!isPro
-                            ? <span style={{ ...mono, fontSize: 8, color: T.textFaint, border: `1px solid ${T.border}`, padding: "2px 6px", borderRadius: 3, flexShrink: 0 }}>PRO</span>
-                            : <span style={{ fontSize: 14, color: T.textFaint }}>→</span>
-                          }
-                        </button>
-                      );
-                    })}
-                  </div>
-                    </div>
-                  )}
                 </div>
-              </div>
-            )}
-
-            {/* Step 2 — Configure value (desktop only) */}
-            {step === 2 && !isMobile && form.trigger && (
-              <div style={{ padding: "22px 28px" }}>
-                <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 22 }}>
-                  <div style={{ background: "#0a1f4a", padding: "14px 18px", display: "flex", gap: 12, alignItems: "center" }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 8, background: "rgba(55,138,221,0.2)", border: "1px solid rgba(55,138,221,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
-                      {form.trigger.icon}
-                    </div>
-                    <div>
-                      <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{form.asset}</div>
-                      <div style={{ fontSize: 18, color: "#e8f2ff", marginTop: 2 }}>{form.trigger.label}</div>
-                    </div>
-                  </div>
-                  {modalPrice && (
-                    <div style={{ background: T.bgCard, borderTop: `1px solid ${T.border}`, padding: "7px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                      {modalPrice.marketOpen
-                        ? <span style={{ ...mono, fontSize: 10, color: modalPrice.changePct >= 0 ? T.green : T.red }}>{modalPrice.changePct >= 0 ? "▲" : "▼"} {Math.abs(modalPrice.changePct).toFixed(2)}% · {modalPrice.changePct >= 0 ? "+" : ""}{Number(modalPrice.change).toFixed(2)}</span>
-                        : <span style={{ ...mono, fontSize: 9, color: T.textMid, border: `1px solid ${T.border}`, borderRadius: 3, padding: "1px 6px" }}>CLOSED</span>
-                      }
-                    </div>
-                  )}
-                </div>
-
-                {form.trigger.input === "price" && (
-                  <div>
-                    <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>TARGET PRICE (USD)</div>
-                    <input type="number" placeholder="0.00" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
-                      style={{ width: "100%", padding: "12px 14px", background: T.bgInput, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, ...font, fontSize: 20, outline: "none", boxSizing: "border-box" }} />
-                  </div>
-                )}
-                {form.trigger.input === "percent" && (
-                  <div>
-                    <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>% CHANGE THRESHOLD</div>
-                    <input type="number" placeholder="5" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
-                      style={{ width: "100%", padding: "12px 14px", background: T.bgInput, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, ...font, fontSize: 20, outline: "none", boxSizing: "border-box" }} />
-                  </div>
-                )}
-                {form.trigger.input === "ma" && (
-                  <div>
-                    <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>MOVING AVERAGE PERIOD</div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      {MA_OPTIONS.map(m => <button key={m} onClick={() => setForm(f => ({ ...f, ma: m }))} style={{ ...chipBtn(form.ma === m), flex: 1, padding: "10px 0", textAlign: "center" }}>{m}D</button>)}
-                    </div>
-                  </div>
-                )}
-                {form.trigger.input === "bb" && (
-                  <div>
-                    <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>BAND</div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      {BB_OPTIONS.map(b => <button key={b} onClick={() => setForm(f => ({ ...f, bb: b }))} style={{ ...chipBtn(form.bb === b), flex: 1, padding: "10px 0", textAlign: "center" }}>{b}</button>)}
-                    </div>
-                  </div>
-                )}
-                {form.trigger.input === "volume" && (
-                  <div>
-                    <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>SURGE MULTIPLIER</div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      {["2","3","5","10"].map(v => <button key={v} onClick={() => setForm(f => ({ ...f, volume: v }))} style={{ ...chipBtn(form.volume === v), flex: 1, padding: "10px 0", textAlign: "center" }}>{v}×</button>)}
-                    </div>
-                  </div>
-                )}
-                {form.trigger.input === null && (
-                  <div style={{ background: T.accentBg, border: `1px solid ${T.accentBorder}`, borderRadius: 10, padding: 20, textAlign: "center", ...mono, fontSize: 11, color: T.textMid }}>
-                    This trigger fires automatically — no configuration needed.
-                  </div>
-                )}
-
-                <button onClick={() => setStep(3)} style={{ marginTop: 22, width: "100%", padding: 12, background: T.btnPrimary, border: "none", borderRadius: 9, cursor: "pointer", ...font, fontSize: 20, color: T.btnText }}>
-                  CONTINUE →
-                </button>
               </div>
             )}
 
@@ -2596,8 +2495,8 @@ export default function AppPage() {
             {step === 3 && (
               <div style={{ padding: isMobile ? "20px" : "22px 28px" }}>
 
-                {/* Alert summary — mobile only */}
-                {isMobile && form.trigger && (
+                {/* Alert summary */}
+                {form.trigger && (
                   <div style={{ background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 36, height: 36, borderRadius: 8, background: form.trigger.id === "price_above" ? "rgba(26,138,68,0.12)" : form.trigger.id === "price_below" ? "rgba(204,34,34,0.12)" : "rgba(138,106,0,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: form.trigger.id === "price_above" ? T.green : form.trigger.id === "price_below" ? T.red : T.accent, flexShrink: 0 }}>{form.trigger.icon}</div>
                     <div style={{ flex: 1 }}>
@@ -2698,7 +2597,7 @@ export default function AppPage() {
                 <button onClick={handleSaveAlert} style={{ width: "100%", padding: isMobile ? 16 : 13, background: T.btnPrimary, border: "none", borderRadius: isMobile ? 10 : 9, cursor: "pointer", ...font, fontSize: 20, color: T.btnText }}>
                   SAVE ALERT
                 </button>
-                <button onClick={() => setStep(isMobile ? 1 : 2)} style={{ marginTop: 8, width: "100%", padding: 10, background: "none", border: "none", color: T.textFaint, cursor: "pointer", ...font, fontSize: isMobile ? 14 : 16 }}>← Back</button>
+                <button onClick={() => setStep(1)} style={{ marginTop: 8, width: "100%", padding: 10, background: "none", border: "none", color: T.textFaint, cursor: "pointer", ...font, fontSize: isMobile ? 14 : 16 }}>← Back</button>
               </div>
             )}
           </div>
