@@ -94,12 +94,17 @@ export default function AppPage() {
   const [showModal, setShowModal] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showProBanner, setShowProBanner] = useState(false);
+  const [proBannerExiting, setProBannerExiting] = useState(false);
 
   // Show Pro banner briefly on login/refresh
   useEffect(() => {
     if (isPro && user) {
       setShowProBanner(true);
-      const timer = setTimeout(() => setShowProBanner(false), 3000);
+      setProBannerExiting(false);
+      const timer = setTimeout(() => {
+        setProBannerExiting(true);
+        setTimeout(() => { setShowProBanner(false); setProBannerExiting(false); }, 400);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [isPro, user]);
@@ -1067,6 +1072,8 @@ export default function AppPage() {
       <style>{`
         @keyframes slideFromLeft  { from { transform: translateX(-60%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideFromRight { from { transform: translateX(60%);  opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideUpIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideDownOut { from { transform: translateY(0); opacity: 1; } to { transform: translateY(100%); opacity: 0; } }
         .price-slide-up   { animation: slideFromLeft  0.22s cubic-bezier(0.22,1,0.36,1) forwards; }
         .price-slide-down { animation: slideFromRight 0.22s cubic-bezier(0.22,1,0.36,1) forwards; }
         @keyframes chartPanelPulse {
@@ -1143,21 +1150,21 @@ export default function AppPage() {
           </div>
         </div>
 
-        {/* Pro plan active banner — auto-dismisses after 3s */}
+        {/* Pro plan active banner — slides in from bottom, auto-dismisses */}
         {showProBanner && (
           <div style={{
-            background: "linear-gradient(135deg,#0a1f4a,#1a3a6a)", borderRadius: 12, padding: "14px 20px",
-            marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between",
-            animation: "fadeIn 0.3s ease",
+            position: "fixed", bottom: isMobile ? 20 : 30, left: "50%", transform: "translateX(-50%)", zIndex: 9997,
+            background: "linear-gradient(135deg,#0a1f4a,#1a3a6a)", borderRadius: 14, padding: "16px 24px",
+            display: "flex", alignItems: "center", gap: 12, boxShadow: "0 8px 32px rgba(10,31,74,0.4)",
+            width: isMobile ? "calc(100% - 32px)" : "auto", maxWidth: 420,
+            animation: proBannerExiting ? "slideDownOut 0.4s ease forwards" : "slideUpIn 0.4s cubic-bezier(0.22,1,0.36,1) forwards",
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 20 }}>⚡</span>
-              <div>
-                <div style={{ ...font, fontSize: 16, fontWeight: 600, color: "#e8f2ff" }}>Pro Plan Active</div>
-                <div style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>All premium features unlocked</div>
-              </div>
+            <span style={{ fontSize: 22 }}>⚡</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ ...font, fontSize: 16, fontWeight: 600, color: "#e8f2ff" }}>Pro Plan Active</div>
+              <div style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>All premium features unlocked</div>
             </div>
-            <button onClick={() => setShowProBanner(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 18 }}>×</button>
+            <button onClick={() => { setProBannerExiting(true); setTimeout(() => { setShowProBanner(false); setProBannerExiting(false); }, 400); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 18 }}>×</button>
           </div>
         )}
 
