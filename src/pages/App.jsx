@@ -1720,7 +1720,6 @@ export default function AppPage() {
                     const snap = { open: null, prevClose: null, dayHigh: null, dayLow: null, volume: t.volume };
                     return (
                       <div key={t.symbol} style={{
-                        borderBottom: isExpanded ? "none" : `1px solid ${T.border}`,
                         background: isExpanded ? T.bgCard : T.bg,
                         border: isExpanded ? "2px solid #0a1f4a" : "none",
                         borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
@@ -1729,8 +1728,10 @@ export default function AppPage() {
                       }}>
                         {/* Collapsed row */}
                         <div onClick={() => {
-                          if (isExpanded) { setExpandedHotlist(null); }
-                          else { setExpandedHotlist(t.symbol); openChart(t.symbol, t.name); }
+                          try {
+                            if (isExpanded) { setExpandedHotlist(null); }
+                            else { setExpandedHotlist(t.symbol); setChartData([]); setChartLoading(true); openChart(t.symbol, t.name); }
+                          } catch (err) { console.error("Hotlist expand error:", err); }
                         }} style={{ padding: isExpanded ? "14px 14px" : "14px 8px 14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                           <div style={{ width: 26, height: 26, borderRadius: 7, background: `${col}15`, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: col, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
                           <div style={{ flex: 1, minWidth: 0 }}>
@@ -1776,11 +1777,11 @@ export default function AppPage() {
                             })()}
                             {/* Chart */}
                             <div style={{ background: T.bgDeep, borderRadius: 10, overflow: "hidden", marginBottom: 8, minHeight: 180 }}>
-                              {chartData && chartData.length > 0 ? (
-                                <CandlestickChart data={chartData} width={window.innerWidth - 60} height={180} theme={T}
+                              {!chartLoading && chartData && chartData.length > 0 && chartSymbol === t.symbol ? (
+                                <CandlestickChart data={chartData} width={Math.max(window.innerWidth - 60, 200)} height={180} theme={T}
                                   onTouchStart={() => {}} onTouchMove={() => {}} onTouchEnd={() => {}} />
                               ) : (
-                                <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>Loading chart...</div>
+                                <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>{chartLoading ? "Loading chart..." : "No data available"}</div>
                               )}
                               <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "6px 8px", alignItems: "center" }}>
                                 {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
