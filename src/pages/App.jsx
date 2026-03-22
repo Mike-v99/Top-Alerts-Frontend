@@ -365,8 +365,11 @@ export default function AppPage() {
     async function fetchSnapshots(symbols) {
       try {
         const tickers = symbols.join(",");
-        const res  = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers?tickers=${tickers}&apiKey=${key}`);
+        const url = `https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers?tickers=${tickers}&apiKey=${key}`;
+        console.log("[Massive] Fetching snapshots:", url.replace(key, "KEY"));
+        const res  = await fetch(url);
         const data = await res.json();
+        console.log("[Massive] Snapshot response:", res.status, "tickers:", (data.tickers || []).length, data.status, data.error || "");
         return (data.tickers || []).map(t => {
           const price = t.lastTrade?.p || t.day?.c || t.min?.c || 0;
           return {
