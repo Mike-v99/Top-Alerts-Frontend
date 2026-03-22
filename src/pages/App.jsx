@@ -1298,7 +1298,13 @@ export default function AppPage() {
               const snap = d || {};
 
               return (
-                <div key={m.id} style={{ borderBottom: `1px solid ${T.border}`, background: isExpanded ? T.bgCard : "transparent", border: isExpanded ? "2px solid #0a1f4a" : "none", borderRadius: isExpanded ? 12 : 0, marginBottom: isExpanded ? 8 : 0, overflow: "hidden" }}>
+                <div key={m.id} style={{
+                  background: isExpanded ? T.bgCard : "transparent",
+                  border: isExpanded ? "2px solid #0a1f4a" : "none",
+                  borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                  borderRadius: isExpanded ? 12 : 0,
+                  marginBottom: isExpanded ? 8 : 0,
+                }}>
                   {/* Collapsed row */}
                   <div onClick={() => {
                     if (isExpanded) { setMobileExpanded(null); }
@@ -1858,10 +1864,7 @@ export default function AppPage() {
 
       {/* Fullscreen chart overlay — mobile */}
       {mobileChartFull && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9998, background: T.bg, display: "flex", flexDirection: "column",
-          transform: "rotate(90deg)", transformOrigin: "top left",
-          width: "100vh", height: "100vw", top: 0, left: "100vw",
-        }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 9998, background: T.bg, display: "flex", flexDirection: "column" }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${T.border}` }}>
             <div>
