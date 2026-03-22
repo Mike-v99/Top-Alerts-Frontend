@@ -1925,9 +1925,16 @@ export default function AppPage() {
 
       {/* Fullscreen chart overlay — mobile */}
       {mobileChartFull && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9998, background: T.bg, display: "flex", flexDirection: "column" }}>
+        <div style={{
+          position: "fixed", top: 0, left: 0, zIndex: 9998, background: T.bg,
+          /* Force landscape: rotate 90deg, anchor at top-left, swap width/height */
+          width: "100vh", height: "100vw",
+          transform: "rotate(90deg)", transformOrigin: "top left",
+          marginLeft: "100vw",
+          display: "flex", flexDirection: "column",
+        }}>
           {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${T.border}` }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 20px", borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
             <div>
               <div style={{ ...font, fontSize: 18, fontWeight: 700, color: T.text }}>{chartLabel || chartSymbol}</div>
               <div style={{ ...mono, fontSize: 12, color: T.textMid }}>{chartSymbol}</div>
@@ -1938,13 +1945,13 @@ export default function AppPage() {
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>×</button>
           </div>
-          {/* Chart — full width */}
-          <div style={{ flex: 1, overflow: "auto", padding: "8px 0" }}>
+          {/* Chart — full width with padding */}
+          <div style={{ flex: 1, overflow: "hidden", padding: "12px 20px" }}>
             {chartData.length > 0 && <CandlestickChart data={chartData} T={T} range={chartRange} />}
             {chartData.length === 0 && <div style={{ textAlign: "center", padding: 60, ...mono, fontSize: 14, color: T.textMid }}>No chart data</div>}
           </div>
           {/* Range buttons */}
-          <div style={{ display: "flex", gap: 6, justifyContent: "center", padding: "12px 16px", borderTop: `1px solid ${T.border}` }}>
+          <div style={{ display: "flex", gap: 6, justifyContent: "center", padding: "10px 20px", borderTop: `1px solid ${T.border}`, flexShrink: 0 }}>
             {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
               <span key={r} onClick={() => changeChartRange(r)} style={{
                 padding: "8px 16px", borderRadius: 8, ...mono, fontSize: 13, cursor: "pointer", fontWeight: 600,
