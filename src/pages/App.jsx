@@ -61,7 +61,58 @@ const DELIVERY   = [
 export default function AppPage() {
   const navigate = useNavigate();
   const { user, profile, isPro, signOut } = useAuth();
+
+  // Sync local alerts to server when user logs in
+  useEffect(() => {
+    if (!user) return;
+    const locals = JSON.parse(localStorage.getItem("ta-local-alerts") || "[]");
+    if (locals.length === 0) return;
+    (async () => {
+      for (const la of locals) {
+        try {
+          await createAlert({
+            asset: la.asset,
+            asset_type: la.asset_type,
+            trigger_type: la.trigger_type,
+            trigger_value: la.trigger_value,
+            delivery: la.delivery,
+            webhook_url: la.webhook_url,
+            cooldown_mins: la.cooldown_mins,
+          });
+        } catch (e) { console.error("Sync local alert failed:", e); }
+      }
+      localStorage.removeItem("ta-local-alerts");
+      setLocalAlerts([]);
+      showToast(`${locals.length} alert${locals.length > 1 ? "s" : ""} synced to your account`);
+    })();
+  }, [user]);
   const { alerts, history, loading, createAlert, deleteAlert, togglePause } = useAlerts();
+
+  // Local alerts for unauthenticated users
+  const [localAlerts, setLocalAlerts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("ta-local-alerts") || "[]"); } catch { return []; }
+  });
+  function saveLocalAlerts(arr) {
+    setLocalAlerts(arr);
+    try { localStorage.setItem("ta-local-alerts", JSON.stringify(arr)); } catch {}
+  }
+  // Combined alerts — server + local
+  const allAlerts = user ? alerts : localAlerts;
+
+  function handleDeleteAlert(id) {
+    if (String(id).startsWith("local-")) {
+      saveLocalAlerts(localAlerts.filter(a => a.id !== id));
+    } else {
+      deleteAlert(id);
+    }
+  }
+  function handleTogglePause(id) {
+    if (String(id).startsWith("local-")) {
+      saveLocalAlerts(localAlerts.map(a => a.id === id ? { ...a, status: a.status === "paused" ? "active" : "paused" } : a));
+    } else {
+      togglePause(id);
+    }
+  }
 
   const [themeName, setThemeName] = useState("paper");
   const [tab,       setTab]       = useState("market");
@@ -809,7 +860,7 @@ export default function AppPage() {
     if (assetOverride && typeof assetOverride !== "string") assetOverride = undefined;
 
     // Free users limited to 10 alerts — show upgrade modal on 11th attempt
-    const activeAlerts = alerts.filter(a => a.status !== "deleted").length;
+    const activeAlerts = allAlerts.filter(a => a.status !== "deleted").length;
     if (!isPro && activeAlerts >= 10) {
       setShowUpgradeModal(true);
       return;
@@ -871,6 +922,28 @@ export default function AppPage() {
              : form.trigger?.input === "bb"       ? { band: form.bb === "Upper Band" ? "upper" : "lower" }
              : form.trigger?.input === "volume"   ? { volume_multiplier: parseInt(form.volume) }
              : {};
+
+    // If not logged in, save to localStorage
+    if (!user) {
+      const localAlert = {
+        id: `local-${Date.now()}`,
+        asset: form.asset,
+        asset_type: form.asset.includes("/") ? "crypto" : "stock",
+        trigger_type: form.trigger.id,
+        trigger_value: tv,
+        delivery: form.delivery,
+        webhook_url: form.delivery.includes("webhook") ? form.webhook_url : null,
+        cooldown_mins: parseInt(form.cooldown),
+        status: "active",
+        created_at: new Date().toISOString(),
+        local: true, // flag for syncing later
+      };
+      const updated = [...localAlerts, localAlert];
+      saveLocalAlerts(updated);
+      setShowModal(false);
+      showToast("Alert saved locally — sign in to enable delivery");
+      return;
+    }
 
     const { error, upgrade } = await createAlert({
       asset:         form.asset,
@@ -1628,7 +1701,7 @@ export default function AppPage() {
         {isMobile && tab === "alerts" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {loading && <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...font, fontSize: 14 }}>Loading...</div>}
-            {!loading && alerts.filter(a => a.status !== "deleted").map((a) => (
+            {!loading && allAlerts.filter(a => a.status !== "deleted").map((a) => (
               <div key={a.id} style={{
                 background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10,
                 padding: "14px 16px", display: "flex", alignItems: "center", gap: 12,
@@ -1648,14 +1721,14 @@ export default function AppPage() {
                     padding: "3px 8px", borderRadius: 4 }}>
                     {a.status.toUpperCase()}
                   </div>
-                  <button onClick={() => togglePause(a.id)} style={{ background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 14 }}>
+                  <button onClick={() => handleTogglePause(a.id)} style={{ background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 14 }}>
                     {a.status === "paused" ? "▶" : "⏸"}
                   </button>
-                  <button onClick={() => deleteAlert(a.id)} style={{ background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 16 }}>×</button>
+                  <button onClick={() => handleDeleteAlert(a.id)} style={{ background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 16 }}>×</button>
                 </div>
               </div>
             ))}
-            {!loading && alerts.filter(a => a.status !== "deleted").length === 0 && (
+            {!loading && allAlerts.filter(a => a.status !== "deleted").length === 0 && (
               <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...font, fontSize: 14 }}>No alerts yet — create one above</div>
             )}
           </div>
@@ -1987,7 +2060,7 @@ export default function AppPage() {
         {tab === "alerts" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {loading && <div style={{ textAlign: "center", padding: 60, color: T.textFaint, fontSize: 18 }}>Loading...</div>}
-            {!loading && alerts.filter(a => a.status !== "deleted").map((a) => (
+            {!loading && allAlerts.filter(a => a.status !== "deleted").map((a) => (
               <div key={a.id} style={{
                 background: T.bgCard,
                 border: `1px solid ${a.status === "triggered" ? T.red + "55" : a.status === "paused" ? T.border : T.border}`,
@@ -2009,7 +2082,7 @@ export default function AppPage() {
                     {a.last_fired_at && <span style={{ marginLeft: 8, color: T.textFaint }}>Last: {new Date(a.last_fired_at).toLocaleDateString()}</span>}
                   </div>
                 </div>
-                <button onClick={() => togglePause(a.id)} style={{ background: "none", border: `1px solid ${T.border}`, borderRadius: 6, color: T.textFaint, cursor: "pointer", ...font, fontSize: 14, padding: "4px 10px" }}>
+                <button onClick={() => handleTogglePause(a.id)} style={{ background: "none", border: `1px solid ${T.border}`, borderRadius: 6, color: T.textFaint, cursor: "pointer", ...font, fontSize: 14, padding: "4px 10px" }}>
                   {a.status === "paused" ? "▶" : "⏸"}
                 </button>
                 <div style={{ ...mono, fontSize: 10, letterSpacing: 1,
@@ -2018,10 +2091,10 @@ export default function AppPage() {
                   padding: "4px 10px", borderRadius: 4 }}>
                   {a.status.toUpperCase()}
                 </div>
-                <button onClick={() => deleteAlert(a.id)} style={{ background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 20, lineHeight: 1 }}>×</button>
+                <button onClick={() => handleDeleteAlert(a.id)} style={{ background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 20, lineHeight: 1 }}>×</button>
               </div>
             ))}
-            {!loading && alerts.filter(a => a.status !== "deleted").length === 0 && (
+            {!loading && allAlerts.filter(a => a.status !== "deleted").length === 0 && (
               <div style={{ textAlign: "center", padding: 60, color: T.textFaint, fontSize: 18 }}>No alerts yet — create one above</div>
             )}
           </div>
