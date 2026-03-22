@@ -140,6 +140,10 @@ export default function AppPage() {
   const [mobileNewsOpen, setMobileNewsOpen] = useState(false);
   const [expandedAlert, setExpandedAlert] = useState(null); // id of expanded alert card
   const [editMode, setEditMode] = useState(false); // watchlist reorder mode
+  const [marketView, setMarketView] = useState("watchlist"); // "watchlist" or "hotlist"
+  const [hotlistFilter, setHotlistFilter] = useState("gainers"); // gainers, losers, + pro filters
+  const [hotlistProOpen, setHotlistProOpen] = useState(false); // pro dropdown open
+  const [hotlistData, setHotlistData] = useState({ gainers: [], losers: [] });
   const [mobileChartFull, setMobileChartFull] = useState(false); // fullscreen chart overlay
   const [mobileProTriggersOpen, setMobileProTriggersOpen] = useState(false);
   const [isLandscape, setIsLandscape] = useState(() => typeof window !== "undefined" && window.innerWidth > window.innerHeight);
@@ -550,6 +554,40 @@ export default function AppPage() {
       showToast(`${locals.length} alert${locals.length > 1 ? "s" : ""} synced to your account`);
     })();
   }, [user]);
+
+  // ── Hotlist data fetching ──────────────────────────────────────────────
+  useEffect(() => {
+    if (marketView !== "hotlist") return;
+    const key = import.meta.env.VITE_MASSIVE_KEY || "";
+    if (!key) return;
+    (async () => {
+      try {
+        const res = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/gainers?apiKey=${key}`);
+        const data = await res.json();
+        const topGainers = (data.tickers || []).slice(0, 10).map(t => ({
+          symbol: t.ticker,
+          name: t.ticker,
+          price: t.lastTrade?.p || t.day?.c || 0,
+          changePct: t.todaysChangePerc || 0,
+          change: t.todaysChange || 0,
+          volume: t.day?.v || 0,
+        }));
+
+        const res2 = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/losers?apiKey=${key}`);
+        const data2 = await res2.json();
+        const topLosers = (data2.tickers || []).slice(0, 10).map(t => ({
+          symbol: t.ticker,
+          name: t.ticker,
+          price: t.lastTrade?.p || t.day?.c || 0,
+          changePct: t.todaysChangePerc || 0,
+          change: t.todaysChange || 0,
+          volume: t.day?.v || 0,
+        }));
+
+        setHotlistData({ gainers: topGainers, losers: topLosers });
+      } catch (e) { console.error("Hotlist fetch error:", e); }
+    })();
+  }, [marketView]);
 
   // ── Symbol search ──────────────────────────────────────────────────────────
   async function searchSymbols(q) {
@@ -1585,8 +1623,120 @@ export default function AppPage() {
         {/* ── MOBILE LAYOUT ──────────────────────────────────────────────── */}
         {isMobile && tab === "market" && (
           <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <div style={{ ...mono, fontSize: 11, letterSpacing: "2px", color: T.text, fontWeight: 600 }}>WATCHLIST</div>
+            {/* Watchlist / Hotlist segmented toggle */}
+            <div style={{ display: "flex", border: `2px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 12 }}>
+              <div onClick={() => { setMarketView("watchlist"); setHotlistProOpen(false); }} style={{
+                flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
+                ...mono, fontSize: 12, letterSpacing: "0.5px",
+                background: marketView === "watchlist" ? "#0a1f4a" : T.bg,
+                color: marketView === "watchlist" ? "#e8f2ff" : T.textMid,
+                fontWeight: marketView === "watchlist" ? 700 : 500,
+              }}>Watchlist</div>
+              <div onClick={() => { setMarketView("hotlist"); setEditMode(false); setMobileExpanded(null); }} style={{
+                flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
+                ...mono, fontSize: 12, letterSpacing: "0.5px",
+                background: marketView === "hotlist" ? "#0a1f4a" : T.bg,
+                color: marketView === "hotlist" ? "#e8f2ff" : T.textMid,
+                fontWeight: marketView === "hotlist" ? 700 : 500,
+                borderLeft: `1px solid ${T.border}`,
+              }}>🔥 Hotlist</div>
+            </div>
+
+            {/* ── HOTLIST VIEW ─────────────────── */}
+            {marketView === "hotlist" && (
+              <div>
+                {/* Segmented filter bar: Gainers | Losers | Pro */}
+                <div style={{ display: "flex", border: `2px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 10 }}>
+                  <div onClick={() => { setHotlistFilter("gainers"); setHotlistProOpen(false); }} style={{
+                    flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
+                    ...mono, fontSize: 12, letterSpacing: "0.5px",
+                    background: hotlistFilter === "gainers" ? "#1a8a44" : T.bg,
+                    color: hotlistFilter === "gainers" ? "#fff" : T.textMid,
+                    fontWeight: hotlistFilter === "gainers" ? 700 : 500,
+                  }}>Gainers</div>
+                  <div onClick={() => { setHotlistFilter("losers"); setHotlistProOpen(false); }} style={{
+                    flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
+                    ...mono, fontSize: 12, letterSpacing: "0.5px",
+                    background: hotlistFilter === "losers" ? "#cc2222" : T.bg,
+                    color: hotlistFilter === "losers" ? "#fff" : T.textMid,
+                    fontWeight: hotlistFilter === "losers" ? 700 : 500,
+                    borderLeft: `1px solid ${T.border}`, borderRight: `1px solid ${T.border}`,
+                  }}>Losers</div>
+                  <div onClick={() => {
+                    if (isPro) { setHotlistProOpen(p => !p); }
+                    else { setHotlistProOpen(p => !p); }
+                  }} style={{
+                    flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
+                    ...mono, fontSize: 12, letterSpacing: "0.5px",
+                    background: hotlistProOpen ? "#0a1f4a" : T.bg,
+                    color: hotlistProOpen ? "#e8f2ff" : "#0a1f4a",
+                    fontWeight: 700,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+                  }}>
+                    <span style={{ fontSize: 8, background: hotlistProOpen ? "rgba(255,255,255,0.2)" : "#0a1f4a", color: "#e8f2ff", padding: "2px 5px", borderRadius: 2, fontWeight: 700 }}>PRO</span>
+                    More
+                  </div>
+                </div>
+
+                {/* Pro dropdown */}
+                {hotlistProOpen && (
+                  <div style={{ background: "#0a1f4a", borderRadius: 10, padding: "14px 16px", marginBottom: 12 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 14 }}>
+                      {["Volume","Volatile","52W High","52W Low","Pre-Market","After-Hours"].map(f => (
+                        <button key={f} onClick={() => {
+                          if (isPro) { setHotlistFilter(f.toLowerCase().replace(/\s+/g, '_').replace('52w_', 'w52_')); setHotlistProOpen(false); }
+                          else { showToast("Pro plan required", "warn"); }
+                        }} style={{
+                          ...mono, fontSize: 11, color: isPro ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.4)",
+                          background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
+                          borderRadius: 8, padding: "10px 0", textAlign: "center", cursor: "pointer",
+                        }}>{f}</button>
+                      ))}
+                    </div>
+                    {!isPro && (
+                      <button onClick={() => { setHotlistProOpen(false); setTab("pricing"); }} style={{
+                        width: "100%", padding: 11, background: "#e8f2ff", color: "#0a1f4a",
+                        border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                      }}>Unlock Pro Filters — $9/mo</button>
+                    )}
+                  </div>
+                )}
+
+                {/* Hotlist results */}
+                <div>
+                  <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: hotlistFilter === "losers" ? "#cc2222" : "#1a8a44", marginBottom: 6, fontWeight: 600 }}>
+                    {hotlistFilter === "losers" ? "TOP LOSERS TODAY" : "TOP GAINERS TODAY"}
+                  </div>
+                  {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).length === 0 && (
+                    <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 12 }}>Loading hotlist...</div>
+                  )}
+                  {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).map((t, i) => {
+                    const up = t.changePct >= 0;
+                    const col = up ? "#1a8a44" : "#cc2222";
+                    const arrow = up ? "▲" : "▼";
+                    return (
+                      <div key={t.symbol} onClick={() => { setMarketView("watchlist"); setMobileExpanded(null); openChart(t.symbol, t.name); }}
+                        style={{ padding: "14px 0", display: "flex", alignItems: "center", gap: 12, borderBottom: `1px solid ${T.border}`, cursor: "pointer" }}>
+                        <div style={{ width: 26, height: 26, borderRadius: 7, background: `${col}15`, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: col, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ ...font, fontSize: 18, fontWeight: 700, color: T.text }}>{t.symbol}</div>
+                          <div style={{ ...mono, fontSize: 11, color: T.textMid, marginTop: 1 }}>{t.name !== t.symbol ? t.name : ""}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ ...font, fontSize: 18, fontWeight: 700, color: T.text }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                          <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 700 }}>{arrow} {Math.abs(t.changePct).toFixed(2)}%</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── WATCHLIST VIEW ─────────────────── */}
+            {marketView === "watchlist" && (
+            <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: 8 }}>
               <button onClick={() => { setEditMode(p => !p); setMobileExpanded(null); }} style={{
                 ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "6px 16px",
                 background: editMode ? "#0a1f4a" : "none",
@@ -1860,6 +2010,8 @@ export default function AppPage() {
                 </div>
               );
             })}
+            </div>
+            )}{/* end watchlist view */}
           </div>
         )}
 
