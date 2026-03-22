@@ -451,7 +451,8 @@ export default function AppPage() {
       };
 
       ws.onerror = (e) => console.warn("[WS] error", e);
-      ws.onclose = (e) => { console.log("[WS] closed", e.code, e.reason); if (!destroyed) setTimeout(connectWS, 3000); };
+      let wsRetries = 0;
+      ws.onclose = (e) => { console.log("[WS] closed", e.code); if (!destroyed && wsRetries < 3) { wsRetries++; setTimeout(connectWS, 5000); } };
     }
 
     // Start everything
@@ -530,45 +531,63 @@ export default function AppPage() {
 
   // ── Hotlist data fetching ──────────────────────────────────────────────
   useEffect(() => {
-    if (marketView !== "hotlist") return;
+    if (marketView !== "hotlist" && tab !== "hotlist") return;
     const key = import.meta.env.VITE_MASSIVE_KEY || "";
     if (!key) return;
     (async () => {
       try {
+        // First try the live gainers/losers endpoints
         const res = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/gainers?apiKey=${key}`);
         const data = await res.json();
-        console.log("[Hotlist] Gainers response:", data.status, "count:", (data.tickers||[]).length);
-        if (data.tickers?.[0]) console.log("[Hotlist] First gainer raw:", JSON.stringify(data.tickers[0]).slice(0, 500));
-        const topGainers = (data.tickers || []).slice(0, 20).map(t => {
-          const price = t.lastTrade?.p || t.day?.c || t.prevDay?.c || 0;
-          const isLive = !!(t.lastTrade?.p || (t.day?.c && t.day.c !== 0));
-          return {
-            symbol: t.ticker, name: t.ticker,
-            price,
-            changePct: t.todaysChangePerc || (t.prevDay?.c && t.prevDay?.o ? ((t.prevDay.c - t.prevDay.o) / t.prevDay.o) * 100 : 0),
-            change: t.todaysChange || (t.prevDay?.c && t.prevDay?.o ? t.prevDay.c - t.prevDay.o : 0),
-            volume: t.day?.v || t.prevDay?.v || 0,
-          };
-        }).filter(t => t.price > 1).slice(0, 10);
+        const liveGainers = (data.tickers || []).slice(0, 20).map(t => ({
+          symbol: t.ticker, name: t.ticker,
+          price: t.lastTrade?.p || t.day?.c || t.prevDay?.c || 0,
+          changePct: t.todaysChangePerc || 0,
+          change: t.todaysChange || 0,
+          volume: t.day?.v || t.prevDay?.v || 0,
+        })).filter(t => t.price > 1).slice(0, 10);
+
         const res2 = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/losers?apiKey=${key}`);
         const data2 = await res2.json();
-        console.log("[Hotlist] Losers response:", data2.status, "count:", (data2.tickers||[]).length);
-        const topLosers = (data2.tickers || []).slice(0, 20).map(t => {
-          const price = t.lastTrade?.p || t.day?.c || t.prevDay?.c || 0;
-          const isLive = !!(t.lastTrade?.p || (t.day?.c && t.day.c !== 0));
+        const liveLosers = (data2.tickers || []).slice(0, 20).map(t => ({
+          symbol: t.ticker, name: t.ticker,
+          price: t.lastTrade?.p || t.day?.c || t.prevDay?.c || 0,
+          changePct: t.todaysChangePerc || 0,
+          change: t.todaysChange || 0,
+          volume: t.day?.v || t.prevDay?.v || 0,
+        })).filter(t => t.price > 1).slice(0, 10);
+
+        if (liveGainers.length > 0 || liveLosers.length > 0) {
+          setHotlistData({ gainers: liveGainers, losers: liveLosers });
+          return;
+        }
+
+        // Market closed — build hotlist from snapshot of popular tickers using prevDay data
+        const popular = "AAPL,MSFT,NVDA,TSLA,AMZN,GOOGL,META,NFLX,AMD,INTC,PLTR,SOFI,RIVN,LCID,NIO,MSTR,SMCI,COIN,HOOD,RKLB,BA,DIS,PYPL,SQ,SHOP,SNAP,UBER,ABNB,CRWD,SNOW,JPM,GS,BAC,WFC,V,MA,UNH,JNJ,PFE,LLY,XOM,CVX,COP,LULU,NKE,SBUX,MCD,WMT,COST,TGT".split(",");
+        const snapRes = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers?tickers=${popular.join(",")}&apiKey=${key}`);
+        const snapData = await snapRes.json();
+        const allTickers = (snapData.tickers || []).map(t => {
+          const prevClose = t.prevDay?.c || 0;
+          const prevOpen = t.prevDay?.o || 0;
+          const change = prevClose && prevOpen ? prevClose - prevOpen : 0;
+          const changePct = prevOpen && prevOpen !== 0 ? ((prevClose - prevOpen) / prevOpen) * 100 : 0;
           return {
             symbol: t.ticker, name: t.ticker,
-            price,
-            changePct: t.todaysChangePerc || (t.prevDay?.c && t.prevDay?.o ? ((t.prevDay.c - t.prevDay.o) / t.prevDay.o) * 100 : 0),
-            change: t.todaysChange || (t.prevDay?.c && t.prevDay?.o ? t.prevDay.c - t.prevDay.o : 0),
-            volume: t.day?.v || t.prevDay?.v || 0,
+            price: prevClose,
+            changePct,
+            change,
+            volume: t.prevDay?.v || 0,
           };
-        }).filter(t => t.price > 1).slice(0, 10);
-        console.log("[Hotlist] Processed:", topGainers.length, "gainers,", topLosers.length, "losers");
-        setHotlistData({ gainers: topGainers, losers: topLosers });
+        }).filter(t => t.price > 1);
+
+        const sorted = [...allTickers].sort((a, b) => b.changePct - a.changePct);
+        const fallbackGainers = sorted.filter(t => t.changePct > 0).slice(0, 10);
+        const fallbackLosers = sorted.filter(t => t.changePct < 0).sort((a, b) => a.changePct - b.changePct).slice(0, 10);
+
+        setHotlistData({ gainers: fallbackGainers, losers: fallbackLosers });
       } catch (e) { console.error("Hotlist fetch error:", e); }
     })();
-  }, [marketView]);
+  }, [marketView, tab]);
 
   // ── Symbol search ──────────────────────────────────────────────────────────
   async function searchSymbols(q) {
@@ -1344,7 +1363,7 @@ export default function AppPage() {
                 <div>
                   <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#1a8a44", marginBottom: 8, fontWeight: 600 }}>🟢 TOP GAINERS</div>
                   <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
-                    {hotlistData.gainers.length === 0 && <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 13 }}>Loading...</div>}
+                    {hotlistData.gainers.length === 0 && <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 13 }}>Market closed — hotlist updates when market opens</div>}
                     {hotlistData.gainers.map((t, i) => (
                       <div key={t.symbol} onClick={() => { openChart(t.symbol, t.name); }} style={{
                         padding: "14px 16px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
@@ -1363,7 +1382,7 @@ export default function AppPage() {
                 <div>
                   <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#cc2222", marginBottom: 8, fontWeight: 600 }}>🔴 TOP LOSERS</div>
                   <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
-                    {hotlistData.losers.length === 0 && <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 13 }}>Loading...</div>}
+                    {hotlistData.losers.length === 0 && <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 13 }}>Market closed — hotlist updates when market opens</div>}
                     {hotlistData.losers.map((t, i) => (
                       <div key={t.symbol} onClick={() => { openChart(t.symbol, t.name); }} style={{
                         padding: "14px 16px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
@@ -1932,7 +1951,7 @@ export default function AppPage() {
                     {hotlistFilter === "losers" ? "TOP LOSERS TODAY" : "TOP GAINERS TODAY"}
                   </div>
                   {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).length === 0 && (
-                    <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 12 }}>Loading hotlist...</div>
+                    <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 12 }}>Market closed — hotlist updates when market opens</div>
                   )}
                   {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).map((t, i) => {
                     const up = t.changePct >= 0;
