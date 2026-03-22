@@ -1372,6 +1372,39 @@ export default function AppPage() {
                         ))}
                       </div>
 
+                      {/* News — first 3 articles */}
+                      {Array.isArray(tickerNews) && tickerNews.length > 0 && (
+                        <div style={{ marginBottom: 8 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                            <span style={{ fontSize: 12 }}>📰</span>
+                            <span style={{ ...mono, fontSize: 13, letterSpacing: "1px", color: "#0a1f4a", fontWeight: 700 }}>LATEST NEWS</span>
+                          </div>
+                          {tickerNews.slice(0, 3).map((n, i) => {
+                            if (!n) return null;
+                            const url = (n && n.article_url) || "";
+                            const title = (n && n.title) || "Untitled";
+                            const pub = (n && n.publisher) || "";
+                            const dateStr = n && n.published_utc ? new Date(n.published_utc).toLocaleDateString() : "";
+                            return (
+                              <div key={i} style={{ padding: "10px 0", borderTop: `1px solid ${T.border}` }}>
+                                <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{title}</div>
+                                <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+                                  {pub ? <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{pub}</span> : null}
+                                  {pub && dateStr ? <span style={{ color: "#6a6050" }}>·</span> : null}
+                                  {dateStr ? <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{dateStr}</span> : null}
+                                </div>
+                                {url ? (
+                                  <a href={url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} style={{
+                                    display: "inline-block", marginTop: 6, ...mono, fontSize: 12,
+                                    color: "#0a1f4a", fontWeight: 600, textDecoration: "underline",
+                                  }}>Read article →</a>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
                       {/* Action buttons */}
                       <div style={{ display: "flex", gap: 8 }}>
                         <button onClick={(ev) => { ev.stopPropagation(); openModal(m.symbol, m.label); }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
