@@ -855,7 +855,8 @@ export default function AppPage() {
           <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 4 : 8 }}>
             {/* Theme toggle */}
             <button onClick={() => setThemeName(t => t === "paper" ? "charcoal" : "paper")} style={{
-              ...font, fontSize: isMobile ? 14 : 18, background: T.bgCard, border: `1px solid ${T.border}`,
+              ...font, fontSize: isMobile ? 14 : 18, background: T.bgCard,
+              border: themeName === "paper" ? "2px solid #f5a623" : "2px solid #ffffff",
               borderRadius: 8, padding: isMobile ? "4px 8px" : "6px 12px", cursor: "pointer",
             }}>
               <span style={{ color: themeName === "paper" ? "#f5a623" : "#ffffff" }}>{T.icon}</span>
@@ -1302,21 +1303,21 @@ export default function AppPage() {
                   <div onClick={() => {
                     if (isExpanded) { setMobileExpanded(null); }
                     else { setMobileExpanded(m.symbol); setMobileNewsOpen(false); openChart(m.symbol, m.label); }
-                  }} style={{ padding: isExpanded ? "12px 14px" : "12px 0", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                  }} style={{ padding: isExpanded ? "14px 14px" : "14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ ...font, fontSize: 17, fontWeight: 700, color: "#1a1200" }}>{m.label}</div>
-                      <div style={{ ...mono, fontSize: 12, color: "#6a6050" }}>{m.symbol}</div>
+                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: "#1a1200" }}>{m.label}</div>
+                      <div style={{ ...mono, fontSize: 14, color: "#6a6050" }}>{m.symbol}</div>
                     </div>
                     {!isExpanded && (
-                      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 9, color: "#8a8070", fontWeight: 500 }}>HIGH</div><div style={{ ...mono, fontSize: 12, color: "#1a1200", fontWeight: 500 }}>{snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"}</div></div>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 9, color: "#8a8070", fontWeight: 500 }}>LOW</div><div style={{ ...mono, fontSize: 12, color: "#1a1200", fontWeight: 500 }}>{snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"}</div></div>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 9, color: "#8a8070", fontWeight: 500 }}>VOL</div><div style={{ ...mono, fontSize: 12, color: "#1a1200", fontWeight: 500 }}>{snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : snap.volume >= 1e3 ? `${(snap.volume/1e3).toFixed(0)}K` : snap.volume) : "—"}</div></div>
+                      <div style={{ display: "flex", gap: 12, alignItems: "center", paddingRight: 10 }}>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 10, color: "#8a8070", fontWeight: 500 }}>HIGH</div><div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 500 }}>{snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"}</div></div>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 10, color: "#8a8070", fontWeight: 500 }}>LOW</div><div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 500 }}>{snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"}</div></div>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 10, color: "#8a8070", fontWeight: 500 }}>VOL</div><div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 500 }}>{snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : snap.volume >= 1e3 ? `${(snap.volume/1e3).toFixed(0)}K` : snap.volume) : "—"}</div></div>
                       </div>
                     )}
-                    <div style={{ textAlign: "right", minWidth: 75 }}>
-                      <div style={{ ...font, fontSize: 18, fontWeight: 700, color: "#1a1200" }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
-                      <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
+                    <div style={{ textAlign: "right", minWidth: 85 }}>
+                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: "#1a1200" }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      <div style={{ ...mono, fontSize: 14, color: col, fontWeight: 600 }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
                     </div>
                   </div>
 
@@ -1324,15 +1325,7 @@ export default function AppPage() {
                   {isExpanded && (
                     <div onClick={(ev) => ev.stopPropagation()} style={{ padding: "0 14px 14px" }}>
                       {/* Chart */}
-                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, overflow: "hidden", position: "relative" }}>
-                        {/* Expand button */}
-                        <button onClick={(ev) => { ev.stopPropagation(); setMobileChartFull(true); }} style={{
-                          position: "absolute", top: 8, right: 8, zIndex: 5,
-                          width: 34, height: 34, borderRadius: 8, border: "none",
-                          background: "#0a1f4a", cursor: "pointer", color: "#e8f2ff",
-                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
-                          boxShadow: "0 2px 8px rgba(10,31,74,0.3)",
-                        }}>⛶</button>
+                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, overflow: "hidden" }}>
                         {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: "#6a6050" }}>Loading chart...</div>}
                         {!chartLoading && chartData.length > 0 && (
                           <div style={{ overflowX: "auto" }}>
@@ -1342,7 +1335,7 @@ export default function AppPage() {
                         {!chartLoading && chartData.length === 0 && (
                           <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: "#6a6050" }}>No chart data</div>
                         )}
-                        <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "8px 12px" }}>
+                        <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "8px 12px", alignItems: "center" }}>
                           {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                             <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
                               padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
@@ -1350,6 +1343,11 @@ export default function AppPage() {
                               color: chartRange === r ? "#e8f2ff" : "#6a6050",
                             }}>{lbl}</span>
                           ))}
+                          <button onClick={(ev) => { ev.stopPropagation(); setMobileChartFull(true); }} style={{
+                            marginLeft: "auto", width: 30, height: 30, borderRadius: 6, border: "none",
+                            background: "#0a1f4a", cursor: "pointer", color: "#e8f2ff",
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+                          }}>⛶</button>
                         </div>
                       </div>
 
@@ -1370,53 +1368,33 @@ export default function AppPage() {
                         ))}
                       </div>
 
-                      {/* News — collapsible */}
-                      <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 8 }}>
-                        {/* Toggle header — ONLY this triggers open/close */}
-                        <div onClick={(ev) => { ev.stopPropagation(); setMobileNewsOpen(p => !p); }} style={{
-                          padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between",
-                          cursor: "pointer", background: mobileNewsOpen ? T.bgDeep : T.bg,
-                        }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <span style={{ fontSize: 12 }}>📰</span>
-                            <span style={{ ...mono, fontSize: 22, letterSpacing: "1px", color: "#cc2222", fontWeight: 700 }}>LATEST NEWS</span>
-                            <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>({tickerNews.length})</span>
-                          </div>
-                          <span style={{ ...font, fontSize: 12, color: mobileNewsOpen ? "#1a1200" : "#6a6050" }}>{mobileNewsOpen ? "▲ Collapse" : "▼ Expand"}</span>
+                      {/* News — always show first 3 articles, no collapse */}
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                          <span style={{ fontSize: 12 }}>📰</span>
+                          <span style={{ ...mono, fontSize: 13, letterSpacing: "1px", color: "#0a1f4a", fontWeight: 700 }}>LATEST NEWS</span>
                         </div>
-                        {/* Preview when collapsed */}
-                        {!mobileNewsOpen && tickerNews.length > 0 && (
-                          <div onClick={(ev) => { ev.stopPropagation(); setMobileNewsOpen(true); }} style={{ padding: "8px 14px", ...font, fontSize: 13, color: "#1a1200", borderTop: `1px solid ${T.border}`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer" }}>
-                            {tickerNews[0]?.title}
-                          </div>
-                        )}
-                        {/* Expanded news items */}
-                        {mobileNewsOpen && (
-                          <div onClick={(ev) => ev.stopPropagation()}>
-                            {tickerNews.map((n, i) => {
-                              const url = n.article_url || n.url || n.link || "";
-                              return (
-                                <div key={i} style={{ borderTop: `1px solid ${T.border}`, padding: "10px 14px" }}>
-                                  <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#0a1f4a", lineHeight: 1.3 }}>{n.title}</div>
-                                  <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                                    <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
-                                    <span style={{ color: "#6a6050" }}>·</span>
-                                    <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
-                                  </div>
-                                  {url && (
-                                    <a href={url} target="_blank" rel="noopener noreferrer" style={{
-                                      display: "inline-block", marginTop: 6, ...mono, fontSize: 11,
-                                      color: "#0a1f4a", fontWeight: 600, textDecoration: "underline",
-                                    }}>Read article →</a>
-                                  )}
-                                </div>
-                              );
-                            })}
-                            {tickerNews.length === 0 && (
-                              <div style={{ padding: "12px 14px", borderTop: `1px solid ${T.border}`, ...font, fontSize: 13, color: "#6a6050", textAlign: "center" }}>No news available</div>
-                            )}
-                          </div>
-                        )}
+                        {tickerNews.slice(0, 3).map((n, i) => {
+                          const url = n.article_url || n.url || n.link || "";
+                          return (
+                            <div key={i} style={{ padding: "10px 0", borderTop: `1px solid ${T.border}` }}>
+                              <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{n.title}</div>
+                              <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+                                <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
+                                <span style={{ color: "#6a6050" }}>·</span>
+                                <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
+                              </div>
+                              {url && (
+                                <a href={url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} style={{
+                                  display: "inline-block", marginTop: 6, ...mono, fontSize: 12,
+                                  color: "#0a1f4a", fontWeight: 600, textDecoration: "underline",
+                                }}>Read article →</a>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {newsLoading && <div style={{ ...mono, fontSize: 12, color: "#6a6050", padding: "10px 0" }}>Loading news...</div>}
+                        {!newsLoading && tickerNews.length === 0 && <div style={{ ...font, fontSize: 13, color: "#6a6050", padding: "10px 0" }}>No news available</div>}
                       </div>
 
                       {/* Action buttons */}
@@ -1880,16 +1858,19 @@ export default function AppPage() {
 
       {/* Fullscreen chart overlay — mobile */}
       {mobileChartFull && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9998, background: T.bg, display: "flex", flexDirection: "column" }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 9998, background: T.bg, display: "flex", flexDirection: "column",
+          transform: "rotate(90deg)", transformOrigin: "top left",
+          width: "100vh", height: "100vw", top: 0, left: "100vw",
+        }}>
           {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: `1px solid ${T.border}` }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${T.border}` }}>
             <div>
               <div style={{ ...font, fontSize: 18, fontWeight: 700, color: "#1a1200" }}>{chartLabel || chartSymbol}</div>
               <div style={{ ...mono, fontSize: 12, color: "#6a6050" }}>{chartSymbol}</div>
             </div>
             <button onClick={() => setMobileChartFull(false)} style={{
-              width: 36, height: 36, borderRadius: 8, border: `1px solid ${T.border}`,
-              background: T.bgCard, cursor: "pointer", fontSize: 18, color: "#1a1200",
+              width: 36, height: 36, borderRadius: 8, border: "none",
+              background: "#0a1f4a", cursor: "pointer", fontSize: 18, color: "#e8f2ff",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>×</button>
           </div>
