@@ -118,6 +118,16 @@ export default function AppPage() {
   const [tab,       setTab]       = useState("market");
   const [showModal, setShowModal] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showProBanner, setShowProBanner] = useState(false);
+
+  // Show Pro banner briefly on login/refresh
+  useEffect(() => {
+    if (isPro && user) {
+      setShowProBanner(true);
+      const timer = setTimeout(() => setShowProBanner(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isPro, user]);
   const [step,      setStep]      = useState(1);
   const [toast,     setToast]     = useState(null);
 
@@ -1142,6 +1152,24 @@ export default function AppPage() {
               <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>Advanced triggers · Multi-condition logic · Backtesting · Webhook delivery</div>
             </div>
             <div style={{ ...mono, fontSize: 9, color: T.textFaint, border: `1px solid ${T.border}`, padding: "4px 12px", borderRadius: 5 }}>UNLIMITED</div>
+          </div>
+        )}
+
+        {/* Pro plan active banner — auto-dismisses after 3s */}
+        {showProBanner && (
+          <div style={{
+            background: "linear-gradient(135deg,#0a1f4a,#1a3a6a)", borderRadius: 12, padding: "14px 20px",
+            marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between",
+            animation: "fadeIn 0.3s ease",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 20 }}>⚡</span>
+              <div>
+                <div style={{ ...font, fontSize: 16, fontWeight: 600, color: "#e8f2ff" }}>Pro Plan Active</div>
+                <div style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>All premium features unlocked</div>
+              </div>
+            </div>
+            <button onClick={() => setShowProBanner(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 18 }}>×</button>
           </div>
         )}
 
