@@ -540,34 +540,12 @@ export default function AppPage() {
     })();
   }, [user]);
 
-  // ── Hotlist data fetching ──────────────────────────────────────────────
+  // ── Hotlist data fetching (temporarily disabled — testing rate limits) ──
   useEffect(() => {
     if (marketView !== "hotlist") return;
-    const key = import.meta.env.VITE_MASSIVE_KEY || "";
-    if (!key) return;
-    (async () => {
-      try {
-        const res = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/gainers?apiKey=${key}`);
-        const data = await res.json();
-        const topGainers = (data.tickers || []).filter(t => (t.lastTrade?.p || t.day?.c || 0) > 1).slice(0, 10).map(t => ({
-          symbol: t.ticker, name: t.ticker,
-          price: t.lastTrade?.p || t.day?.c || 0,
-          changePct: t.todaysChangePerc || 0,
-          change: t.todaysChange || 0,
-          volume: t.day?.v || 0,
-        }));
-        const res2 = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/losers?apiKey=${key}`);
-        const data2 = await res2.json();
-        const topLosers = (data2.tickers || []).filter(t => (t.lastTrade?.p || t.day?.c || 0) > 1).slice(0, 10).map(t => ({
-          symbol: t.ticker, name: t.ticker,
-          price: t.lastTrade?.p || t.day?.c || 0,
-          changePct: t.todaysChangePerc || 0,
-          change: t.todaysChange || 0,
-          volume: t.day?.v || 0,
-        }));
-        setHotlistData({ gainers: topGainers, losers: topLosers });
-      } catch (e) { console.error("Hotlist fetch error:", e); }
-    })();
+    // Disabled to test if gainers/losers endpoints are eating rate limit
+    // const key = import.meta.env.VITE_MASSIVE_KEY || "";
+    // if (!key) return;
   }, [marketView]);
 
   // ── Symbol search ──────────────────────────────────────────────────────────
