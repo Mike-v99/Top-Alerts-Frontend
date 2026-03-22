@@ -2148,7 +2148,7 @@ export default function AppPage() {
             {tab === "market" && (
               <div>
                 <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textMid, marginBottom: 10 }}>WATCHLIST</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {MARKET_SYMBOLS.map(m => {
                     const d   = marketData[m.id];
                     const up  = d?.changePct >= 0;
@@ -2159,8 +2159,8 @@ export default function AppPage() {
                         background: isActive ? T.bgDeep : T.bgCard,
                         border: `1px solid ${isActive ? T.accent : T.border}`,
                         borderLeft: `4px solid ${col}`,
-                        borderRadius: 9,
-                        padding: "10px 12px",
+                        borderRadius: 10,
+                        padding: "14px 16px",
                         cursor: "pointer",
                         display: "flex",
                         justifyContent: "space-between",
@@ -2168,19 +2168,19 @@ export default function AppPage() {
                         transition: "all 0.2s",
                       }}>
                         <div>
-                          <div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.text }}>{m.label}</div>
-                          <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{m.symbol}</div>
+                          <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{m.label}</div>
+                          <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 2 }}>{m.symbol}</div>
                         </div>
                         <div style={{ textAlign: "right" }}>
                           <div style={{ overflow: "hidden" }}>
                             <div
                               key={d?.price}
                               className={flashState[m.id] === "up" ? "price-slide-up" : flashState[m.id] === "down" ? "price-slide-down" : ""}
-                              style={{ ...font, fontSize: 14, fontWeight: 500, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.8s" }}>
+                              style={{ ...font, fontSize: 17, fontWeight: 600, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.8s" }}>
                               {marketLoading && !d ? "—" : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
                             </div>
                           </div>
-                          {d && <div style={{ ...mono, fontSize: 10, color: col, marginTop: 1 }}>
+                          {d && <div style={{ ...mono, fontSize: 12, color: col, marginTop: 2 }}>
                             {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
                           </div>}
                         </div>
