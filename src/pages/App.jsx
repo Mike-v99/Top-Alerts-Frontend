@@ -74,6 +74,7 @@ export default function AppPage() {
   const [mobileExpanded, setMobileExpanded] = useState(null); // symbol of expanded ticker
   const [mobileNewsOpen, setMobileNewsOpen] = useState(false);
   const [mobileChartFull, setMobileChartFull] = useState(false); // fullscreen chart overlay
+  const [mobileProTriggersOpen, setMobileProTriggersOpen] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", check);
@@ -1999,9 +2000,9 @@ export default function AppPage() {
                     {step}
                   </div>
                   <div>
-                    <div style={{ fontSize: 20, color: "#e8f2ff" }}>{step === 1 ? "Choose Trigger" : step === 2 ? "Configure" : "Delivery"}</div>
+                    <div style={{ fontSize: 20, color: "#e8f2ff" }}>{isMobile ? (step === 1 ? "Set Alert" : "Delivery") : (step === 1 ? "Choose Trigger" : step === 2 ? "Configure" : "Delivery")}</div>
                     <div style={{ display: "flex", gap: 4, marginTop: 5 }}>
-                      {[1,2,3].map(s => <div key={s} style={{ width: s <= step ? 20 : 6, height: 3, borderRadius: 2, background: s <= step ? "#378ADD" : "rgba(255,255,255,0.15)", transition: "all 0.3s" }} />)}
+                      {(isMobile ? [1,3] : [1,2,3]).map(s => <div key={s} style={{ width: s <= step ? 20 : 6, height: 3, borderRadius: 2, background: s <= step ? "#378ADD" : "rgba(255,255,255,0.15)", transition: "all 0.3s" }} />)}
                     </div>
                   </div>
                 </div>
@@ -2070,8 +2071,103 @@ export default function AppPage() {
             {/* Step 1 — Triggers */}
             {step === 1 && (
               <div>
-                {/* Triggers — always visible, disabled if no asset */}
                 <div style={{ padding: "20px 24px" }}>
+
+                  {/* Mobile: single-screen with trigger + input combined */}
+                  {isMobile ? (
+                    <div>
+                      {/* Selected trigger with inline input */}
+                      {FREE_TRIGGERS.map(t => {
+                        const isSelected = form.trigger?.id === t.id;
+                        const iconBg = t.id === "price_above" ? "rgba(26,138,68,0.12)" : t.id === "price_below" ? "rgba(204,34,34,0.12)" : "rgba(138,106,0,0.12)";
+                        const iconCol = t.id === "price_above" ? T.green : t.id === "price_below" ? T.red : T.accent;
+                        const disabled = !form.asset;
+                        return (
+                          <div key={t.id} style={{
+                            background: T.bgCard, border: isSelected ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                            borderRadius: 12, padding: 14, marginBottom: 6, cursor: disabled ? "not-allowed" : "pointer",
+                            opacity: disabled ? 0.4 : 1,
+                          }} onClick={() => { if (!disabled) setForm(f => ({ ...f, trigger: t })); }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <div style={{ width: 36, height: 36, borderRadius: 8, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: iconCol, flexShrink: 0 }}>{t.icon}</div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ ...font, fontSize: 15, fontWeight: isSelected ? 600 : 500, color: T.text }}>{t.label}</div>
+                                <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>{t.desc}</div>
+                              </div>
+                              {isSelected && <span style={{ ...mono, fontSize: 10, color: "#0a1f4a", fontWeight: 600 }}>✓</span>}
+                              {!isSelected && <span style={{ fontSize: 14, color: T.textFaint }}>→</span>}
+                            </div>
+                            {/* Inline input when selected */}
+                            {isSelected && t.input === "price" && (
+                              <div style={{ marginTop: 12 }} onClick={(ev) => ev.stopPropagation()}>
+                                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: "#8a8070", marginBottom: 6 }}>TARGET PRICE (USD)</div>
+                                <input type="number" placeholder="0.00" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
+                                  style={{ width: "100%", padding: "12px 14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, ...font, fontSize: 18, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
+                              </div>
+                            )}
+                            {isSelected && t.input === "percent" && (
+                              <div style={{ marginTop: 12 }} onClick={(ev) => ev.stopPropagation()}>
+                                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: "#8a8070", marginBottom: 6 }}>% CHANGE THRESHOLD</div>
+                                <input type="number" placeholder="5" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
+                                  style={{ width: "100%", padding: "12px 14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, ...font, fontSize: 18, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {/* Pro triggers — collapsible */}
+                      <div style={{ border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden", marginTop: 10, marginBottom: 16 }}>
+                        <div onClick={() => setMobileProTriggersOpen(p => !p)} style={{
+                          padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between",
+                          cursor: "pointer", background: T.bgCard,
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ ...mono, fontSize: 9, letterSpacing: "1.5px", color: "#0a1f4a", fontWeight: 600 }}>PRO TRIGGERS</span>
+                            <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>({PRO_TRIGGERS.length})</span>
+                          </div>
+                          <span style={{ ...font, fontSize: 11, color: mobileProTriggersOpen ? "#0a1f4a" : T.textFaint }}>{mobileProTriggersOpen ? "▲ Hide" : "▼ Show"}</span>
+                        </div>
+                        {!mobileProTriggersOpen && (
+                          <div style={{ padding: "6px 14px 10px", display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            {PRO_TRIGGERS.slice(0, 4).map(t => (
+                              <span key={t.id} style={{ ...mono, fontSize: 9, color: "#8a8070", background: "rgba(10,31,74,0.06)", padding: "3px 8px", borderRadius: 4, border: "1px solid rgba(10,31,74,0.12)" }}>{t.label.split(" ").slice(0, 2).join(" ")}</span>
+                            ))}
+                            <span style={{ ...mono, fontSize: 9, color: T.textFaint }}>+{PRO_TRIGGERS.length - 4} more</span>
+                          </div>
+                        )}
+                        {mobileProTriggersOpen && (
+                          <div style={{ padding: "0 14px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
+                            {PRO_TRIGGERS.map(t => (
+                              <button key={t.id} onClick={() => {
+                                if (!form.asset) return;
+                                if (!isPro) { setShowModal(false); setTab("pricing"); showToast("Pro plan required", "warn"); return; }
+                                setForm(f => ({ ...f, trigger: t }));
+                              }} style={{
+                                padding: "10px 14px", borderRadius: 10, border: form.trigger?.id === t.id ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                                background: T.bgCard, cursor: !form.asset ? "not-allowed" : "pointer", ...font,
+                                textAlign: "left", display: "flex", gap: 12, alignItems: "center",
+                                opacity: !form.asset ? 0.4 : isPro ? 1 : 0.45,
+                              }}>
+                                <div style={{ width: 32, height: 32, borderRadius: 7, background: T.bgDeep, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 14, color: T.textFaint }}>{t.icon}</div>
+                                <span style={{ flex: 1, fontSize: 14, color: T.text }}>{t.label}</span>
+                                {!isPro && <span style={{ ...mono, fontSize: 8, color: T.textFaint, border: `1px solid ${T.border}`, padding: "2px 6px", borderRadius: 3 }}>PRO</span>}
+                                {form.trigger?.id === t.id && <span style={{ ...mono, fontSize: 10, color: "#0a1f4a", fontWeight: 600 }}>✓</span>}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Continue button — goes to step 3 (delivery) */}
+                      <button onClick={() => { if (form.trigger) setStep(3); }} style={{
+                        width: "100%", padding: 14, background: form.trigger ? "#0a1f4a" : T.border, color: form.trigger ? "#e8f2ff" : T.textFaint,
+                        border: "none", borderRadius: 10, ...font, fontSize: 17, fontWeight: 600, cursor: form.trigger ? "pointer" : "not-allowed",
+                      }}>CONTINUE →</button>
+                    </div>
+                  ) : (
+                    /* Desktop: original two-step flow */
+                    <div>
                   <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>FREE TRIGGERS</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
                     {FREE_TRIGGERS.map(t => {
@@ -2120,12 +2216,14 @@ export default function AppPage() {
                       );
                     })}
                   </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Step 2 — Configure value */}
-            {step === 2 && form.trigger && (
+            {/* Step 2 — Configure value (desktop only) */}
+            {step === 2 && !isMobile && form.trigger && (
               <div style={{ padding: "22px 28px" }}>
                 <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 22 }}>
                   <div style={{ background: "#0a1f4a", padding: "14px 18px", display: "flex", gap: 12, alignItems: "center" }}>
