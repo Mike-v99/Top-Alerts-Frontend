@@ -1782,6 +1782,7 @@ export default function AppPage() {
                           </span>
                         )) : <span style={{ ...mono, fontSize: 12, color: T.textFaint }}>None set</span>}
                       </div>
+                      {!user && <div style={{ ...font, fontSize: 13, color: "#cc2222", marginTop: 8, fontWeight: 500 }}>⚠ Please sign in to activate alerts</div>}
                     </div>
 
                     {/* Created date */}
@@ -2205,6 +2206,7 @@ export default function AppPage() {
                             </span>
                           )) : <span style={{ ...mono, fontSize: 11, color: T.textFaint }}>None set</span>}
                         </div>
+                        {!user && <div style={{ ...font, fontSize: 13, color: "#cc2222", marginTop: 8, fontWeight: 500 }}>⚠ Please sign in to activate alerts</div>}
                       </div>
                       {/* Meta */}
                       <div>
