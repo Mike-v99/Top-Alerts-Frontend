@@ -528,12 +528,40 @@ export default function AppPage() {
     })();
   }, [user]);
 
-  // ── Hotlist data fetching (temporarily disabled — testing rate limits) ──
+  // ── Hotlist data fetching ──────────────────────────────────────────────
   useEffect(() => {
     if (marketView !== "hotlist") return;
-    // Disabled to test if gainers/losers endpoints are eating rate limit
-    // const key = import.meta.env.VITE_MASSIVE_KEY || "";
-    // if (!key) return;
+    const key = import.meta.env.VITE_MASSIVE_KEY || "";
+    if (!key) return;
+    (async () => {
+      try {
+        const res = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/gainers?apiKey=${key}`);
+        const data = await res.json();
+        const topGainers = (data.tickers || []).filter(t => (t.lastTrade?.p || t.day?.c || t.prevDay?.c || 0) > 1).slice(0, 10).map(t => {
+          const isLive = !!(t.lastTrade?.p || (t.day?.c && t.day.c !== 0));
+          return {
+            symbol: t.ticker, name: t.ticker,
+            price: isLive ? (t.lastTrade?.p || t.day?.c || 0) : (t.prevDay?.c || 0),
+            changePct: t.todaysChangePerc || (t.prevDay?.c && t.prevDay?.o ? ((t.prevDay.c - t.prevDay.o) / t.prevDay.o) * 100 : 0),
+            change: t.todaysChange || (t.prevDay?.c && t.prevDay?.o ? t.prevDay.c - t.prevDay.o : 0),
+            volume: t.day?.v || t.prevDay?.v || 0,
+          };
+        });
+        const res2 = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/losers?apiKey=${key}`);
+        const data2 = await res2.json();
+        const topLosers = (data2.tickers || []).filter(t => (t.lastTrade?.p || t.day?.c || t.prevDay?.c || 0) > 1).slice(0, 10).map(t => {
+          const isLive = !!(t.lastTrade?.p || (t.day?.c && t.day.c !== 0));
+          return {
+            symbol: t.ticker, name: t.ticker,
+            price: isLive ? (t.lastTrade?.p || t.day?.c || 0) : (t.prevDay?.c || 0),
+            changePct: t.todaysChangePerc || (t.prevDay?.c && t.prevDay?.o ? ((t.prevDay.c - t.prevDay.o) / t.prevDay.o) * 100 : 0),
+            change: t.todaysChange || (t.prevDay?.c && t.prevDay?.o ? t.prevDay.c - t.prevDay.o : 0),
+            volume: t.day?.v || t.prevDay?.v || 0,
+          };
+        });
+        setHotlistData({ gainers: topGainers, losers: topLosers });
+      } catch (e) { console.error("Hotlist fetch error:", e); }
+    })();
   }, [marketView]);
 
   // ── Symbol search ──────────────────────────────────────────────────────────
@@ -1186,15 +1214,15 @@ export default function AppPage() {
 
         {/* Tabs */}
         <div style={{ display: "flex", flexWrap: isMobile ? "wrap" : "nowrap", gap: isMobile ? 0 : 0, marginBottom: isMobile ? 10 : 28, borderBottom: `1px solid ${T.border}` }}>
-          {(isPro ? ["market","alerts","calendar"] : ["market","alerts","calendar","pricing"]).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{
+          {(isPro ? ["market","hotlist","alerts","calendar"] : ["market","hotlist","alerts","calendar","pricing"]).map(t => (
+            <button key={t} onClick={() => { setTab(t); if (t === "hotlist") setMarketView("hotlist"); }} style={{
               padding: isMobile ? "8px 10px" : "10px 22px", background: "none", border: "none", cursor: "pointer",
-              ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px", fontWeight: isMobile && tab === t ? 700 : (t === "alerts" ? 600 : 400),
-              color: t === "alerts" ? "#cc2222" : (tab === t ? (isMobile ? T.text : T.activeTab) : T.textMid),
-              borderBottom: tab === t ? `2px solid ${t === "alerts" ? "#cc2222" : (isMobile ? T.text : T.activeTabBorder)}` : "2px solid transparent",
+              ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px", fontWeight: isMobile && tab === t ? 700 : (t === "alerts" || t === "hotlist" ? 600 : 400),
+              color: t === "alerts" ? "#cc2222" : t === "hotlist" ? (tab === t ? "#f5a623" : "#c89000") : (tab === t ? (isMobile ? T.text : T.activeTab) : T.textMid),
+              borderBottom: tab === t ? `2px solid ${t === "alerts" ? "#cc2222" : t === "hotlist" ? "#f5a623" : (isMobile ? T.text : T.activeTabBorder)}` : "2px solid transparent",
               marginBottom: -1, transition: "all 0.2s", flexShrink: 0,
             }}>
-              {t.toUpperCase()}
+              {t === "hotlist" ? "🔥 HOTLIST" : t.toUpperCase()}
             </button>
           ))}
           <button onClick={() => openModal()} style={{
@@ -1251,6 +1279,249 @@ export default function AppPage() {
                     <div style={{ ...mono, fontSize: 9, color: T.accent, border: `1px solid ${T.accentBorder}`, padding: "2px 8px", borderRadius: 4 }}>+ ADD</div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Hotlist tab — desktop full page */}
+        {tab === "hotlist" && !isMobile && (
+          <div>
+            {/* Stats row */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
+              {(() => {
+                const topG = hotlistData.gainers[0];
+                const topL = hotlistData.losers[0];
+                return [
+                  { label: "🟢 TOP GAINER", value: topG ? `${topG.symbol} +${Math.abs(topG.changePct).toFixed(2)}%` : "—", color: "#1a8a44" },
+                  { label: "🔴 TOP LOSER", value: topL ? `${topL.symbol} -${Math.abs(topL.changePct).toFixed(2)}%` : "—", color: "#cc2222" },
+                  { label: "📊 MOST VOLUME", value: topG ? `${topG.symbol} ${topG.volume ? (topG.volume / 1e6).toFixed(1) + "M" : "—"}` : "—", color: "#0a1f4a" },
+                  { label: "⚡ MARKET STATUS", value: hotlistData.gainers.length > 0 ? (hotlistData.gainers[0].changePct > 0 ? "Bullish 📈" : "Bearish 📉") : "—", color: hotlistData.gainers.length > 0 && hotlistData.gainers[0].changePct > 0 ? "#1a8a44" : "#cc2222" },
+                ].map(s => (
+                  <div key={s.label} style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: "16px 20px" }}>
+                    <div style={{ ...mono, fontSize: 9, letterSpacing: "1.5px", color: T.textFaint }}>{s.label}</div>
+                    <div style={{ ...font, fontSize: 22, fontWeight: 700, color: s.color, marginTop: 4 }}>{s.value}</div>
+                  </div>
+                ));
+              })()}
+            </div>
+
+            {/* Filter pills — all visible, Pro ones faded */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 20, alignItems: "center", flexWrap: "wrap" }}>
+              <span onClick={() => { setHotlistFilter("gainers"); setHotlistProOpen(false); }} style={{
+                ...mono, fontSize: 12, background: hotlistFilter === "gainers" ? "#1a8a44" : T.bgCard, color: hotlistFilter === "gainers" ? "#fff" : T.textMid,
+                border: `1px solid ${hotlistFilter === "gainers" ? "#1a8a44" : T.border}`,
+                borderRadius: 8, padding: "8px 16px", fontWeight: 600, cursor: "pointer",
+              }}>🟢 Gainers</span>
+              <span onClick={() => { setHotlistFilter("losers"); setHotlistProOpen(false); }} style={{
+                ...mono, fontSize: 12, background: hotlistFilter === "losers" ? "#cc2222" : T.bgCard, color: hotlistFilter === "losers" ? "#fff" : T.textMid,
+                border: `1px solid ${hotlistFilter === "losers" ? "#cc2222" : T.border}`,
+                borderRadius: 8, padding: "8px 16px", fontWeight: 600, cursor: "pointer",
+              }}>🔴 Losers</span>
+              <span style={{ width: 1, height: 24, background: T.border }} />
+              {["Volume","Volatile","52W High","52W Low","Pre-Market","After-Hours"].map(f => (
+                <span key={f} onClick={() => {
+                  if (isPro) { setHotlistFilter(f.toLowerCase().replace(/\s+/g, '_')); }
+                  else { showToast("Pro plan required", "warn"); }
+                }} style={{
+                  ...mono, fontSize: 12, color: T.textFaint, background: T.bgCard,
+                  border: `1px solid ${T.border}`, borderRadius: 8, padding: "8px 14px",
+                  cursor: "pointer", opacity: isPro ? 1 : 0.5, position: "relative",
+                }}>{f} {!isPro && <span style={{ ...mono, fontSize: 7, background: "#0a1f4a", color: "#e8f2ff", padding: "1px 5px", borderRadius: 2, marginLeft: 2 }}>PRO</span>}</span>
+              ))}
+            </div>
+
+            {/* Main content — side-by-side or card+chart */}
+            {!chartSymbol || !hotlistData.gainers.concat(hotlistData.losers).some(t => t.symbol === chartSymbol) ? (
+              /* No ticker selected — show Gainers + Losers side by side */
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                <div>
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#1a8a44", marginBottom: 8, fontWeight: 600 }}>🟢 TOP GAINERS</div>
+                  <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
+                    {hotlistData.gainers.length === 0 && <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 13 }}>Loading...</div>}
+                    {hotlistData.gainers.map((t, i) => (
+                      <div key={t.symbol} onClick={() => { openChart(t.symbol, t.name); }} style={{
+                        padding: "14px 16px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
+                        borderBottom: `1px solid ${T.border}`, transition: "background 0.15s",
+                      }} onMouseEnter={e => e.currentTarget.style.background = T.bgDeep} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                        <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(26,138,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: "#1a8a44", fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text }}>{t.symbol} <span style={{ fontSize: 12, color: T.textFaint, fontWeight: 400 }}>{t.name !== t.symbol ? t.name : ""}</span></div>
+                        </div>
+                        <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text, marginRight: 8 }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div style={{ ...mono, fontSize: 12, color: "#fff", background: "#1a8a44", padding: "4px 10px", borderRadius: 6, fontWeight: 600 }}>▲{Math.abs(t.changePct).toFixed(2)}%</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#cc2222", marginBottom: 8, fontWeight: 600 }}>🔴 TOP LOSERS</div>
+                  <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
+                    {hotlistData.losers.length === 0 && <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 13 }}>Loading...</div>}
+                    {hotlistData.losers.map((t, i) => (
+                      <div key={t.symbol} onClick={() => { openChart(t.symbol, t.name); }} style={{
+                        padding: "14px 16px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
+                        borderBottom: `1px solid ${T.border}`, transition: "background 0.15s",
+                      }} onMouseEnter={e => e.currentTarget.style.background = T.bgDeep} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                        <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(204,34,34,0.12)", display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: "#cc2222", fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text }}>{t.symbol} <span style={{ fontSize: 12, color: T.textFaint, fontWeight: 400 }}>{t.name !== t.symbol ? t.name : ""}</span></div>
+                        </div>
+                        <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text, marginRight: 8 }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div style={{ ...mono, fontSize: 12, color: "#fff", background: "#cc2222", padding: "4px 10px", borderRadius: 6, fontWeight: 600 }}>▼{Math.abs(t.changePct).toFixed(2)}%</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Ticker selected — two column: selected card list on left, chart+details on right */
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 24 }}>
+                {/* Left — ranked list */}
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: hotlistFilter === "losers" ? "#cc2222" : "#1a8a44", fontWeight: 600 }}>
+                      {hotlistFilter === "losers" ? "🔴 LOSERS" : "🟢 GAINERS"}
+                    </div>
+                    <button onClick={() => { setChartSymbol(null); setChartData([]); }} style={{ ...mono, fontSize: 11, color: T.textFaint, background: "none", border: `1px solid ${T.border}`, borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>← Back</button>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).map((t, i) => {
+                      const up = t.changePct >= 0;
+                      const col = up ? "#1a8a44" : "#cc2222";
+                      const isActive = chartSymbol === t.symbol;
+                      return (
+                        <div key={t.symbol} onClick={() => openChart(t.symbol, t.name)} style={{
+                          background: isActive ? T.bgDeep : T.bgCard,
+                          border: `1px solid ${isActive ? T.accent : T.border}`,
+                          borderLeft: `4px solid ${col}`,
+                          borderRadius: 10, padding: "14px 16px", cursor: "pointer",
+                          display: "flex", alignItems: "center", gap: 12, transition: "all 0.2s",
+                        }}>
+                          <div style={{ width: 28, height: 28, borderRadius: 8, background: `${col}15`, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 13, color: col, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{t.symbol}</div>
+                            <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 2 }}>{t.name !== t.symbol ? t.name : ""}</div>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <div style={{ ...font, fontSize: 17, fontWeight: 600, color: T.text }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div style={{ ...mono, fontSize: 12, color: col, fontWeight: 600, marginTop: 2 }}>{up ? "▲" : "▼"} {Math.abs(t.changePct).toFixed(2)}%</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Right — chart + details panel */}
+                <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden" }}>
+                  {/* Chart header */}
+                  <div style={{ padding: "24px 24px 16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ ...font, fontSize: 26, fontWeight: 700, color: T.text }}>{chartLabel || chartSymbol} <span style={{ ...mono, fontSize: 14, color: T.textFaint }}>{chartSymbol}</span></div>
+                        {(() => {
+                          const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol);
+                          if (!ht) return null;
+                          const col = ht.changePct >= 0 ? "#1a8a44" : "#cc2222";
+                          return (
+                            <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 6 }}>
+                              <span style={{ ...font, fontSize: 32, fontWeight: 700, color: T.text }}>${Number(ht.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span style={{ ...mono, fontSize: 16, color: col, fontWeight: 700 }}>{ht.changePct >= 0 ? "▲" : "▼"} {Math.abs(ht.changePct).toFixed(2)}%</span>
+                              <span style={{ ...mono, fontSize: 13, color: col }}>{ht.changePct >= 0 ? "+" : ""}${Number(ht.change).toFixed(2)}</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
+                          <span key={r} onClick={() => changeChartRange(r)} style={{
+                            padding: "6px 14px", borderRadius: 7, ...mono, fontSize: 12, cursor: "pointer", fontWeight: 600,
+                            background: chartRange === r ? "#0a1f4a" : T.bgDeep,
+                            color: chartRange === r ? "#e8f2ff" : T.textMid,
+                            border: chartRange === r ? "none" : `1px solid ${T.border}`,
+                          }}>{lbl}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Chart */}
+                  <div style={{ padding: "0 24px", minHeight: 280 }}>
+                    {chartData.length > 0 ? <CandlestickChart data={chartData} T={T} range={chartRange} /> : <div style={{ textAlign: "center", padding: 60, ...mono, fontSize: 14, color: T.textMid }}>Loading chart...</div>}
+                  </div>
+
+                  {/* Action buttons */}
+                  <div style={{ padding: "16px 24px", display: "flex", gap: 10 }}>
+                    <button onClick={() => openModal(chartSymbol, chartLabel)} style={{ padding: "12px 24px", background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                    <button onClick={() => {
+                      const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol);
+                      if (ht) shareTicker(ht.symbol, ht.name, ht.price, ht.changePct);
+                    }} style={{ padding: "12px 24px", background: "none", color: "#0a1f4a", border: "2px solid #0a1f4a", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>↗ Share</button>
+                    {(() => {
+                      const alreadyIn = watchlist.some(w => w.symbol === chartSymbol) || MARKET_SYMBOLS.some(ms => ms.symbol === chartSymbol);
+                      return alreadyIn ? (
+                        <span style={{ padding: "12px 24px", ...font, fontSize: 15, fontWeight: 600, color: "#1a8a44" }}>✓ In Watchlist</span>
+                      ) : (
+                        <button onClick={() => {
+                          setWatchlist(prev => { const next = [...prev, { symbol: chartSymbol, label: chartLabel || chartSymbol }]; localStorage.setItem("ta-watchlist", JSON.stringify(next)); return next; });
+                          showToast(`${chartSymbol} added to watchlist`);
+                        }} style={{ padding: "12px 24px", background: "linear-gradient(135deg,#0a1f4a,#1a3a6a)", color: "#e8f2ff", border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Watchlist</button>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Market stats grid */}
+                  <div style={{ padding: "0 24px 16px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 1, background: T.border, borderRadius: 10, overflow: "hidden" }}>
+                      {[
+                        ["Prev. Close", marketData[chartSymbol]?.prevClose ? `$${Number(marketData[chartSymbol].prevClose).toFixed(2)}` : ((() => { const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol); return ht ? `$${(ht.price - ht.change).toFixed(2)}` : "—"; })())],
+                        ["Volume", (() => { const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol); return ht && ht.volume ? (ht.volume / 1e6).toFixed(1) + "M" : "—"; })()],
+                        ["Day Range", marketData[chartSymbol]?.high ? `$${Number(marketData[chartSymbol].low).toFixed(2)} – $${Number(marketData[chartSymbol].high).toFixed(2)}` : "—"],
+                        ["52 Wk Range", week52Data ? `$${Number(week52Data.low).toFixed(2)} – $${Number(week52Data.high).toFixed(2)}` : "—"],
+                        ["Open", marketData[chartSymbol]?.open ? `$${Number(marketData[chartSymbol].open).toFixed(2)}` : "—"],
+                        ["Change", (() => { const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol); return ht ? `${ht.change >= 0 ? "+" : ""}$${Number(ht.change).toFixed(2)}` : "—"; })()],
+                        ["Change %", (() => { const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol); return ht ? `${ht.changePct >= 0 ? "+" : ""}${Number(ht.changePct).toFixed(2)}%` : "—"; })()],
+                        ["1-Yr Change", week52Data ? `${week52Data.yearChange >= 0 ? "+" : ""}${Number(week52Data.yearChange).toFixed(2)}%` : "—"],
+                      ].map(([label, val]) => (
+                        <div key={label} style={{ background: T.bg, padding: "10px 14px" }}>
+                          <div style={{ ...mono, fontSize: 9, color: T.textFaint, letterSpacing: "0.5px" }}>{label}</div>
+                          <div style={{ ...mono, fontSize: 13, color: T.text, fontWeight: 500, marginTop: 3 }}>{val}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Company info */}
+                  {tickerDetails && (
+                    <div style={{ padding: "0 24px 16px" }}>
+                      <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>ABOUT {chartSymbol}</div>
+                      <div style={{ ...font, fontSize: 13, color: T.textMid, lineHeight: 1.6 }}>
+                        {tickerDetails.description ? tickerDetails.description.slice(0, 300) + (tickerDetails.description.length > 300 ? "..." : "") : tickerDetails.name || ""}
+                      </div>
+                      {tickerDetails.sic_description && <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 6 }}>Sector: {tickerDetails.sic_description}</div>}
+                    </div>
+                  )}
+
+                  {/* News */}
+                  {tickerNews.length > 0 && (
+                    <div style={{ padding: "0 24px 24px" }}>
+                      <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>LATEST NEWS</div>
+                      {tickerNews.slice(0, 4).map((article, i) => (
+                        <a key={i} href={article.article_url} target="_blank" rel="noopener noreferrer" style={{
+                          display: "flex", gap: 14, padding: "12px 0", borderBottom: i < 3 ? `1px solid ${T.border}` : "none",
+                          textDecoration: "none", color: "inherit",
+                        }}>
+                          {article.image_url && <img src={article.image_url} alt="" style={{ width: 70, height: 50, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />}
+                          <div style={{ flex: 1 }}>
+                            <div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.text, lineHeight: 1.4 }}>{article.title}</div>
+                            <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 4 }}>{article.publisher?.name} · {new Date(article.published_utc).toLocaleDateString()}</div>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
