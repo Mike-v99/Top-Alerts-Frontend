@@ -1408,21 +1408,103 @@ export default function AppPage() {
               const up = wd?.changePct >= 0;
               const col = !wd ? T.textFaint : up ? T.green : T.red;
               const arrow = up ? "▲" : "▼";
+              const isExpanded = mobileExpanded === w.symbol;
+              const snap = wd || {};
               return (
-                <div key={w.symbol} style={{ borderBottom: `1px solid ${T.border}` }}>
+                <div key={w.symbol} style={{
+                  background: isExpanded ? T.bgCard : "transparent",
+                  border: isExpanded ? "2px solid #0a1f4a" : "none",
+                  borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                  borderRadius: isExpanded ? 12 : 0,
+                  marginBottom: isExpanded ? 8 : 0,
+                }}>
                   <div onClick={() => {
-                    if (mobileExpanded === w.symbol) setMobileExpanded(null);
-                    else { setMobileExpanded(w.symbol); setMobileNewsOpen(false); openChart(w.symbol, w.label); }
-                  }} style={{ padding: "12px 0", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text }}>{w.label || w.symbol}</div>
-                      <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>{w.symbol}</div>
+                    try {
+                      if (isExpanded) { setMobileExpanded(null); }
+                      else { setMobileExpanded(w.symbol); openChart(w.symbol, w.label); }
+                    } catch (err) { console.error("Watchlist expand error:", err); }
+                  }} style={{ padding: isExpanded ? "14px 14px" : "14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: "#1a1200" }}>{w.label || w.symbol}</div>
+                      <div style={{ ...mono, fontSize: 14, color: "#6a6050" }}>{w.symbol}</div>
                     </div>
-                    <div style={{ textAlign: "right", minWidth: 75 }}>
-                      <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
-                      <div style={{ ...mono, fontSize: 11, color: col }}>{wd ? `${arrow} ${Math.abs(wd.changePct).toFixed(2)}%` : ""}</div>
+                    {!isExpanded && (
+                      <div style={{ display: "flex", gap: 12, alignItems: "center", paddingRight: 10 }}>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 10, color: "#8a8070", fontWeight: 500 }}>HIGH</div><div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 500 }}>{snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"}</div></div>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 10, color: "#8a8070", fontWeight: 500 }}>LOW</div><div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 500 }}>{snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"}</div></div>
+                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 10, color: "#8a8070", fontWeight: 500 }}>VOL</div><div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 500 }}>{snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : snap.volume >= 1e3 ? `${(snap.volume/1e3).toFixed(0)}K` : snap.volume) : "—"}</div></div>
+                      </div>
+                    )}
+                    <div style={{ textAlign: "right", minWidth: 85 }}>
+                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: "#1a1200" }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      <div style={{ ...mono, fontSize: 14, color: col, fontWeight: 600 }}>{wd ? `${arrow} ${Math.abs(wd.changePct).toFixed(2)}%` : ""}</div>
                     </div>
                   </div>
+
+                  {/* Expanded card */}
+                  {isExpanded && (
+                    <div onClick={(ev) => ev.stopPropagation()} style={{ padding: "0 14px 14px" }}>
+                      {/* Chart */}
+                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, padding: 4 }}>
+                        {chartLoading && <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: "#6a6050" }}>Loading chart...</div>}
+                        {!chartLoading && chartData && chartData.length > 0 && (
+                          <div style={{ overflowX: "auto" }}>
+                            <CandlestickChart data={chartData} T={T} range={chartRange} />
+                          </div>
+                        )}
+                        {!chartLoading && (!chartData || chartData.length === 0) && (
+                          <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: "#6a6050" }}>Loading data...</div>
+                        )}
+                        <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "6px 8px", alignItems: "center" }}>
+                          {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
+                            <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
+                              padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
+                              background: chartRange === r ? "#0a1f4a" : "transparent",
+                              color: chartRange === r ? "#e8f2ff" : "#6a6050",
+                            }}>{lbl}</span>
+                          ))}
+                          <button onClick={(ev) => { ev.stopPropagation(); setMobileChartFull(true); }} style={{
+                            marginLeft: "auto", width: 30, height: 30, borderRadius: 6, border: "none",
+                            background: "#0a1f4a", cursor: "pointer", color: "#e8f2ff",
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+                          }}>⛶</button>
+                        </div>
+                      </div>
+
+                      {/* Fundamentals grid */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: "#c0b8a8", borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                        {[
+                          ["Prev. Close", snap && snap.prevClose ? `$${Number(snap.prevClose).toFixed(2)}` : "—"],
+                          ["Open", snap && snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"],
+                          ["Volume", snap && snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : `${snap.volume}`) : "—"],
+                          ["Day High", snap && snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"],
+                          ["Day Low", snap && snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"],
+                          ["Change", wd && wd.changePct != null ? `${wd.changePct >= 0 ? "+" : ""}${wd.changePct.toFixed(2)}%` : "—"],
+                        ].map(([label, val], idx) => (
+                          <div key={idx} style={{ background: T.bg, padding: 8, textAlign: "center" }}>
+                            <div style={{ ...mono, fontSize: 10, color: "#6a6050", fontWeight: 500 }}>{label}</div>
+                            <div style={{ ...mono, fontSize: 14, color: "#1a1200", fontWeight: 600, marginTop: 2 }}>{val}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Action buttons */}
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={(ev) => { ev.stopPropagation(); openModal(w.symbol, w.label); }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                        <button onClick={(ev) => {
+                          ev.stopPropagation();
+                          setWatchlist(prev => {
+                            const next = prev.filter(x => x.symbol !== w.symbol);
+                            localStorage.setItem("ta-watchlist", JSON.stringify(next));
+                            return next;
+                          });
+                          setMobileExpanded(null);
+                        }} style={{ flex: 1, padding: 11, background: "none", color: "#cc2222", border: "2px solid #cc2222", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
