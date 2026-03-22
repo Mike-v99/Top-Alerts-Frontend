@@ -1166,8 +1166,8 @@ export default function AppPage() {
           {["market","alerts","calendar","pricing"].map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: isMobile ? "8px 10px" : "10px 22px", background: "none", border: "none", cursor: "pointer",
-              ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px", fontWeight: isMobile && tab === t ? 700 : 400,
-              color: tab === t ? (t === "alerts" ? "#cc2222" : (isMobile ? T.text : T.activeTab)) : T.textMid,
+              ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px", fontWeight: isMobile && tab === t ? 700 : (t === "alerts" ? 600 : 400),
+              color: t === "alerts" ? "#cc2222" : (tab === t ? (isMobile ? T.text : T.activeTab) : T.textMid),
               borderBottom: tab === t ? `2px solid ${t === "alerts" ? "#cc2222" : (isMobile ? T.text : T.activeTabBorder)}` : "2px solid transparent",
               marginBottom: -1, transition: "all 0.2s", flexShrink: 0,
             }}>
