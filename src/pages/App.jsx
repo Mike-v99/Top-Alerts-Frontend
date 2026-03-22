@@ -1143,18 +1143,6 @@ export default function AppPage() {
           </div>
         </div>
 
-        {/* Pro banner */}
-        {isPro && (
-          <div style={{ background: T.proGradient, border: `1px solid ${T.accentBorder}`, borderRadius: 12, padding: "14px 20px", marginBottom: 24, display: "flex", alignItems: "center", gap: 14 }}>
-            <span style={{ fontSize: 20 }}>⚡</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 20, color: T.accent }}>Pro Plan Active</div>
-              <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>Advanced triggers · Multi-condition logic · Backtesting · Webhook delivery</div>
-            </div>
-            <div style={{ ...mono, fontSize: 9, color: T.textFaint, border: `1px solid ${T.border}`, padding: "4px 12px", borderRadius: 5 }}>UNLIMITED</div>
-          </div>
-        )}
-
         {/* Pro plan active banner — auto-dismisses after 3s */}
         {showProBanner && (
           <div style={{
