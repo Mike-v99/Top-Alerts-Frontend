@@ -1314,16 +1314,10 @@ export default function AppPage() {
           <div>
             {/* Filter pills */}
             <div style={{ display: "flex", gap: 8, marginBottom: 20, alignItems: "center", flexWrap: "wrap" }}>
-              <span onClick={() => { setHotlistFilter("gainers"); }} style={{
-                ...mono, fontSize: 12, background: hotlistFilter === "gainers" ? "#1a8a44" : T.bgCard, color: hotlistFilter === "gainers" ? "#fff" : T.textMid,
-                border: `1px solid ${hotlistFilter === "gainers" ? "#1a8a44" : T.border}`,
-                borderRadius: 8, padding: "8px 16px", fontWeight: 600, cursor: "pointer",
-              }}>🟢 Gainers</span>
-              <span onClick={() => { setHotlistFilter("losers"); }} style={{
-                ...mono, fontSize: 12, background: hotlistFilter === "losers" ? "#cc2222" : T.bgCard, color: hotlistFilter === "losers" ? "#fff" : T.textMid,
-                border: `1px solid ${hotlistFilter === "losers" ? "#cc2222" : T.border}`,
-                borderRadius: 8, padding: "8px 16px", fontWeight: 600, cursor: "pointer",
-              }}>🔴 Losers</span>
+              <span style={{
+                ...mono, fontSize: 12, background: "#0a1f4a", color: "#e8f2ff",
+                borderRadius: 8, padding: "8px 16px", fontWeight: 600,
+              }}>🟢 Gainers & Losers</span>
               <span style={{ width: 1, height: 24, background: T.border }} />
               {["Volume","Volatile","52W High","52W Low","Pre-Market","After-Hours"].map(fl => (
                 <span key={fl} onClick={() => {
