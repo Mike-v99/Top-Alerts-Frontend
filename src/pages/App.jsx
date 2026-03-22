@@ -283,6 +283,97 @@ export default function AppPage() {
     if (mobileExpanded === symbol) setMobileExpanded(null);
   }
   // Swipe offset is now handled via direct DOM manipulation in handleTouchMove
+
+  // ── Drag-to-reorder ──────────────────────────────────────────────────
+  const [dragMode, setDragMode] = useState(false); // long-press activated
+  const [dragSymbol, setDragSymbol] = useState(null); // symbol being dragged
+  const [dragY, setDragY] = useState(0); // current touch Y
+  const [dragStartY, setDragStartY] = useState(0);
+  const [dragOrigIdx, setDragOrigIdx] = useState(-1);
+  const longPressTimer = useRef(null);
+
+  // Build combined list: MARKET_SYMBOLS + user watchlist
+  const allCards = [...MARKET_SYMBOLS, ...watchlist.filter(w => !MARKET_SYMBOLS.some(m => m.symbol === w.symbol)).map(w => ({ id: w.symbol, label: w.label || w.symbol, symbol: w.symbol, isUser: true }))];
+
+  function onCardTouchStart(symbol, e) {
+    const touch = e.touches[0];
+    // Start long-press timer
+    longPressTimer.current = setTimeout(() => {
+      setDragMode(true);
+      setDragSymbol(symbol);
+      setDragStartY(touch.clientY);
+      setDragY(touch.clientY);
+      setDragOrigIdx(allCards.findIndex(c => c.symbol === symbol));
+      // Haptic feedback if available
+      if (navigator.vibrate) navigator.vibrate(30);
+    }, 500);
+    // Also start swipe tracking
+    handleTouchStart(symbol, e);
+  }
+
+  function onCardTouchMove(symbol, e) {
+    if (dragMode && dragSymbol === symbol) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      setDragY(touch.clientY);
+
+      // Calculate which index we're hovering over
+      const cardEls = document.querySelectorAll("[data-reorder-symbol]");
+      let targetIdx = -1;
+      cardEls.forEach((el, i) => {
+        const rect = el.getBoundingClientRect();
+        if (touch.clientY > rect.top && touch.clientY < rect.bottom) {
+          targetIdx = i;
+        }
+      });
+
+      if (targetIdx >= 0 && targetIdx !== allCards.findIndex(c => c.symbol === symbol)) {
+        // Reorder
+        const currentIdx = allCards.findIndex(c => c.symbol === symbol);
+        const marketSymbols = allCards.filter(c => !c.isUser).map(c => c.symbol);
+        const fromMarketIdx = marketSymbols.indexOf(symbol);
+
+        if (fromMarketIdx >= 0 && targetIdx < MARKET_SYMBOLS.length) {
+          // Reorder within market symbols
+          const newOrder = [...cardOrder];
+          const fromIdx = newOrder.indexOf(symbol);
+          if (fromIdx >= 0) {
+            newOrder.splice(fromIdx, 1);
+            newOrder.splice(Math.min(targetIdx, newOrder.length), 0, symbol);
+            saveCardOrder(newOrder);
+          }
+        }
+      }
+    } else {
+      // Clear long-press if finger moves too much
+      const touch = e.touches[0];
+      if (longPressTimer.current) {
+        const s = swipeRefs.current[symbol];
+        if (s) {
+          const dx = Math.abs(touch.clientX - s.startX);
+          const dy = Math.abs(touch.clientY - s.startY);
+          if (dx > 10 || dy > 10) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+          }
+        }
+      }
+      handleTouchMove(symbol, e);
+    }
+  }
+
+  function onCardTouchEnd(symbol) {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    if (dragMode) {
+      setDragMode(false);
+      setDragSymbol(null);
+      return; // Don't trigger swipe delete or click
+    }
+    handleTouchEnd(symbol);
+  }
   useEffect(() => {
     const check = () => {
       setIsMobile(window.innerWidth < 768);
@@ -331,7 +422,7 @@ export default function AppPage() {
   const [calAlertTiming, setCalAlertTiming] = useState("1day"); // "15min" | "1hr" | "1day" | "after"
   const [calCollapsed, setCalCollapsed] = useState({}); // { earnings: true, ipo: true, ... }
 
-  const MARKET_SYMBOLS = [
+  const DEFAULT_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
     { id: "SPY",   label: "S&P 500", symbol: "SPY"  },
     { id: "VIXY",  label: "VIX",     symbol: "VIXY" },
@@ -341,6 +432,22 @@ export default function AppPage() {
     { id: "USO",   label: "USO",     symbol: "USO"  },
     { id: "GLD",   label: "Gold",    symbol: "GLD"  },
   ];
+  const [cardOrder, setCardOrder] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("ta-card-order"));
+      if (saved && saved.length) return saved;
+    } catch {}
+    return DEFAULT_SYMBOLS.map(m => m.symbol);
+  });
+  const MARKET_SYMBOLS = cardOrder
+    .map(sym => DEFAULT_SYMBOLS.find(m => m.symbol === sym))
+    .filter(Boolean)
+    .concat(DEFAULT_SYMBOLS.filter(m => !cardOrder.includes(m.symbol)));
+
+  function saveCardOrder(order) {
+    setCardOrder(order);
+    try { localStorage.setItem("ta-card-order", JSON.stringify(order)); } catch {}
+  }
 
   // ── Massive.com real-time prices ─────────────────────────────────────────────
   useEffect(() => {
@@ -1555,7 +1662,10 @@ export default function AppPage() {
         {/* ── MOBILE LAYOUT ──────────────────────────────────────────────── */}
         {isMobile && tab === "market" && (
           <div>
-            <div style={{ ...mono, fontSize: 11, letterSpacing: "2px", color: T.text, marginBottom: 8, fontWeight: 600 }}>WATCHLIST</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <div style={{ ...mono, fontSize: 11, letterSpacing: "2px", color: T.text, fontWeight: 600 }}>WATCHLIST</div>
+              <div style={{ ...mono, fontSize: 9, color: T.textFaint }}>Hold to reorder</div>
+            </div>
             {MARKET_SYMBOLS.map(m => {
               const d = marketData[m.id];
               const up = d?.changePct >= 0;
@@ -1574,17 +1684,22 @@ export default function AppPage() {
                       Remove
                     </div>
                   </div>
-                  {/* Card content — slides left on swipe */}
-                  <div id={`swipe-card-${m.symbol}`} style={{
-                    position: "relative", zIndex: 1, background: isExpanded ? T.bgCard : T.bg,
+                  {/* Card content — slides left on swipe, long-press to reorder */}
+                  <div id={`swipe-card-${m.symbol}`} data-reorder-symbol={m.symbol} style={{
+                    position: "relative", zIndex: dragSymbol === m.symbol ? 50 : 1,
+                    background: isExpanded ? T.bgCard : T.bg,
                     border: isExpanded ? "2px solid #0a1f4a" : "none",
                     borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
                     borderRadius: isExpanded ? 12 : 0,
-                    touchAction: "pan-y",
+                    touchAction: dragMode ? "none" : "pan-y",
+                    opacity: dragSymbol === m.symbol ? 0.85 : 1,
+                    transform: dragSymbol === m.symbol ? `scale(1.02)` : "none",
+                    boxShadow: dragSymbol === m.symbol ? "0 8px 24px rgba(0,0,0,0.15)" : "none",
+                    transition: dragSymbol ? "none" : "transform 0.2s, box-shadow 0.2s",
                   }}
-                    onTouchStart={(e) => handleTouchStart(m.symbol, e)}
-                    onTouchMove={(e) => handleTouchMove(m.symbol, e)}
-                    onTouchEnd={() => handleTouchEnd(m.symbol)}
+                    onTouchStart={(e) => onCardTouchStart(m.symbol, e)}
+                    onTouchMove={(e) => onCardTouchMove(m.symbol, e)}
+                    onTouchEnd={() => onCardTouchEnd(m.symbol)}
                   >
                   {/* Collapsed row */}
                   <div onClick={() => {
@@ -1692,17 +1807,22 @@ export default function AppPage() {
                       Remove
                     </div>
                   </div>
-                  {/* Card content — slides left on swipe */}
-                  <div id={`swipe-card-${w.symbol}`} style={{
-                    position: "relative", zIndex: 1, background: isExpanded ? T.bgCard : T.bg,
+                  {/* Card content — slides left on swipe, long-press to reorder */}
+                  <div id={`swipe-card-${w.symbol}`} data-reorder-symbol={w.symbol} style={{
+                    position: "relative", zIndex: dragSymbol === w.symbol ? 50 : 1,
+                    background: isExpanded ? T.bgCard : T.bg,
                     border: isExpanded ? "2px solid #0a1f4a" : "none",
                     borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
                     borderRadius: isExpanded ? 12 : 0,
-                    touchAction: "pan-y",
+                    touchAction: dragMode ? "none" : "pan-y",
+                    opacity: dragSymbol === w.symbol ? 0.85 : 1,
+                    transform: dragSymbol === w.symbol ? `scale(1.02)` : "none",
+                    boxShadow: dragSymbol === w.symbol ? "0 8px 24px rgba(0,0,0,0.15)" : "none",
+                    transition: dragSymbol ? "none" : "transform 0.2s, box-shadow 0.2s",
                   }}
-                    onTouchStart={(e) => handleTouchStart(w.symbol, e)}
-                    onTouchMove={(e) => handleTouchMove(w.symbol, e)}
-                    onTouchEnd={() => handleTouchEnd(w.symbol)}
+                    onTouchStart={(e) => onCardTouchStart(w.symbol, e)}
+                    onTouchMove={(e) => onCardTouchMove(w.symbol, e)}
+                    onTouchEnd={() => onCardTouchEnd(w.symbol)}
                   >
                   <div onClick={() => {
                     if (swipedJustNow) return;
