@@ -1309,7 +1309,7 @@ export default function AppPage() {
                   <div onClick={() => {
                     try {
                       if (isExpanded) { setMobileExpanded(null); }
-                      else { setMobileExpanded(m.symbol); setMobileNewsOpen(false); openChart(m.symbol, m.label); }
+                      else { setMobileExpanded(m.symbol); }
                     } catch (err) { console.error("Mobile expand error:", err); }
                   }} style={{ padding: isExpanded ? "14px 14px" : "14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -1331,94 +1331,10 @@ export default function AppPage() {
 
                   {/* Expanded card */}
                   {isExpanded && (
-                    <div onClick={(ev) => ev.stopPropagation()} style={{ padding: "0 14px 14px" }}>
-                      {/* Chart */}
-                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, padding: 16 }}>
-                        {chartLoading && <div style={{ textAlign: "center", padding: 20, ...mono, fontSize: 12, color: "#6a6050" }}>Loading chart...</div>}
-                        {!chartLoading && chartData && chartData.length > 0 && (
-                          <div style={{ textAlign: "center", ...mono, fontSize: 12, color: "#6a6050" }}>
-                            📊 {chartData.length} candles · {chartSymbol}
-                          </div>
-                        )}
-                        {!chartLoading && (!chartData || chartData.length === 0) && (
-                          <div style={{ textAlign: "center", ...mono, fontSize: 12, color: "#6a6050" }}>Loading data...</div>
-                        )}
-                        <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "8px 12px", alignItems: "center" }}>
-                          {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
-                            <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
-                              padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
-                              background: chartRange === r ? "#0a1f4a" : "transparent",
-                              color: chartRange === r ? "#e8f2ff" : "#6a6050",
-                            }}>{lbl}</span>
-                          ))}
-                          <button onClick={(ev) => { ev.stopPropagation(); setMobileChartFull(true); }} style={{
-                            marginLeft: "auto", width: 30, height: 30, borderRadius: 6, border: "none",
-                            background: "#0a1f4a", cursor: "pointer", color: "#e8f2ff",
-                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
-                          }}>⛶</button>
-                        </div>
-                      </div>
-
-                      {/* Fundamentals grid */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: "#c0b8a8", borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
-                        {[
-                          ["Prev. Close", snap.prevClose ? `$${Number(snap.prevClose).toFixed(2)}` : "—"],
-                          ["Open", snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"],
-                          ["Volume", snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : `${snap.volume}`) : "—"],
-                          ["Day High", snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"],
-                          ["Day Low", snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"],
-                          ["Change", d && d.changePct != null ? `${d.changePct >= 0 ? "+" : ""}${d.changePct.toFixed(2)}%` : "—"],
-                        ].map(([label, val], idx) => (
-                          <div key={idx} style={{ background: T.bg, padding: 8, textAlign: "center" }}>
-                            <div style={{ ...mono, fontSize: 10, color: "#6a6050", fontWeight: 500 }}>{label}</div>
-                            <div style={{ ...mono, fontSize: 14, color: "#1a1200", fontWeight: 600, marginTop: 2 }}>{val}</div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* News — always show first 3 articles */}
-                      <div style={{ marginBottom: 8 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                          <span style={{ fontSize: 12 }}>📰</span>
-                          <span style={{ ...mono, fontSize: 13, letterSpacing: "1px", color: "#0a1f4a", fontWeight: 700 }}>LATEST NEWS</span>
-                        </div>
-                        {tickerNews && tickerNews.slice(0, 3).map((n, i) => {
-                          const url = n.article_url || n.url || n.link || "";
-                          return (
-                            <div key={i} style={{ padding: "10px 0", borderTop: `1px solid ${T.border}` }}>
-                              <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{n.title || "Untitled"}</div>
-                              <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                                <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher || ""}</span>
-                                {n.published_utc && <><span style={{ color: "#6a6050" }}>·</span><span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{new Date(n.published_utc).toLocaleDateString()}</span></>}
-                              </div>
-                              {url && (
-                                <a href={url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} style={{
-                                  display: "inline-block", marginTop: 6, ...mono, fontSize: 12,
-                                  color: "#0a1f4a", fontWeight: 600, textDecoration: "underline",
-                                }}>Read article →</a>
-                              )}
-                            </div>
-                          );
-                        })}
-                        {newsLoading && <div style={{ ...mono, fontSize: 12, color: "#6a6050", padding: "10px 0" }}>Loading news...</div>}
-                        {!newsLoading && (!tickerNews || tickerNews.length === 0) && <div style={{ ...font, fontSize: 13, color: "#6a6050", padding: "10px 0" }}>No news available</div>}
-                      </div>
-
-                      {/* Action buttons */}
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={(ev) => { ev.stopPropagation(); openModal(m.symbol, m.label); }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
-                        <button onClick={(ev) => {
-                          ev.stopPropagation();
-                          setWatchlist(prev => {
-                            const exists = prev.some(w => w.symbol === m.symbol);
-                            const next = exists ? prev.filter(w => w.symbol !== m.symbol) : [...prev, { symbol: m.symbol, label: m.label }];
-                            localStorage.setItem("ta-watchlist", JSON.stringify(next));
-                            return next;
-                          });
-                        }} style={{ flex: 1, padding: 11, background: "none", color: "#1a1200", border: "2px solid #5F5E5A", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                          {watchlist.some(w => w.symbol === m.symbol) ? "✓ Watchlisted" : "+ Watchlist"}
-                        </button>
-                      </div>
+                    <div style={{ padding: 14, background: "#eee" }}>
+                      <div>Expanded: {m.symbol} - {m.label}</div>
+                      <div>Price: {d ? d.price : "loading..."}</div>
+                      <button onClick={() => setMobileExpanded(null)}>Close</button>
                     </div>
                   )}
                 </div>
