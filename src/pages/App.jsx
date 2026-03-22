@@ -843,11 +843,11 @@ export default function AppPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isMobile ? 16 : 36 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 4 : 8 }}>
-              <span style={{ fontSize: isMobile ? 20 : 38, color: isMobile ? "#1a1200" : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A", lineHeight: 1 }}>◈</span>
+              <span style={{ fontSize: isMobile ? 20 : 38, color: isMobile ? T.text : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A", lineHeight: 1 }}>◈</span>
               <span style={{ fontSize: isMobile ? 22 : 45, letterSpacing: "1px", fontWeight: isMobile ? 700 : 400 }}>
-                <span style={{ color: isMobile ? "#1a1200" : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A" }}>TOP</span>
-                <span style={{ color: isMobile ? "#1a1200" : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A" }}>-</span>
-                <span style={{ color: isMobile ? "#1a1200" : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A" }}>ALERTS</span>
+                <span style={{ color: isMobile ? T.text : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A" }}>TOP</span>
+                <span style={{ color: isMobile ? T.text : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A" }}>-</span>
+                <span style={{ color: isMobile ? T.text : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A" }}>ALERTS</span>
               </span>
             </div>
             {!isMobile && <div style={{ ...mono, fontSize: 9, letterSpacing: "3px", color: themeName === "charcoal" ? "#888" : "#5F5E5A", marginTop: 2 }}>INTELLIGENT PRICE ALERTS</div>}
@@ -866,8 +866,8 @@ export default function AppPage() {
             {/* Plan badge */}
             <div style={{ ...mono, fontSize: 9, letterSpacing: "1.5px",
               background: isPro ? T.accentBg : "transparent",
-              color: isPro ? T.accent : isMobile ? "#6a6050" : T.textFaint,
-              border: `1px solid ${isPro ? T.accentBorder : isMobile ? "#8a8070" : T.border}`,
+              color: isPro ? T.accent : isMobile ? T.textMid : T.textFaint,
+              border: `1px solid ${isPro ? T.accentBorder : isMobile ? T.textFaint : T.border}`,
               padding: isMobile ? "4px 8px" : "6px 12px", borderRadius: 8 }}>
               {profile?.plan?.toUpperCase() || "FREE"}
             </div>
@@ -883,9 +883,9 @@ export default function AppPage() {
             ) : (
               <button onClick={() => navigate("/login")} style={{
                 ...font, fontSize: isMobile ? 14 : 18, background: "none",
-                border: `2px solid ${isMobile ? "#1a1200" : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A"}`,
+                border: `2px solid ${isMobile ? T.text : themeName === "charcoal" ? "#e0e0e0" : T.textMid}`,
                 borderRadius: 8, padding: isMobile ? "4px 10px" : "6px 16px", cursor: "pointer",
-                color: isMobile ? "#1a1200" : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A",
+                color: isMobile ? T.text : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A",
                 fontWeight: isMobile ? 600 : 400,
               }}>
                 SIGN IN
@@ -912,8 +912,8 @@ export default function AppPage() {
             <button key={t} onClick={() => setTab(t)} style={{
               padding: isMobile ? "8px 10px" : "10px 22px", background: "none", border: "none", cursor: "pointer",
               ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px", fontWeight: isMobile && tab === t ? 700 : 400,
-              color: tab === t ? (isMobile ? "#1a1200" : T.activeTab) : (isMobile ? "#8a8070" : T.textFaint),
-              borderBottom: tab === t ? `2px solid ${isMobile ? "#1a1200" : T.activeTabBorder}` : "2px solid transparent",
+              color: tab === t ? (isMobile ? T.text : T.activeTab) : (isMobile ? T.textFaint : T.textFaint),
+              borderBottom: tab === t ? `2px solid ${isMobile ? T.text : T.activeTabBorder}` : "2px solid transparent",
               marginBottom: -1, transition: "all 0.2s", flexShrink: 0,
             }}>
               {t.toUpperCase()}
@@ -938,7 +938,7 @@ export default function AppPage() {
               onChange={e => { setSearch(e.target.value); searchSymbols(e.target.value); }}
               style={{
                 width: "100%", padding: isMobile ? "10px 14px" : "12px 16px", boxSizing: "border-box",
-                background: T.bgCard, border: isMobile ? `2px solid ${search ? T.accent : "#5F5E5A"}` : `1px solid ${search ? T.accent : T.border}`,
+                background: T.bgCard, border: isMobile ? `2px solid ${search ? T.accent : T.textMid}` : `1px solid ${search ? T.accent : T.border}`,
                 borderRadius: 10, color: T.text, ...font, fontSize: isMobile ? 16 : 18,
                 outline: "none", transition: "border 0.2s",
               }}
@@ -1027,7 +1027,7 @@ export default function AppPage() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
                 <div>
-                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#5F5E5A", marginBottom: 6 }}>CALENDAR</div>
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textMid, marginBottom: 6 }}>CALENDAR</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <span style={{ ...font, fontSize: isMobile ? 20 : 28, fontWeight: 600, color: T.text }}>{monthName}</span>
                     <div style={{ display: "flex", gap: 4 }}>
@@ -1035,7 +1035,7 @@ export default function AppPage() {
                       <button onClick={() => setCalMonth(p => { const d = new Date(p.year, p.month + 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${T.border}`, background: "none", cursor: "pointer", color: T.textMid, fontSize: 14 }}>›</button>
                     </div>
                     {!isCurrentMonth && (
-                      <button onClick={() => { const n = new Date(); setCalMonth({ year: n.getFullYear(), month: n.getMonth() }); setCalSelectedDay(n.getDate()); }} style={{ padding: "4px 12px", border: "2px solid #5F5E5A", borderRadius: 6, background: "none", cursor: "pointer", ...font, fontSize: 12, color: "#5F5E5A" }}>Today</button>
+                      <button onClick={() => { const n = new Date(); setCalMonth({ year: n.getFullYear(), month: n.getMonth() }); setCalSelectedDay(n.getDate()); }} style={{ padding: "4px 12px", border: `2px solid ${T.textMid}`, borderRadius: 6, background: "none", cursor: "pointer", ...font, fontSize: 12, color: T.textMid }}>Today</button>
                     )}
                   </div>
                 </div>
@@ -1089,7 +1089,7 @@ export default function AppPage() {
                         }}>
                           <div style={{ fontSize: isMobile ? 12 : 16, fontWeight: isToday ? 700 : 500, color: isWeekend ? T.textFaint : T.text, marginBottom: isMobile ? 2 : 5 }}>
                             {isToday ? (
-                              <span style={{ background: "#5F5E5A", color: "#fff", width: isMobile ? 20 : 28, height: isMobile ? 20 : 28, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? 10 : 14 }}>{d}</span>
+                              <span style={{ background: T.textMid, color: "#fff", width: isMobile ? 20 : 28, height: isMobile ? 20 : 28, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? 10 : 14 }}>{d}</span>
                             ) : d}
                           </div>
                           {(() => {
@@ -1292,7 +1292,7 @@ export default function AppPage() {
         {/* ── MOBILE LAYOUT ──────────────────────────────────────────────── */}
         {isMobile && tab === "market" && (
           <div>
-            <div style={{ ...mono, fontSize: 11, letterSpacing: "2px", color: "#1a1200", marginBottom: 8, fontWeight: 600 }}>WATCHLIST</div>
+            <div style={{ ...mono, fontSize: 11, letterSpacing: "2px", color: T.text, marginBottom: 8, fontWeight: 600 }}>WATCHLIST</div>
             {MARKET_SYMBOLS.map(m => {
               const d = marketData[m.id];
               const up = d?.changePct >= 0;
@@ -1317,17 +1317,17 @@ export default function AppPage() {
                     } catch (err) { console.error("Mobile expand error:", err); }
                   }} style={{ padding: isExpanded ? "14px 14px" : "14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: "#1a1200" }}>{m.label}</div>
-                      <div style={{ ...mono, fontSize: 14, color: "#6a6050" }}>{m.symbol}</div>
+                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{m.label}</div>
+                      <div style={{ ...mono, fontSize: 14, color: T.textMid }}>{m.symbol}</div>
                     </div>
                     {!isExpanded && d && (
                       <div style={{ textAlign: "center", flexShrink: 0 }}>
                         <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{d.changePct >= 0 ? "+" : "-"}${d.change != null ? `$${Math.abs(Number(d.change)).toFixed(2)}` : ""}</div>
-                        <div style={{ ...mono, fontSize: 10, color: "#8a8070", marginTop: 2 }}>Open {snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>Open {snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"}</div>
                       </div>
                     )}
                     <div style={{ textAlign: "right", minWidth: 85 }}>
-                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: "#1a1200" }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
                       <div style={{ ...mono, fontSize: 14, color: col, fontWeight: 600 }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
                     </div>
                   </div>
@@ -1338,21 +1338,21 @@ export default function AppPage() {
 
                       {/* Chart */}
                       <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, padding: 4 }}>
-                        {chartLoading && <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: "#6a6050" }}>Loading chart...</div>}
+                        {chartLoading && <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>Loading chart...</div>}
                         {!chartLoading && chartData && chartData.length > 0 && (
                           <div style={{ overflowX: "auto" }}>
                             <CandlestickChart data={chartData} T={T} range={chartRange} />
                           </div>
                         )}
                         {!chartLoading && (!chartData || chartData.length === 0) && (
-                          <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: "#6a6050" }}>Loading data...</div>
+                          <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>Loading data...</div>
                         )}
                         <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "6px 8px", alignItems: "center" }}>
                           {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                             <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
                               padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
                               background: chartRange === r ? "#0a1f4a" : "transparent",
-                              color: chartRange === r ? "#e8f2ff" : "#6a6050",
+                              color: chartRange === r ? "#e8f2ff" : T.textMid,
                             }}>{lbl}</span>
                           ))}
                           <button onClick={(ev) => { ev.stopPropagation(); setMobileChartFull(true); }} style={{
@@ -1364,7 +1364,7 @@ export default function AppPage() {
                       </div>
 
                       {/* Fundamentals grid */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: "#c0b8a8", borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: T.border, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
                         {[
                           ["Prev. Close", snap && snap.prevClose ? `$${Number(snap.prevClose).toFixed(2)}` : "—"],
                           ["Open", snap && snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"],
@@ -1374,8 +1374,8 @@ export default function AppPage() {
                           ["Change", d && d.changePct != null ? `${d.changePct >= 0 ? "+" : ""}${d.changePct.toFixed(2)}%` : "—"],
                         ].map(([label, val], idx) => (
                           <div key={idx} style={{ background: T.bg, padding: 8, textAlign: "center" }}>
-                            <div style={{ ...mono, fontSize: 10, color: "#6a6050", fontWeight: 500 }}>{label}</div>
-                            <div style={{ ...mono, fontSize: 14, color: "#1a1200", fontWeight: 600, marginTop: 2 }}>{val}</div>
+                            <div style={{ ...mono, fontSize: 10, color: T.textMid, fontWeight: 500 }}>{label}</div>
+                            <div style={{ ...mono, fontSize: 14, color: T.text, fontWeight: 600, marginTop: 2 }}>{val}</div>
                           </div>
                         ))}
                       </div>
@@ -1391,7 +1391,7 @@ export default function AppPage() {
                             localStorage.setItem("ta-watchlist", JSON.stringify(next));
                             return next;
                           });
-                        }} style={{ flex: 1, padding: 11, background: "none", color: "#1a1200", border: "2px solid #5F5E5A", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                        }} style={{ flex: 1, padding: 11, background: "none", color: T.text, border: `2px solid ${T.textMid}`, borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                           {watchlist.some(w => w.symbol === m.symbol) ? "✓ Watchlisted" : "+ Watchlist"}
                         </button>
                       </div>
@@ -1424,17 +1424,17 @@ export default function AppPage() {
                     } catch (err) { console.error("Watchlist expand error:", err); }
                   }} style={{ padding: isExpanded ? "14px 14px" : "14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: "#1a1200" }}>{w.label || w.symbol}</div>
-                      <div style={{ ...mono, fontSize: 14, color: "#6a6050" }}>{w.symbol}</div>
+                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{w.label || w.symbol}</div>
+                      <div style={{ ...mono, fontSize: 14, color: T.textMid }}>{w.symbol}</div>
                     </div>
                     {!isExpanded && wd && (
                       <div style={{ textAlign: "center", flexShrink: 0 }}>
                         <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{wd.changePct >= 0 ? "+" : "-"}${wd.change != null ? `$${Math.abs(Number(wd.change)).toFixed(2)}` : ""}</div>
-                        <div style={{ ...mono, fontSize: 10, color: "#8a8070", marginTop: 2 }}>Open {snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>Open {snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"}</div>
                       </div>
                     )}
                     <div style={{ textAlign: "right", minWidth: 85 }}>
-                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: "#1a1200" }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
                       <div style={{ ...mono, fontSize: 14, color: col, fontWeight: 600 }}>{wd ? `${arrow} ${Math.abs(wd.changePct).toFixed(2)}%` : ""}</div>
                     </div>
                   </div>
@@ -1444,21 +1444,21 @@ export default function AppPage() {
                     <div onClick={(ev) => ev.stopPropagation()} style={{ padding: "0 14px 14px" }}>
                       {/* Chart */}
                       <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, padding: 4 }}>
-                        {chartLoading && <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: "#6a6050" }}>Loading chart...</div>}
+                        {chartLoading && <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>Loading chart...</div>}
                         {!chartLoading && chartData && chartData.length > 0 && (
                           <div style={{ overflowX: "auto" }}>
                             <CandlestickChart data={chartData} T={T} range={chartRange} />
                           </div>
                         )}
                         {!chartLoading && (!chartData || chartData.length === 0) && (
-                          <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: "#6a6050" }}>Loading data...</div>
+                          <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>Loading data...</div>
                         )}
                         <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "6px 8px", alignItems: "center" }}>
                           {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                             <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
                               padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
                               background: chartRange === r ? "#0a1f4a" : "transparent",
-                              color: chartRange === r ? "#e8f2ff" : "#6a6050",
+                              color: chartRange === r ? "#e8f2ff" : T.textMid,
                             }}>{lbl}</span>
                           ))}
                           <button onClick={(ev) => { ev.stopPropagation(); setMobileChartFull(true); }} style={{
@@ -1470,7 +1470,7 @@ export default function AppPage() {
                       </div>
 
                       {/* Fundamentals grid */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: "#c0b8a8", borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: T.border, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
                         {[
                           ["Prev. Close", snap && snap.prevClose ? `$${Number(snap.prevClose).toFixed(2)}` : "—"],
                           ["Open", snap && snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"],
@@ -1480,8 +1480,8 @@ export default function AppPage() {
                           ["Change", wd && wd.changePct != null ? `${wd.changePct >= 0 ? "+" : ""}${wd.changePct.toFixed(2)}%` : "—"],
                         ].map(([label, val], idx) => (
                           <div key={idx} style={{ background: T.bg, padding: 8, textAlign: "center" }}>
-                            <div style={{ ...mono, fontSize: 10, color: "#6a6050", fontWeight: 500 }}>{label}</div>
-                            <div style={{ ...mono, fontSize: 14, color: "#1a1200", fontWeight: 600, marginTop: 2 }}>{val}</div>
+                            <div style={{ ...mono, fontSize: 10, color: T.textMid, fontWeight: 500 }}>{label}</div>
+                            <div style={{ ...mono, fontSize: 14, color: T.text, fontWeight: 600, marginTop: 2 }}>{val}</div>
                           </div>
                         ))}
                       </div>
@@ -1556,7 +1556,7 @@ export default function AppPage() {
           <div style={{ width: 210, flexShrink: 0 }}>
             {tab === "market" && (
               <div>
-                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: "#5F5E5A", marginBottom: 10 }}>WATCHLIST</div>
+                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textMid, marginBottom: 10 }}>WATCHLIST</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                   {MARKET_SYMBOLS.map(m => {
                     const d   = marketData[m.id];
@@ -1683,7 +1683,7 @@ export default function AppPage() {
                         ))}
                         <button onClick={() => openModal(chartSymbol, chartLabel, d ? { price: d.price, change: d.change, changePct: d.changePct, marketOpen: !!d.price } : null)} style={{
                           padding: "5px 14px", background: "none",
-                          border: `2px solid ${themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A"}`,
+                          border: `2px solid ${themeName === "charcoal" ? "#e0e0e0" : T.textMid}`,
                           borderRadius: 6, cursor: "pointer", ...font, fontSize: 13,
                           color: themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A",
                           whiteSpace: "nowrap", marginLeft: 4,
@@ -1929,8 +1929,8 @@ export default function AppPage() {
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${T.border}` }}>
             <div>
-              <div style={{ ...font, fontSize: 18, fontWeight: 700, color: "#1a1200" }}>{chartLabel || chartSymbol}</div>
-              <div style={{ ...mono, fontSize: 12, color: "#6a6050" }}>{chartSymbol}</div>
+              <div style={{ ...font, fontSize: 18, fontWeight: 700, color: T.text }}>{chartLabel || chartSymbol}</div>
+              <div style={{ ...mono, fontSize: 12, color: T.textMid }}>{chartSymbol}</div>
             </div>
             <button onClick={() => setMobileChartFull(false)} style={{
               width: 36, height: 36, borderRadius: 8, border: "none",
@@ -1941,7 +1941,7 @@ export default function AppPage() {
           {/* Chart — full width */}
           <div style={{ flex: 1, overflow: "auto", padding: "8px 0" }}>
             {chartData.length > 0 && <CandlestickChart data={chartData} T={T} range={chartRange} />}
-            {chartData.length === 0 && <div style={{ textAlign: "center", padding: 60, ...mono, fontSize: 14, color: "#6a6050" }}>No chart data</div>}
+            {chartData.length === 0 && <div style={{ textAlign: "center", padding: 60, ...mono, fontSize: 14, color: T.textMid }}>No chart data</div>}
           </div>
           {/* Range buttons */}
           <div style={{ display: "flex", gap: 6, justifyContent: "center", padding: "12px 16px", borderTop: `1px solid ${T.border}` }}>
@@ -1949,7 +1949,7 @@ export default function AppPage() {
               <span key={r} onClick={() => changeChartRange(r)} style={{
                 padding: "8px 16px", borderRadius: 8, ...mono, fontSize: 13, cursor: "pointer", fontWeight: 600,
                 background: chartRange === r ? "#0a1f4a" : T.bgCard,
-                color: chartRange === r ? "#e8f2ff" : "#1a1200",
+                color: chartRange === r ? "#e8f2ff" : T.text,
                 border: chartRange === r ? "none" : `1px solid ${T.border}`,
               }}>{lbl}</span>
             ))}
@@ -2695,7 +2695,7 @@ function CandlestickChart({ data, T, range }) {
   const [hover, setHover] = useState(null); // { x, y, candle, svgX, svgY }
   const svgRef = useRef(null);
 
-  if (!data || !data.length) return <div style={{ padding: 20, textAlign: "center", color: "#6a6050", fontSize: 12 }}>No data</div>;
+  if (!data || !data.length) return <div style={{ padding: 20, textAlign: "center", color: T.textMid, fontSize: 12 }}>No data</div>;
 
   const W = range === "1M" ? 700 : 600, H = 200, PAD = { top: 10, right: 10, bottom: 24, left: 52 };
   const cW = W - PAD.left - PAD.right;
