@@ -1352,6 +1352,11 @@ export default function AppPage() {
                               color: chartRange === r ? "#e8f2ff" : "#6a6050",
                             }}>{lbl}</span>
                           ))}
+                          <button onClick={(ev) => { ev.stopPropagation(); setMobileChartFull(true); }} style={{
+                            marginLeft: "auto", width: 30, height: 30, borderRadius: 6, border: "none",
+                            background: "#0a1f4a", cursor: "pointer", color: "#e8f2ff",
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+                          }}>⛶</button>
                         </div>
                       </div>
 
