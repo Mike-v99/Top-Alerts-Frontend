@@ -75,10 +75,15 @@ export default function AppPage() {
   const [mobileNewsOpen, setMobileNewsOpen] = useState(false);
   const [mobileChartFull, setMobileChartFull] = useState(false); // fullscreen chart overlay
   const [mobileProTriggersOpen, setMobileProTriggersOpen] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(() => typeof window !== "undefined" && window.innerWidth > window.innerHeight);
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
+    const check = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    };
     window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    window.addEventListener("orientationchange", () => setTimeout(check, 100));
+    return () => { window.removeEventListener("resize", check); window.removeEventListener("orientationchange", check); };
   }, []);
   const [marketData, setMarketData] = useState({});
   const [marketLoading, setMarketLoading] = useState(true);
@@ -1925,9 +1930,13 @@ export default function AppPage() {
 
       {/* Fullscreen chart overlay — mobile */}
       {mobileChartFull && (
-        <div style={{
+        <div style={isLandscape ? {
+          /* Phone is already landscape — no rotation needed */
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9998,
+          background: T.bg, display: "flex", flexDirection: "column",
+        } : {
+          /* Phone is portrait — rotate to landscape */
           position: "fixed", top: 0, left: 0, zIndex: 9998, background: T.bg,
-          /* Force landscape: rotate 90deg, anchor at top-left, swap width/height */
           width: "100vh", height: "100vw",
           transform: "rotate(90deg)", transformOrigin: "top left",
           marginLeft: "100vw",
