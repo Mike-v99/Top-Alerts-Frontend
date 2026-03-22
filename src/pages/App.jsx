@@ -557,44 +557,32 @@ export default function AppPage() {
   }, [user]);
 
   // ── Hotlist data fetching ──────────────────────────────────────────────
-  const [hotlistLoading, setHotlistLoading] = useState(false);
   useEffect(() => {
     if (marketView !== "hotlist") return;
-    if (hotlistData.gainers.length > 0 || hotlistData.losers.length > 0) return; // already loaded
     const key = import.meta.env.VITE_MASSIVE_KEY || "";
     if (!key) return;
-    setHotlistLoading(true);
     (async () => {
       try {
-        // Fetch gainers
         const res = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/gainers?apiKey=${key}`);
         const data = await res.json();
-        console.log("Hotlist gainers response:", data);
         const topGainers = (data.tickers || []).filter(t => (t.lastTrade?.p || t.day?.c || 0) > 1).slice(0, 10).map(t => ({
-          symbol: t.ticker,
-          name: t.ticker,
+          symbol: t.ticker, name: t.ticker,
           price: t.lastTrade?.p || t.day?.c || 0,
           changePct: t.todaysChangePerc || 0,
           change: t.todaysChange || 0,
           volume: t.day?.v || 0,
         }));
-
-        // Fetch losers
         const res2 = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/losers?apiKey=${key}`);
         const data2 = await res2.json();
-        console.log("Hotlist losers response:", data2);
         const topLosers = (data2.tickers || []).filter(t => (t.lastTrade?.p || t.day?.c || 0) > 1).slice(0, 10).map(t => ({
-          symbol: t.ticker,
-          name: t.ticker,
+          symbol: t.ticker, name: t.ticker,
           price: t.lastTrade?.p || t.day?.c || 0,
           changePct: t.todaysChangePerc || 0,
           change: t.todaysChange || 0,
           volume: t.day?.v || 0,
         }));
-
         setHotlistData({ gainers: topGainers, losers: topLosers });
       } catch (e) { console.error("Hotlist fetch error:", e); }
-      setHotlistLoading(false);
     })();
   }, [marketView]);
 
@@ -1717,7 +1705,7 @@ export default function AppPage() {
                     {hotlistFilter === "losers" ? "TOP LOSERS TODAY" : "TOP GAINERS TODAY"}
                   </div>
                   {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).length === 0 && (
-                    <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 12 }}>{hotlistLoading ? "Loading hotlist..." : "No data available — market may be closed"}</div>
+                    <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 12 }}>Loading hotlist...</div>
                   )}
                   {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).map((t, i) => {
                     const up = t.changePct >= 0;
