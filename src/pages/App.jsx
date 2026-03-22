@@ -146,6 +146,18 @@ export default function AppPage() {
   const [hotlistData, setHotlistData] = useState({ gainers: [], losers: [] });
   const [expandedHotlist, setExpandedHotlist] = useState(null); // symbol of expanded hotlist card
   const [mobileChartFull, setMobileChartFull] = useState(false); // fullscreen chart overlay
+
+  // Close fullscreen chart if user exits fullscreen via browser gesture
+  useEffect(() => {
+    const onFsChange = () => {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement && mobileChartFull) {
+        setMobileChartFull(false);
+      }
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    document.addEventListener("webkitfullscreenchange", onFsChange);
+    return () => { document.removeEventListener("fullscreenchange", onFsChange); document.removeEventListener("webkitfullscreenchange", onFsChange); };
+  }, [mobileChartFull]);
   const [mobileProTriggersOpen, setMobileProTriggersOpen] = useState(false);
   const [isLandscape, setIsLandscape] = useState(() => typeof window !== "undefined" && window.innerWidth > window.innerHeight);
 
@@ -2637,12 +2649,18 @@ export default function AppPage() {
 
       {/* Fullscreen chart overlay — mobile */}
       {mobileChartFull && (
-        <div style={{
+        <div ref={el => {
+          // Request browser fullscreen to hide address bar / toolbar
+          if (el && !document.fullscreenElement && !document.webkitFullscreenElement) {
+            const goFull = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+            if (goFull) goFull.call(el).catch(() => {});
+          }
+        }} style={{
           /* Always force landscape — CSS rotate, locked in place */
           position: "fixed", top: 0, left: 0, zIndex: 9998, background: T.bg,
-          width: "100vh", height: "100vw",
+          width: "100dvh", height: "100dvw",
           transform: "rotate(90deg)", transformOrigin: "top left",
-          marginLeft: "100vw",
+          marginLeft: "100dvw",
           display: "flex", flexDirection: "column",
           touchAction: "none",
         }}>
@@ -2652,7 +2670,11 @@ export default function AppPage() {
               <div style={{ ...font, fontSize: 18, fontWeight: 700, color: T.text }}>{chartLabel || chartSymbol}</div>
               <div style={{ ...mono, fontSize: 12, color: T.textMid }}>{chartSymbol}</div>
             </div>
-            <button onClick={() => setMobileChartFull(false)} style={{
+            <button onClick={() => {
+              setMobileChartFull(false);
+              const exitFull = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+              if (exitFull && (document.fullscreenElement || document.webkitFullscreenElement)) exitFull.call(document).catch(() => {});
+            }} style={{
               width: 36, height: 36, borderRadius: 8, border: "none",
               background: "#0a1f4a", cursor: "pointer", fontSize: 18, color: "#e8f2ff",
               display: "flex", alignItems: "center", justifyContent: "center",
