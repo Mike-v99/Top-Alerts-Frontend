@@ -73,6 +73,7 @@ export default function AppPage() {
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
   const [mobileExpanded, setMobileExpanded] = useState(null); // symbol of expanded ticker
   const [mobileNewsOpen, setMobileNewsOpen] = useState(false);
+  const [mobileChartFull, setMobileChartFull] = useState(false); // fullscreen chart overlay
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", check);
@@ -1319,7 +1320,14 @@ export default function AppPage() {
                   {isExpanded && (
                     <div onClick={(ev) => ev.stopPropagation()} style={{ padding: "0 14px 14px" }}>
                       {/* Chart */}
-                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, overflow: "hidden" }}>
+                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, overflow: "hidden", position: "relative" }}>
+                        {/* Expand button */}
+                        <button onClick={(ev) => { ev.stopPropagation(); setMobileChartFull(true); }} style={{
+                          position: "absolute", top: 8, right: 8, zIndex: 5,
+                          width: 32, height: 32, borderRadius: 6, border: `1px solid ${T.border}`,
+                          background: "rgba(255,255,255,0.9)", cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
+                        }}>⛶</button>
                         {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: "#6a6050" }}>Loading chart...</div>}
                         {!chartLoading && chartData.length > 0 && (
                           <div style={{ overflowX: "auto" }}>
@@ -1358,8 +1366,9 @@ export default function AppPage() {
                       </div>
 
                       {/* News — collapsible */}
-                      <div onClick={(ev) => ev.stopPropagation()} style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 8 }}>
-                        <div onClick={() => setMobileNewsOpen(p => !p)} style={{
+                      <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 8 }}>
+                        {/* Toggle header — ONLY this triggers open/close */}
+                        <div onClick={(ev) => { ev.stopPropagation(); setMobileNewsOpen(p => !p); }} style={{
                           padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between",
                           cursor: "pointer", background: mobileNewsOpen ? T.bgDeep : T.bg,
                         }}>
@@ -1370,37 +1379,43 @@ export default function AppPage() {
                           </div>
                           <span style={{ ...font, fontSize: 12, color: mobileNewsOpen ? "#1a1200" : "#6a6050" }}>{mobileNewsOpen ? "▲ Collapse" : "▼ Expand"}</span>
                         </div>
+                        {/* Preview when collapsed */}
                         {!mobileNewsOpen && tickerNews.length > 0 && (
-                          <div style={{ padding: "8px 14px", ...font, fontSize: 13, color: "#1a1200", borderTop: `1px solid ${T.border}`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          <div onClick={(ev) => { ev.stopPropagation(); setMobileNewsOpen(true); }} style={{ padding: "8px 14px", ...font, fontSize: 13, color: "#1a1200", borderTop: `1px solid ${T.border}`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer" }}>
                             {tickerNews[0]?.title}
                           </div>
                         )}
-                        {mobileNewsOpen && tickerNews.map((n, i) => {
-                          const url = n.article_url || n.url || n.link || "";
-                          return (
-                          <div key={i} style={{ padding: "10px 14px", borderTop: `1px solid ${T.border}`, cursor: url ? "pointer" : "default" }}>
-                            {url ? (
-                              <a href={url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} style={{ textDecoration: "none", display: "block" }}>
-                                <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#0a1f4a", lineHeight: 1.3, textDecoration: "underline" }}>{n.title}</div>
-                                <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                                  <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
-                                  <span style={{ color: "#6a6050" }}>·</span>
-                                  <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
+                        {/* Expanded news items — each is its own link, clicks do NOT toggle */}
+                        {mobileNewsOpen && (
+                          <div onClick={(ev) => ev.stopPropagation()}>
+                            {tickerNews.map((n, i) => {
+                              const url = n.article_url || n.url || n.link || "";
+                              return (
+                                <div key={i} style={{ borderTop: `1px solid ${T.border}` }}>
+                                  {url ? (
+                                    <a href={url} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "10px 14px", textDecoration: "none" }}>
+                                      <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#0a1f4a", lineHeight: 1.3, textDecoration: "underline" }}>{n.title}</div>
+                                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+                                        <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
+                                        <span style={{ color: "#6a6050" }}>·</span>
+                                        <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
+                                      </div>
+                                    </a>
+                                  ) : (
+                                    <div style={{ padding: "10px 14px" }}>
+                                      <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{n.title}</div>
+                                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+                                        <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                              </a>
-                            ) : (
-                              <div>
-                                <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{n.title}</div>
-                                <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                                  <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
-                                </div>
-                              </div>
+                              );
+                            })}
+                            {tickerNews.length === 0 && (
+                              <div style={{ padding: "12px 14px", borderTop: `1px solid ${T.border}`, ...font, fontSize: 13, color: "#6a6050", textAlign: "center" }}>No news available</div>
                             )}
                           </div>
-                          );
-                        })}
-                        {mobileNewsOpen && tickerNews.length === 0 && (
-                          <div style={{ padding: "12px 14px", borderTop: `1px solid ${T.border}`, ...font, fontSize: 13, color: "#6a6050", textAlign: "center" }}>No news available</div>
                         )}
                       </div>
 
@@ -1861,6 +1876,40 @@ export default function AppPage() {
       {/* Upgrade modal — shown when free user hits 10 alert limit */}
       {showUpgradeModal && (
         <UpgradeModal T={T} font={font} mono={mono} onClose={() => setShowUpgradeModal(false)} onUpgrade={() => { setShowUpgradeModal(false); setTab("pricing"); }} />
+      )}
+
+      {/* Fullscreen chart overlay — mobile */}
+      {mobileChartFull && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9998, background: T.bg, display: "flex", flexDirection: "column" }}>
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: `1px solid ${T.border}` }}>
+            <div>
+              <div style={{ ...font, fontSize: 18, fontWeight: 700, color: "#1a1200" }}>{chartLabel || chartSymbol}</div>
+              <div style={{ ...mono, fontSize: 12, color: "#6a6050" }}>{chartSymbol}</div>
+            </div>
+            <button onClick={() => setMobileChartFull(false)} style={{
+              width: 36, height: 36, borderRadius: 8, border: `1px solid ${T.border}`,
+              background: T.bgCard, cursor: "pointer", fontSize: 18, color: "#1a1200",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>×</button>
+          </div>
+          {/* Chart — full width */}
+          <div style={{ flex: 1, overflow: "auto", padding: "8px 0" }}>
+            {chartData.length > 0 && <CandlestickChart data={chartData} T={T} range={chartRange} />}
+            {chartData.length === 0 && <div style={{ textAlign: "center", padding: 60, ...mono, fontSize: 14, color: "#6a6050" }}>No chart data</div>}
+          </div>
+          {/* Range buttons */}
+          <div style={{ display: "flex", gap: 6, justifyContent: "center", padding: "12px 16px", borderTop: `1px solid ${T.border}` }}>
+            {["1D","5D","1M","3M","1Y","5Y"].map(r => (
+              <span key={r} onClick={() => setChartRange(r)} style={{
+                padding: "8px 16px", borderRadius: 8, ...mono, fontSize: 13, cursor: "pointer", fontWeight: 600,
+                background: chartRange === r ? "#0a1f4a" : T.bgCard,
+                color: chartRange === r ? "#e8f2ff" : "#1a1200",
+                border: chartRange === r ? "none" : `1px solid ${T.border}`,
+              }}>{r}</span>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Event Alert Popup */}
