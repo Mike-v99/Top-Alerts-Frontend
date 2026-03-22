@@ -76,6 +76,59 @@ export default function AppPage() {
   const [mobileChartFull, setMobileChartFull] = useState(false); // fullscreen chart overlay
   const [mobileProTriggersOpen, setMobileProTriggersOpen] = useState(false);
   const [isLandscape, setIsLandscape] = useState(() => typeof window !== "undefined" && window.innerWidth > window.innerHeight);
+  const [swipeState, setSwipeState] = useState({}); // { symbol: { startX, currentX } }
+  const [swipedOpen, setSwipedOpen] = useState(null); // symbol that has delete revealed
+
+  function shareTicker(symbol, label, price, changePct) {
+    const text = `Check out ${label || symbol} (${symbol}) on Top-Alerts — currently $${Number(price).toFixed(2)} (${changePct >= 0 ? "▲" : "▼"} ${Math.abs(changePct).toFixed(2)}% today)`;
+    const url = `https://top-alerts.com?symbol=${symbol}`;
+    if (navigator.share) {
+      navigator.share({ title: `${label || symbol} — $${Number(price).toFixed(2)}`, text, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(`${text}\n${url}`).then(() => showToast("Copied to clipboard", "ok")).catch(() => {});
+    }
+  }
+
+  function handleTouchStart(symbol, e) {
+    const touch = e.touches[0];
+    setSwipeState(prev => ({ ...prev, [symbol]: { startX: touch.clientX, currentX: touch.clientX } }));
+  }
+  function handleTouchMove(symbol, e) {
+    const touch = e.touches[0];
+    setSwipeState(prev => {
+      const s = prev[symbol];
+      if (!s) return prev;
+      return { ...prev, [symbol]: { ...s, currentX: touch.clientX } };
+    });
+  }
+  function handleTouchEnd(symbol) {
+    const s = swipeState[symbol];
+    if (!s) return;
+    const diff = s.startX - s.currentX;
+    if (diff > 80) {
+      setSwipedOpen(symbol);
+    } else {
+      setSwipedOpen(prev => prev === symbol ? null : prev);
+    }
+    setSwipeState(prev => { const n = { ...prev }; delete n[symbol]; return n; });
+  }
+  function removeFromWatchlist(symbol) {
+    setWatchlist(prev => {
+      const next = prev.filter(w => w.symbol !== symbol);
+      localStorage.setItem("ta-watchlist", JSON.stringify(next));
+      return next;
+    });
+    setSwipedOpen(null);
+    if (mobileExpanded === symbol) setMobileExpanded(null);
+  }
+  function getSwipeOffset(symbol) {
+    const s = swipeState[symbol];
+    if (s) {
+      const diff = s.startX - s.currentX;
+      return Math.max(0, Math.min(90, diff));
+    }
+    return swipedOpen === symbol ? 90 : 0;
+  }
   useEffect(() => {
     const check = () => {
       setIsMobile(window.innerWidth < 768);
@@ -1307,13 +1360,28 @@ export default function AppPage() {
               const snap = d || {};
 
               return (
-                <div key={m.id} style={{
-                  background: isExpanded ? T.bgCard : "transparent",
-                  border: isExpanded ? "2px solid #0a1f4a" : "none",
-                  borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
-                  borderRadius: isExpanded ? 12 : 0,
-                  marginBottom: isExpanded ? 8 : 0,
-                }}>
+                <div key={m.id} style={{ position: "relative", overflow: "hidden", marginBottom: isExpanded ? 8 : 0 }}>
+                  {/* Delete button revealed by swipe */}
+                  <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: "#cc2222", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: isExpanded ? "0 12px 12px 0" : 0 }}
+                    onClick={() => removeFromWatchlist(m.symbol)}>
+                    <div style={{ color: "#fff", ...font, fontSize: 13, fontWeight: 600, textAlign: "center" }}>
+                      <div style={{ fontSize: 18, marginBottom: 2 }}>✕</div>
+                      Remove
+                    </div>
+                  </div>
+                  {/* Card content — slides left on swipe */}
+                  <div style={{
+                    position: "relative", zIndex: 1, background: isExpanded ? T.bgCard : T.bg,
+                    border: isExpanded ? "2px solid #0a1f4a" : "none",
+                    borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                    borderRadius: isExpanded ? 12 : 0,
+                    transform: `translateX(-${getSwipeOffset(m.symbol)}px)`,
+                    transition: swipeState[m.symbol] ? "none" : "transform 0.25s ease",
+                  }}
+                    onTouchStart={(e) => handleTouchStart(m.symbol, e)}
+                    onTouchMove={(e) => handleTouchMove(m.symbol, e)}
+                    onTouchEnd={() => handleTouchEnd(m.symbol)}
+                  >
                   {/* Collapsed row */}
                   <div onClick={() => {
                     try {
@@ -1388,20 +1456,15 @@ export default function AppPage() {
                       {/* Action buttons */}
                       <div style={{ display: "flex", gap: 8 }}>
                         <button onClick={(ev) => { ev.stopPropagation(); openModal(m.symbol, m.label); }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
-                        <button onClick={(ev) => {
-                          ev.stopPropagation();
-                          setWatchlist(prev => {
-                            const exists = prev.some(w => w.symbol === m.symbol);
-                            const next = exists ? prev.filter(w => w.symbol !== m.symbol) : [...prev, { symbol: m.symbol, label: m.label }];
-                            localStorage.setItem("ta-watchlist", JSON.stringify(next));
-                            return next;
-                          });
-                        }} style={{ flex: 1, padding: 11, background: "none", color: T.text, border: `2px solid ${T.textMid}`, borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                          {watchlist.some(w => w.symbol === m.symbol) ? "✓ Watchlisted" : "+ Watchlist"}
+                        <button onClick={(ev) => { ev.stopPropagation(); if (d) shareTicker(m.symbol, m.label, d.price, d.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: "#0a1f4a", border: "2px solid #0a1f4a", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                          <span style={{ fontSize: 16 }}>↗</span> Share
                         </button>
                       </div>
+                      {/* Swipe hint */}
+                      <div style={{ textAlign: "center", marginTop: 8, ...mono, fontSize: 10, color: T.textFaint }}>← Swipe left to remove</div>
                     </div>
                   )}
+                  </div>
                 </div>
               );
             })}
@@ -1415,13 +1478,28 @@ export default function AppPage() {
               const isExpanded = mobileExpanded === w.symbol;
               const snap = wd || {};
               return (
-                <div key={w.symbol} style={{
-                  background: isExpanded ? T.bgCard : "transparent",
-                  border: isExpanded ? "2px solid #0a1f4a" : "none",
-                  borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
-                  borderRadius: isExpanded ? 12 : 0,
-                  marginBottom: isExpanded ? 8 : 0,
-                }}>
+                <div key={w.symbol} style={{ position: "relative", overflow: "hidden", marginBottom: isExpanded ? 8 : 0 }}>
+                  {/* Delete button revealed by swipe */}
+                  <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: "#cc2222", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: isExpanded ? "0 12px 12px 0" : 0 }}
+                    onClick={() => removeFromWatchlist(w.symbol)}>
+                    <div style={{ color: "#fff", ...font, fontSize: 13, fontWeight: 600, textAlign: "center" }}>
+                      <div style={{ fontSize: 18, marginBottom: 2 }}>✕</div>
+                      Remove
+                    </div>
+                  </div>
+                  {/* Card content — slides left on swipe */}
+                  <div style={{
+                    position: "relative", zIndex: 1, background: isExpanded ? T.bgCard : T.bg,
+                    border: isExpanded ? "2px solid #0a1f4a" : "none",
+                    borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                    borderRadius: isExpanded ? 12 : 0,
+                    transform: `translateX(-${getSwipeOffset(w.symbol)}px)`,
+                    transition: swipeState[w.symbol] ? "none" : "transform 0.25s ease",
+                  }}
+                    onTouchStart={(e) => handleTouchStart(w.symbol, e)}
+                    onTouchMove={(e) => handleTouchMove(w.symbol, e)}
+                    onTouchEnd={() => handleTouchEnd(w.symbol)}
+                  >
                   <div onClick={() => {
                     try {
                       if (isExpanded) { setMobileExpanded(null); }
@@ -1494,20 +1572,15 @@ export default function AppPage() {
                       {/* Action buttons */}
                       <div style={{ display: "flex", gap: 8 }}>
                         <button onClick={(ev) => { ev.stopPropagation(); openModal(w.symbol, w.label); }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
-                        <button onClick={(ev) => {
-                          ev.stopPropagation();
-                          setWatchlist(prev => {
-                            const next = prev.filter(x => x.symbol !== w.symbol);
-                            localStorage.setItem("ta-watchlist", JSON.stringify(next));
-                            return next;
-                          });
-                          setMobileExpanded(null);
-                        }} style={{ flex: 1, padding: 11, background: "none", color: "#cc2222", border: "2px solid #cc2222", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                          Remove
+                        <button onClick={(ev) => { ev.stopPropagation(); if (wd) shareTicker(w.symbol, w.label, wd.price, wd.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: "#0a1f4a", border: "2px solid #0a1f4a", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                          <span style={{ fontSize: 16 }}>↗</span> Share
                         </button>
                       </div>
+                      {/* Swipe hint */}
+                      <div style={{ textAlign: "center", marginTop: 8, ...mono, fontSize: 10, color: T.textFaint }}>← Swipe left to remove</div>
                     </div>
                   )}
+                  </div>
                 </div>
               );
             })}
@@ -2533,6 +2606,7 @@ function UpgradeModal({ T, font, mono, onClose, onUpgrade }) {
     { icon: "⚡", title: "12 trigger types",       desc: "RSI, MACD, Bollinger Bands, Golden Cross and more" },
     { icon: "◈", title: "Multi-condition logic",  desc: "Combine AND/OR conditions in a single alert" },
     { icon: "↗", title: "SMS & Webhook delivery", desc: "Get notified via text or pipe into any workflow" },
+    { icon: "📸", title: "Share chart screenshots", desc: "Share beautiful chart images with price data to social" },
     { icon: "⏱", title: "Custom cooldowns",       desc: "Control how often the same alert can fire" },
     { icon: "★", title: "Priority delivery",      desc: "Alerts processed first in the queue" },
   ];
@@ -2913,7 +2987,7 @@ function PricingPage({ T, font, mono, currentPlan, onUpgrade, isMobile }) {
   const proPriceId = import.meta.env.VITE_STRIPE_PRO_PRICE_ID;
 
   const freeFeatures = ["10 active alerts","Price above / below","% change alerts","Push & Email"];
-  const proFeatures  = ["Unlimited alerts","All 12 trigger types","Multi-condition AND/OR","90-day backtesting","SMS & Webhook","Alert cooldown","Priority delivery"];
+  const proFeatures  = ["Unlimited alerts","All 12 trigger types","Multi-condition AND/OR","90-day backtesting","SMS & Webhook","Share chart screenshots","Alert cooldown","Priority delivery"];
 
   return (
     <div>
