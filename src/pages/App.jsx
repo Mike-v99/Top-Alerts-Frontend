@@ -1292,12 +1292,12 @@ export default function AppPage() {
               const snap = d || {};
 
               return (
-                <div key={m.id} style={{ borderBottom: `1px solid ${T.border}`, background: isExpanded ? T.bgCard : "transparent" }}>
+                <div key={m.id} style={{ borderBottom: `1px solid ${T.border}`, background: isExpanded ? T.bgCard : "transparent", border: isExpanded ? "2px solid #0a1f4a" : "none", borderRadius: isExpanded ? 12 : 0, marginBottom: isExpanded ? 8 : 0, overflow: "hidden" }}>
                   {/* Collapsed row */}
                   <div onClick={() => {
                     if (isExpanded) { setMobileExpanded(null); }
                     else { setMobileExpanded(m.symbol); setMobileNewsOpen(false); openChart(m.symbol, m.label); }
-                  }} style={{ padding: "12px 0", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                  }} style={{ padding: isExpanded ? "12px 14px" : "12px 0", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ ...font, fontSize: 17, fontWeight: 700, color: "#1a1200" }}>{m.label}</div>
                       <div style={{ ...mono, fontSize: 12, color: "#6a6050" }}>{m.symbol}</div>
@@ -1317,7 +1317,7 @@ export default function AppPage() {
 
                   {/* Expanded card */}
                   {isExpanded && (
-                    <div onClick={(ev) => ev.stopPropagation()} style={{ paddingBottom: 14 }}>
+                    <div onClick={(ev) => ev.stopPropagation()} style={{ padding: "0 14px 14px" }}>
                       {/* Chart */}
                       <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, overflow: "hidden" }}>
                         {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: "#6a6050" }}>Loading chart...</div>}
@@ -1375,26 +1375,30 @@ export default function AppPage() {
                             {tickerNews[0]?.title}
                           </div>
                         )}
-                        {mobileNewsOpen && tickerNews.map((n, i) => (
-                          <div key={i} onClick={(ev) => {
-                            ev.stopPropagation();
-                            if (!n.article_url) return;
-                            const a = document.createElement("a");
-                            a.href = n.article_url;
-                            a.target = "_blank";
-                            a.rel = "noopener noreferrer";
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                          }} style={{ display: "block", padding: "10px 14px", borderTop: `1px solid ${T.border}`, cursor: "pointer" }}>
-                            <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#0a1f4a", lineHeight: 1.3, textDecoration: "underline" }}>{n.title}</div>
-                            <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                              <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
-                              <span style={{ color: "#6a6050" }}>·</span>
-                              <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
-                            </div>
+                        {mobileNewsOpen && tickerNews.map((n, i) => {
+                          const url = n.article_url || n.url || n.link || "";
+                          return (
+                          <div key={i} style={{ padding: "10px 14px", borderTop: `1px solid ${T.border}`, cursor: url ? "pointer" : "default" }}>
+                            {url ? (
+                              <a href={url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} style={{ textDecoration: "none", display: "block" }}>
+                                <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#0a1f4a", lineHeight: 1.3, textDecoration: "underline" }}>{n.title}</div>
+                                <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+                                  <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
+                                  <span style={{ color: "#6a6050" }}>·</span>
+                                  <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
+                                </div>
+                              </a>
+                            ) : (
+                              <div>
+                                <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{n.title}</div>
+                                <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+                                  <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        ))}
+                          );
+                        })}
                         {mobileNewsOpen && tickerNews.length === 0 && (
                           <div style={{ padding: "12px 14px", borderTop: `1px solid ${T.border}`, ...font, fontSize: 13, color: "#6a6050", textAlign: "center" }}>No news available</div>
                         )}
@@ -2503,8 +2507,10 @@ function CandlestickChart({ data, T, range }) {
     const rect = svg.getBoundingClientRect();
     const scaleX = W / rect.width;
     const scaleYr = H / rect.height;
-    const svgX = (e.clientX - rect.left) * scaleX;
-    const svgY = (e.clientY - rect.top) * scaleYr;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgX = (clientX - rect.left) * scaleX;
+    const svgY = (clientY - rect.top) * scaleYr;
 
     // Find closest candle
     const idx = Math.round((svgX - PAD.left - spacing / 2) / spacing);
@@ -2519,12 +2525,14 @@ function CandlestickChart({ data, T, range }) {
   }
 
   return (
-    <div style={{ position: "relative" }} onMouseLeave={() => setHover(null)}>
+    <div style={{ position: "relative" }} onMouseLeave={() => setHover(null)} onTouchEnd={() => setHover(null)}>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
-        style={{ width: "100%", height: "auto", display: "block", cursor: hover ? "crosshair" : "default" }}
+        style={{ width: "100%", height: "auto", display: "block", cursor: hover ? "crosshair" : "default", touchAction: "none" }}
         onMouseMove={handleMouseMove}
+        onTouchMove={(e) => { e.preventDefault(); handleMouseMove(e); }}
+        onTouchStart={(e) => { e.preventDefault(); handleMouseMove(e); }}
       >
         <text x="300" y="9" textAnchor="middle" fontSize="8" fill="#aaa" fontFamily="monospace">{`${data.length} candles · ${data.length > 0 ? new Date(data[0].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""} → ${data.length > 0 ? new Date(data[data.length-1].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""}`}</text>
         {/* Y grid lines + labels */}
