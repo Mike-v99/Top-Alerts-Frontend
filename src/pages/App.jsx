@@ -3123,69 +3123,96 @@ function CandlestickChart({ data, T, range }) {
 function PricingPage({ T, font, mono, currentPlan, onUpgrade, isMobile }) {
   const isFree = !currentPlan || currentPlan === "free";
   const proPriceId = import.meta.env.VITE_STRIPE_PRO_PRICE_ID;
+  const [pricingTab, setPricingTab] = useState("pro"); // "free" or "pro" — default Pro
 
   const freeFeatures = ["10 active alerts","Price above / below","% change alerts","Push & Email"];
   const proFeatures  = ["Unlimited alerts","All 12 trigger types","Multi-condition AND/OR","90-day backtesting","SMS & Webhook","Share chart screenshots","Alert cooldown","Priority delivery"];
 
   return (
-    <div>
-      <div style={{ textAlign: "center", marginBottom: isMobile ? 20 : 40 }}>
-        <div style={{ ...mono, fontSize: 10, letterSpacing: "3px", color: T.textFaint, marginBottom: 10 }}>PRICING</div>
-        <div style={{ ...font, fontSize: isMobile ? 24 : 36, fontWeight: 500, color: T.text }}>Simple, transparent pricing</div>
-        <div style={{ ...font, fontSize: isMobile ? 13 : 15, color: T.textMid, marginTop: 8 }}>Start free. Upgrade when you need more power.</div>
+    <div style={{ maxWidth: isMobile ? "100%" : 600, margin: "0 auto" }}>
+      {/* Header */}
+      <div style={{ textAlign: "center", marginBottom: isMobile ? 20 : 28 }}>
+        <div style={{ ...font, fontSize: isMobile ? 28 : 36, fontWeight: 800, color: T.text, lineHeight: 1.2 }}>Choose your plan</div>
+        <div style={{ ...font, fontSize: isMobile ? 15 : 16, color: T.textMid, marginTop: 8 }}>Start free. Upgrade anytime.</div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 16 : 24, maxWidth: 900, margin: "0 auto" }}>
-        {/* Free card */}
-        <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 16, padding: "36px 32px" }}>
-          <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>FREE</div>
-          <div style={{ ...font, fontSize: 48, fontWeight: 500, color: T.text, marginBottom: 4 }}>$0</div>
-          <div style={{ ...font, fontSize: 14, color: T.textMid, marginBottom: 28 }}>For casual watchers</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 32 }}>
-            {freeFeatures.map(f => (
-              <div key={f} style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <span style={{ color: T.green, fontSize: 14 }}>✓</span>
-                <span style={{ ...font, fontSize: 15, color: T.text }}>{f}</span>
-              </div>
-            ))}
-          </div>
-          {isFree ? (
-            <div style={{ textAlign: "center", padding: 12, border: `1px solid ${T.border}`, borderRadius: 10, ...mono, fontSize: 11, color: T.textFaint }}>✓ CURRENT PLAN</div>
-          ) : (
-            <div style={{ textAlign: "center", padding: 12, border: `1px solid ${T.border}`, borderRadius: 10, ...mono, fontSize: 11, color: T.textFaint }}>FREE PLAN</div>
-          )}
-        </div>
 
-        {/* Pro card — cobalt filled */}
-        <div style={{ background: "#0a1f4a", borderRadius: 16, padding: "36px 32px", position: "relative" }}>
-          <div style={{ position: "absolute", top: 0, right: 0, width: 150, height: 150, background: "radial-gradient(circle, rgba(55,138,221,0.15), transparent)", borderRadius: "0 16px 0 0" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#378ADD" }}>PRO</div>
-            <div style={{ ...mono, fontSize: 8, letterSpacing: "1.5px", color: "#378ADD", background: "rgba(55,138,221,0.15)", padding: "3px 8px", borderRadius: 4 }}>RECOMMENDED</div>
-          </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
-            <span style={{ ...font, fontSize: 48, fontWeight: 500, color: "#e8f2ff" }}>$9</span>
-            <span style={{ ...font, fontSize: 16, color: "rgba(255,255,255,0.4)" }}>/mo</span>
-          </div>
-          <div style={{ ...font, fontSize: 14, color: "rgba(255,255,255,0.5)", marginBottom: 28 }}>For serious traders</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 32 }}>
+      {/* Toggle tabs */}
+      <div style={{ display: "flex", background: T.bgDeep, borderRadius: 12, padding: 4, marginBottom: isMobile ? 24 : 28 }}>
+        <div onClick={() => setPricingTab("free")} style={{
+          flex: 1, textAlign: "center", padding: isMobile ? 12 : 14, borderRadius: 10, cursor: "pointer",
+          ...font, fontSize: isMobile ? 15 : 16,
+          fontWeight: pricingTab === "free" ? 700 : 500,
+          background: pricingTab === "free" ? T.bgCard : "transparent",
+          color: pricingTab === "free" ? T.text : T.textMid,
+          boxShadow: pricingTab === "free" ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
+          transition: "all 0.2s",
+        }}>Free</div>
+        <div onClick={() => setPricingTab("pro")} style={{
+          flex: 1, textAlign: "center", padding: isMobile ? 12 : 14, borderRadius: 10, cursor: "pointer",
+          ...font, fontSize: isMobile ? 15 : 16,
+          fontWeight: pricingTab === "pro" ? 700 : 500,
+          background: pricingTab === "pro" ? "#0a1f4a" : "transparent",
+          color: pricingTab === "pro" ? "#e8f2ff" : T.textMid,
+          boxShadow: pricingTab === "pro" ? "0 2px 8px rgba(10,31,74,0.3)" : "none",
+          transition: "all 0.2s",
+        }}>Pro</div>
+      </div>
+
+      {/* Pro card — shown when Pro tab selected */}
+      {pricingTab === "pro" && (
+        <div>
+          <div style={{ background: "linear-gradient(135deg,#0a1f4a 0%,#1a3a6a 100%)", borderRadius: 20, padding: isMobile ? "32px 24px" : "36px 32px", marginBottom: 16, position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, background: "rgba(55,138,221,0.15)", borderRadius: "50%" }} />
+            <div style={{ position: "absolute", bottom: -30, left: -20, width: 80, height: 80, background: "rgba(55,138,221,0.1)", borderRadius: "50%" }} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, position: "relative" }}>
+              <div>
+                <div style={{ ...mono, fontSize: isMobile ? 11 : 10, letterSpacing: "2px", color: "#378ADD", fontWeight: 600 }}>PRO</div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 4 }}>
+                  <span style={{ ...font, fontSize: isMobile ? 48 : 52, fontWeight: 800, color: "#e8f2ff", lineHeight: 1 }}>$9</span>
+                  <span style={{ ...font, fontSize: isMobile ? 18 : 20, color: "rgba(255,255,255,0.4)" }}>/mo</span>
+                </div>
+              </div>
+              <div style={{ ...mono, fontSize: isMobile ? 10 : 9, color: "#e8f2ff", background: "rgba(55,138,221,0.2)", padding: "6px 12px", borderRadius: 20, border: "1px solid rgba(55,138,221,0.3)" }}>SAVE 40% yearly</div>
+            </div>
+            <div style={{ ...font, fontSize: isMobile ? 15 : 14, color: "rgba(255,255,255,0.6)", marginBottom: 24 }}>For serious traders who need every edge</div>
             {proFeatures.map(f => (
-              <div key={f} style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <span style={{ color: "#3ddc84", fontSize: 14 }}>✓</span>
-                <span style={{ ...font, fontSize: 15, color: "rgba(255,255,255,0.85)" }}>{f}</span>
+              <div key={f} style={{ display: "flex", alignItems: "center", padding: "8px 0", ...font, fontSize: isMobile ? 15 : 14, color: "#e8f2ff" }}>
+                <span style={{ color: "#378ADD", marginRight: 10, fontSize: 16 }}>✓</span>{f}
               </div>
             ))}
+            {isFree ? (
+              <button onClick={() => proPriceId && onUpgrade(proPriceId)} style={{
+                marginTop: 24, width: "100%", padding: isMobile ? 16 : 14, background: "#e8f2ff", color: "#0a1f4a",
+                border: "none", borderRadius: 12, ...font, fontSize: isMobile ? 18 : 16, fontWeight: 700, cursor: "pointer",
+              }}>Start Pro — $9/mo</button>
+            ) : (
+              <div style={{ marginTop: 24, textAlign: "center", padding: 14, border: "1px solid rgba(55,138,221,0.3)", borderRadius: 12, ...mono, fontSize: 12, color: "#378ADD", background: "rgba(55,138,221,0.1)" }}>✓ PRO ACTIVE</div>
+            )}
           </div>
-          {isFree ? (
-            <button onClick={() => proPriceId && onUpgrade(proPriceId)} style={{
-              width: "100%", padding: 14, background: "#e8f2ff", color: "#0a1f4a",
-              border: "none", borderRadius: 10, ...font, fontSize: 16, fontWeight: 500, cursor: "pointer",
-            }}>Upgrade to Pro →</button>
-          ) : (
-            <div style={{ textAlign: "center", padding: 12, border: "1px solid rgba(55,138,221,0.3)", borderRadius: 10, ...mono, fontSize: 11, color: "#378ADD", background: "rgba(55,138,221,0.1)" }}>✓ PRO ACTIVE</div>
-          )}
+          <div style={{ textAlign: "center", ...mono, fontSize: isMobile ? 11 : 10, color: T.textFaint }}>14-day money-back guarantee · Cancel anytime</div>
         </div>
-      </div>
-      <div style={{ textAlign: "center", marginTop: 24, ...mono, fontSize: 10, color: T.textFaint }}>14-day money-back guarantee · Cancel anytime</div>
+      )}
+
+      {/* Free card — shown when Free tab selected */}
+      {pricingTab === "free" && (
+        <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 16, padding: isMobile ? "24px 24px" : "36px 32px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <div>
+              <div style={{ ...mono, fontSize: isMobile ? 11 : 10, letterSpacing: "2px", color: T.textFaint }}>FREE</div>
+              <div style={{ ...font, fontSize: isMobile ? 32 : 48, fontWeight: 800, color: T.text }}>$0</div>
+            </div>
+            {isFree && (
+              <div style={{ ...mono, fontSize: isMobile ? 10 : 9, color: T.green, background: `${T.green}15`, padding: "4px 10px", borderRadius: 4 }}>✓ CURRENT</div>
+            )}
+          </div>
+          <div style={{ ...font, fontSize: isMobile ? 14 : 13, color: T.textMid, marginBottom: 20 }}>For casual watchers</div>
+          {freeFeatures.map(f => (
+            <div key={f} style={{ display: "flex", alignItems: "center", padding: "8px 0", ...font, fontSize: isMobile ? 15 : 14, color: T.text }}>
+              <span style={{ color: T.green, marginRight: 10, fontSize: 16 }}>✓</span>{f}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
