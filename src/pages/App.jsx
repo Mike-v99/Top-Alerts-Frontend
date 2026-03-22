@@ -120,16 +120,28 @@ export default function AppPage() {
     if (!s) return;
     const diff = s.startX - s.currentX;
     const el = document.getElementById(`swipe-card-${symbol}`);
+    const wrapper = document.getElementById(`swipe-wrapper-${symbol}`);
     if (s.isHorizontal && diff > 120) {
-      // Animate off screen then remove
+      // Animate card off screen
       if (el) {
         el.style.transition = "transform 0.2s ease";
         el.style.transform = "translateX(-100%)";
       }
       setSwipedJustNow(true);
+      // After card slides out, collapse the row height
       setTimeout(() => {
-        removeFromWatchlist(symbol);
-        setSwipedJustNow(false);
+        if (wrapper) {
+          wrapper.style.transition = "max-height 0.25s ease, opacity 0.25s ease, margin 0.25s ease";
+          wrapper.style.maxHeight = "0px";
+          wrapper.style.opacity = "0";
+          wrapper.style.marginBottom = "0px";
+          wrapper.style.overflow = "hidden";
+        }
+        // After collapse animation, remove from state
+        setTimeout(() => {
+          removeFromWatchlist(symbol);
+          setSwipedJustNow(false);
+        }, 250);
       }, 200);
     } else {
       // Snap back
@@ -1385,7 +1397,7 @@ export default function AppPage() {
               const snap = d || {};
 
               return (
-                <div key={m.id} style={{ position: "relative", overflow: "hidden", marginBottom: isExpanded ? 8 : 0 }}>
+                <div key={m.id} id={`swipe-wrapper-${m.symbol}`} style={{ position: "relative", overflow: "hidden", marginBottom: isExpanded ? 8 : 0, maxHeight: 2000 }}>
                   {/* Delete button revealed by swipe */}
                   <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: "#cc2222", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: isExpanded ? "0 12px 12px 0" : 0 }}
                     onClick={() => removeFromWatchlist(m.symbol)}>
@@ -1503,7 +1515,7 @@ export default function AppPage() {
               const isExpanded = mobileExpanded === w.symbol;
               const snap = wd || {};
               return (
-                <div key={w.symbol} style={{ position: "relative", overflow: "hidden", marginBottom: isExpanded ? 8 : 0 }}>
+                <div key={w.symbol} id={`swipe-wrapper-${w.symbol}`} style={{ position: "relative", overflow: "hidden", marginBottom: isExpanded ? 8 : 0, maxHeight: 2000 }}>
                   {/* Delete button revealed by swipe */}
                   <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: "#cc2222", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: isExpanded ? "0 12px 12px 0" : 0 }}
                     onClick={() => removeFromWatchlist(w.symbol)}>
