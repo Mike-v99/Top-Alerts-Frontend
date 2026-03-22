@@ -1365,7 +1365,7 @@ export default function AppPage() {
                         }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                             <span style={{ fontSize: 12 }}>📰</span>
-                            <span style={{ ...mono, fontSize: 11, letterSpacing: "1px", color: "#0a1f4a", fontWeight: 600 }}>LATEST NEWS</span>
+                            <span style={{ ...mono, fontSize: 22, letterSpacing: "1px", color: "#cc2222", fontWeight: 700 }}>LATEST NEWS</span>
                             <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>({tickerNews.length})</span>
                           </div>
                           <span style={{ ...font, fontSize: 12, color: mobileNewsOpen ? "#1a1200" : "#6a6050" }}>{mobileNewsOpen ? "▲ Collapse" : "▼ Expand"}</span>
@@ -1376,8 +1376,18 @@ export default function AppPage() {
                           </div>
                         )}
                         {mobileNewsOpen && tickerNews.map((n, i) => (
-                          <div key={i} onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); if (n.article_url) window.open(n.article_url, "_blank", "noopener,noreferrer"); }} style={{ display: "block", padding: "10px 14px", borderTop: `1px solid ${T.border}`, cursor: "pointer" }}>
-                            <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{n.title}</div>
+                          <div key={i} onClick={(ev) => {
+                            ev.stopPropagation();
+                            if (!n.article_url) return;
+                            const a = document.createElement("a");
+                            a.href = n.article_url;
+                            a.target = "_blank";
+                            a.rel = "noopener noreferrer";
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                          }} style={{ display: "block", padding: "10px 14px", borderTop: `1px solid ${T.border}`, cursor: "pointer" }}>
+                            <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#0a1f4a", lineHeight: 1.3, textDecoration: "underline" }}>{n.title}</div>
                             <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
                               <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
                               <span style={{ color: "#6a6050" }}>·</span>
