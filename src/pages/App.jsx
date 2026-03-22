@@ -1333,15 +1333,15 @@ export default function AppPage() {
                   {isExpanded && (
                     <div onClick={(ev) => ev.stopPropagation()} style={{ padding: "0 14px 14px" }}>
                       {/* Chart */}
-                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8 }}>
-                        {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: "#6a6050" }}>Loading chart...</div>}
+                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, padding: 16 }}>
+                        {chartLoading && <div style={{ textAlign: "center", padding: 20, ...mono, fontSize: 12, color: "#6a6050" }}>Loading chart...</div>}
                         {!chartLoading && chartData && chartData.length > 0 && (
-                          <div style={{ overflowX: "auto" }}>
-                            <CandlestickChart data={chartData} T={T} range={chartRange} />
+                          <div style={{ textAlign: "center", ...mono, fontSize: 12, color: "#6a6050" }}>
+                            📊 {chartData.length} candles · {chartSymbol}
                           </div>
                         )}
                         {!chartLoading && (!chartData || chartData.length === 0) && (
-                          <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: "#6a6050" }}>No chart data</div>
+                          <div style={{ textAlign: "center", ...mono, fontSize: 12, color: "#6a6050" }}>Loading data...</div>
                         )}
                         <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "8px 12px", alignItems: "center" }}>
                           {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
