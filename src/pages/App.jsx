@@ -291,17 +291,7 @@ export default function AppPage() {
   // Swipe offset is now handled via direct DOM manipulation in handleTouchMove
 
   // ── Edit mode reorder — simple move up/down ─────────────────────────
-  function moveCard(symbol, direction) {
-    const order = [...cardOrder];
-    const idx = order.indexOf(symbol);
-    if (idx < 0) return;
-    const targetIdx = idx + direction;
-    if (targetIdx < 0 || targetIdx >= order.length) return;
-    // Swap
-    [order[idx], order[targetIdx]] = [order[targetIdx], order[idx]];
-    saveCardOrder(order);
-    if (navigator.vibrate) navigator.vibrate(15);
-  }
+  // Edit mode — reorder disabled (static list)
   useEffect(() => {
     const check = () => {
       setIsMobile(window.innerWidth < 768);
@@ -350,7 +340,7 @@ export default function AppPage() {
   const [calAlertTiming, setCalAlertTiming] = useState("1day"); // "15min" | "1hr" | "1day" | "after"
   const [calCollapsed, setCalCollapsed] = useState({}); // { earnings: true, ipo: true, ... }
 
-  const DEFAULT_SYMBOLS = [
+  const MARKET_SYMBOLS = [
     { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
     { id: "SPY",   label: "S&P 500", symbol: "SPY"  },
     { id: "VIXY",  label: "VIX",     symbol: "VIXY" },
@@ -360,22 +350,6 @@ export default function AppPage() {
     { id: "USO",   label: "USO",     symbol: "USO"  },
     { id: "GLD",   label: "Gold",    symbol: "GLD"  },
   ];
-  const [cardOrder, setCardOrder] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("ta-card-order"));
-      if (saved && saved.length) return saved;
-    } catch {}
-    return DEFAULT_SYMBOLS.map(m => m.symbol);
-  });
-  const MARKET_SYMBOLS = cardOrder
-    .map(sym => DEFAULT_SYMBOLS.find(m => m.symbol === sym))
-    .filter(Boolean)
-    .concat(DEFAULT_SYMBOLS.filter(m => !cardOrder.includes(m.symbol)));
-
-  function saveCardOrder(order) {
-    setCardOrder(order);
-    try { localStorage.setItem("ta-card-order", JSON.stringify(order)); } catch {}
-  }
 
   // ── Massive.com real-time prices ─────────────────────────────────────────────
   useEffect(() => {
@@ -1862,24 +1836,14 @@ export default function AppPage() {
                       else { setMobileExpanded(m.symbol); openChart(m.symbol, m.label); }
                     } catch (err) { console.error("Mobile expand error:", err); }
                   }} style={{ padding: isExpanded ? "14px 14px" : "14px 8px 14px 0", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
-                    {/* Move buttons — only in edit mode */}
-                    {editMode && (() => {
-                      const idx = cardOrder.indexOf(m.symbol);
-                      return (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
-                        <button onClick={(ev) => { ev.stopPropagation(); moveCard(m.symbol, -1); }} style={{
-                          width: 30, height: 26, borderRadius: "6px 6px 2px 2px", border: `1px solid ${T.border}`,
-                          background: idx === 0 ? T.bgDeep : T.bgCard, color: idx === 0 ? T.textFaint : T.text,
-                          fontSize: 12, cursor: idx === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                        }}>▲</button>
-                        <button onClick={(ev) => { ev.stopPropagation(); moveCard(m.symbol, 1); }} style={{
-                          width: 30, height: 26, borderRadius: "2px 2px 6px 6px", border: `1px solid ${T.border}`,
-                          background: idx === cardOrder.length - 1 ? T.bgDeep : T.bgCard, color: idx === cardOrder.length - 1 ? T.textFaint : T.text,
-                          fontSize: 12, cursor: idx === cardOrder.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                        }}>▼</button>
+                    {/* Edit mode indicator */}
+                    {editMode && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "8px 4px", flexShrink: 0 }}>
+                        <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
+                        <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
+                        <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
                       </div>
-                      );
-                    })()}
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{m.label}</div>
                       <div style={{ ...mono, fontSize: 14, color: T.textMid }}>{m.symbol}</div>
