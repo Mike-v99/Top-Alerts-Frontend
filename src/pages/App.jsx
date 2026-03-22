@@ -361,8 +361,9 @@ export default function AppPage() {
         const res  = await fetch(url);
         const data = await res.json();
         console.log("[Massive] Snapshot response:", res.status, "tickers:", (data.tickers || []).length, data.status, data.error || "");
+        if (data.tickers && data.tickers[0]) console.log("[Massive] First ticker raw:", JSON.stringify(data.tickers[0]).slice(0, 500));
         return (data.tickers || []).map(t => {
-          const price = t.lastTrade?.p || t.day?.c || t.min?.c || 0;
+          const price = t.lastTrade?.p || t.day?.c || t.min?.c || t.prevDay?.c || 0;
           return {
             id: symbolToId[t.ticker] || t.ticker,
             symbol: t.ticker,
