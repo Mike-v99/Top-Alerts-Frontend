@@ -35,6 +35,16 @@ const THEMES = {
 };
 
 const ASSETS = ["BTC/USD","ETH/USD","SOL/USD","AAPL","TSLA","SPY","GOLD"];
+const MARKET_SYMBOLS = [
+  { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
+  { id: "SPY",   label: "S&P 500", symbol: "SPY"  },
+  { id: "VIXY",  label: "VIX",     symbol: "VIXY" },
+  { id: "QQQ",   label: "Nasdaq",  symbol: "QQQ"  },
+  { id: "UUP",   label: "DXY",     symbol: "UUP"  },
+  { id: "IBIT",  label: "BTC/USD", symbol: "IBIT" },
+  { id: "USO",   label: "USO",     symbol: "USO"  },
+  { id: "GLD",   label: "Gold",    symbol: "GLD"  },
+];
 const FREE_TRIGGERS = [
   { id: "price_above", label: "Price rises above", icon: "↑", input: "price",   desc: "Fires when price exceeds your target" },
   { id: "price_below", label: "Price drops below", icon: "↓", input: "price",   desc: "Fires when price falls under your target" },
@@ -60,6 +70,18 @@ const DELIVERY   = [
 
 export default function AppPage() {
   const navigate = useNavigate();
+
+  // Clear localStorage if ?reset is in the URL
+  useEffect(() => {
+    if (window.location.search.includes("reset")) {
+      localStorage.removeItem("ta-card-order");
+      localStorage.removeItem("ta-local-alerts");
+      localStorage.removeItem("ta-watchlist");
+      console.log("[TopAlerts] localStorage cleared via ?reset");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
   const { user, profile, isPro, signOut } = useAuth();
   const { alerts, history, loading, createAlert, deleteAlert, togglePause } = useAlerts();
 
@@ -339,17 +361,6 @@ export default function AppPage() {
   const [calEventAlert, setCalEventAlert] = useState(null); // event object for alert popup
   const [calAlertTiming, setCalAlertTiming] = useState("1day"); // "15min" | "1hr" | "1day" | "after"
   const [calCollapsed, setCalCollapsed] = useState({}); // { earnings: true, ipo: true, ... }
-
-  const MARKET_SYMBOLS = [
-    { id: "DIA",   label: "Dow 30",  symbol: "DIA"  },
-    { id: "SPY",   label: "S&P 500", symbol: "SPY"  },
-    { id: "VIXY",  label: "VIX",     symbol: "VIXY" },
-    { id: "QQQ",   label: "Nasdaq",  symbol: "QQQ"  },
-    { id: "UUP",   label: "DXY",     symbol: "UUP"  },
-    { id: "IBIT",  label: "BTC/USD", symbol: "IBIT" },
-    { id: "USO",   label: "USO",     symbol: "USO"  },
-    { id: "GLD",   label: "Gold",    symbol: "GLD"  },
-  ];
 
   // ── Massive.com real-time prices ─────────────────────────────────────────────
   useEffect(() => {
