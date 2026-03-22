@@ -2637,17 +2637,14 @@ export default function AppPage() {
 
       {/* Fullscreen chart overlay — mobile */}
       {mobileChartFull && (
-        <div style={isLandscape ? {
-          /* Phone is already landscape — no rotation needed */
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9998,
-          background: T.bg, display: "flex", flexDirection: "column",
-        } : {
-          /* Phone is portrait — rotate to landscape */
+        <div style={{
+          /* Always force landscape — CSS rotate, locked in place */
           position: "fixed", top: 0, left: 0, zIndex: 9998, background: T.bg,
           width: "100vh", height: "100vw",
           transform: "rotate(90deg)", transformOrigin: "top left",
           marginLeft: "100vw",
           display: "flex", flexDirection: "column",
+          touchAction: "none",
         }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 20px", borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
