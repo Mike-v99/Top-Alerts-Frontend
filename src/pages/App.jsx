@@ -117,6 +117,7 @@ export default function AppPage() {
   const [themeName, setThemeName] = useState("paper");
   const [tab,       setTab]       = useState("market");
   const [showModal, setShowModal] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [step,      setStep]      = useState(1);
   const [toast,     setToast]     = useState(null);
 
@@ -1055,22 +1056,17 @@ export default function AppPage() {
               <span style={{ color: themeName === "paper" ? "#f5a623" : "#ffffff" }}>{T.icon}</span>
             </button>
 
-            {/* Plan badge */}
-            <div style={{ ...mono, fontSize: 9, letterSpacing: "1.5px",
-              background: isPro ? T.accentBg : "transparent",
-              color: isPro ? T.accent : isMobile ? T.textMid : T.textFaint,
-              border: `1px solid ${isPro ? T.accentBorder : isMobile ? T.textFaint : T.border}`,
-              padding: isMobile ? "4px 8px" : "6px 12px", borderRadius: 8 }}>
-              {profile?.plan?.toUpperCase() || "FREE"}
-            </div>
-
-            {/* User + sign out */}
+            {/* User profile / sign in */}
             {user ? (
-              <button onClick={() => { signOut(); navigate("/"); }} style={{
-                ...font, fontSize: isMobile ? 12 : 16, background: T.bgCard, border: `1px solid ${T.border}`,
-                borderRadius: 8, padding: isMobile ? "4px 8px" : "6px 12px", cursor: "pointer", color: T.textFaint,
+              <button onClick={() => setShowProfile(p => !p)} style={{
+                ...font, fontSize: isMobile ? 14 : 16, background: T.bgCard, border: `1px solid ${T.border}`,
+                borderRadius: 8, padding: isMobile ? "6px 12px" : "8px 14px", cursor: "pointer", color: T.text,
+                display: "flex", alignItems: "center", gap: 6, fontWeight: 500,
               }}>
-                {user?.email?.split("@")[0]} ↩
+                <span style={{ width: 24, height: 24, borderRadius: "50%", background: "#0a1f4a", color: "#e8f2ff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+                  {(user?.email?.[0] || "U").toUpperCase()}
+                </span>
+                {!isMobile && <span>{user?.email?.split("@")[0]}</span>}
               </button>
             ) : (
               <button onClick={() => navigate("/login")} style={{
@@ -2425,6 +2421,71 @@ export default function AppPage() {
       )}
 
       {/* Modal */}
+      {/* Profile overlay */}
+      {showProfile && user && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 99, touchAction: "none" }}
+          onClick={() => setShowProfile(false)}
+          onTouchMove={e => e.preventDefault()}>
+          <div onClick={e => e.stopPropagation()} onTouchMove={e => e.stopPropagation()} style={{
+            position: "absolute", top: isMobile ? 70 : 80, right: isMobile ? 16 : 40,
+            width: isMobile ? "calc(100vw - 32px)" : 340,
+            background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 16,
+            boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
+          }}>
+            {/* Profile header */}
+            <div style={{ background: "#0a1f4a", padding: "24px 20px", textAlign: "center" }}>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(55,138,221,0.25)", border: "2px solid rgba(55,138,221,0.4)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700, color: "#e8f2ff", marginBottom: 10 }}>
+                {(user?.email?.[0] || "U").toUpperCase()}
+              </div>
+              <div style={{ ...font, fontSize: 18, fontWeight: 600, color: "#e8f2ff" }}>{user?.email?.split("@")[0]}</div>
+              <div style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>{user?.email}</div>
+            </div>
+
+            {/* Plan info */}
+            <div style={{ padding: "16px 20px", borderBottom: `1px solid ${T.border}` }}>
+              <div style={{ ...mono, fontSize: 10, letterSpacing: "1.5px", color: T.textFaint, marginBottom: 8 }}>SUBSCRIPTION</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ ...font, fontSize: 18, fontWeight: 700, color: isPro ? "#378ADD" : T.text }}>{isPro ? "Pro" : "Free"}</div>
+                  {isPro && <span style={{ ...mono, fontSize: 9, color: "#378ADD", background: "rgba(55,138,221,0.1)", padding: "3px 8px", borderRadius: 4, border: "1px solid rgba(55,138,221,0.2)" }}>ACTIVE</span>}
+                </div>
+                {!isPro && (
+                  <button onClick={() => { setShowProfile(false); setTab("pricing"); }} style={{
+                    ...font, fontSize: 13, fontWeight: 600, background: "#0a1f4a", color: "#e8f2ff",
+                    border: "none", borderRadius: 8, padding: "8px 16px", cursor: "pointer",
+                  }}>Upgrade</button>
+                )}
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div style={{ padding: "16px 20px", borderBottom: `1px solid ${T.border}`, display: "flex", gap: 16 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>ACTIVE ALERTS</div>
+                <div style={{ ...font, fontSize: 20, fontWeight: 700, color: T.text, marginTop: 4 }}>{allAlerts.filter(a => a.status === "active").length}</div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>WATCHLIST</div>
+                <div style={{ ...font, fontSize: 20, fontWeight: 700, color: T.text, marginTop: 4 }}>{watchlist.length}</div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>LIMIT</div>
+                <div style={{ ...font, fontSize: 20, fontWeight: 700, color: T.text, marginTop: 4 }}>{isPro ? "∞" : "10"}</div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ padding: "12px 20px" }}>
+              <button onClick={() => { setShowProfile(false); signOut(); navigate("/"); }} style={{
+                width: "100%", padding: 12, background: "none", color: "#cc2222",
+                border: "1px solid #cc2222", borderRadius: 10,
+                ...font, fontSize: 15, fontWeight: 600, cursor: "pointer",
+              }}>Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showModal && (
         <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, touchAction: "none", overscrollBehavior: "contain" }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}
