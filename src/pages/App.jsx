@@ -1778,10 +1778,11 @@ export default function AppPage() {
                             {/* Chart */}
                             <div style={{ background: T.bgDeep, borderRadius: 10, overflow: "hidden", marginBottom: 8, minHeight: 180 }}>
                               {!chartLoading && chartData && chartData.length > 0 && chartSymbol === t.symbol ? (
-                                <CandlestickChart data={chartData} width={Math.max(window.innerWidth - 60, 200)} height={180} theme={T}
-                                  onTouchStart={() => {}} onTouchMove={() => {}} onTouchEnd={() => {}} />
+                                <div style={{ width: "100%", overflow: "hidden" }}>
+                                  <CandlestickChart data={chartData} T={T} range={chartRange} />
+                                </div>
                               ) : (
-                                <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>{chartLoading ? "Loading chart..." : "No data available"}</div>
+                                <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>{chartLoading ? "Loading chart..." : "No data"}</div>
                               )}
                               <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "6px 8px", alignItems: "center" }}>
                                 {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
@@ -1794,20 +1795,10 @@ export default function AppPage() {
                               </div>
                             </div>
 
-                            {/* Volume info */}
-                            {t.volume > 0 && (
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 1, background: T.border, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
-                                <div style={{ background: T.bgCard, padding: "8px 12px", textAlign: "center" }}>
-                                  <div style={{ ...mono, fontSize: 9, color: T.textFaint }}>VOLUME</div>
-                                  <div style={{ ...mono, fontSize: 14, color: T.text, fontWeight: 600, marginTop: 2 }}>{Number(t.volume).toLocaleString()}</div>
-                                </div>
-                              </div>
-                            )}
-
                             {/* Action buttons */}
                             <div style={{ display: "flex", gap: 8 }}>
                               <button onClick={(ev) => { ev.stopPropagation(); openModal(t.symbol, t.name); }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
-                              <button onClick={(ev) => { ev.stopPropagation(); if (d) shareTicker(t.symbol, t.name, d.price, d.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: "#0a1f4a", border: "2px solid #0a1f4a", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                              <button onClick={(ev) => { ev.stopPropagation(); shareTicker(t.symbol, t.name, t.price, t.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: "#0a1f4a", border: "2px solid #0a1f4a", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                                 <span style={{ fontSize: 16 }}>↗</span> Share
                               </button>
                             </div>
