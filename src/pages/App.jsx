@@ -2581,25 +2581,63 @@ export default function AppPage() {
                           </div>
                         )}
                         {mobileProTriggersOpen && (
-                          <div style={{ padding: "0 14px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
-                            {PRO_TRIGGERS.map(t => (
-                              <button key={t.id} onClick={() => {
+                          <div style={{ padding: "6px 14px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
+                            {PRO_TRIGGERS.map(t => {
+                              const isSelected = form.trigger?.id === t.id;
+                              return (
+                              <div key={t.id}>
+                              <button onClick={() => {
                                 if (!form.asset) return;
                                 if (!isPro) { setShowModal(false); setTab("pricing"); showToast("Pro plan required", "warn"); return; }
                                 setForm(f => ({ ...f, trigger: t }));
                               }} style={{
-                                padding: "12px 14px", borderRadius: 10,
-                                border: form.trigger?.id === t.id ? "2px solid #e8f2ff" : "1px solid rgba(255,255,255,0.15)",
-                                background: "rgba(255,255,255,0.07)", cursor: !form.asset ? "not-allowed" : "pointer", ...font,
+                                width: "100%", padding: "12px 14px", borderRadius: 10,
+                                border: isSelected ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                                background: T.bgCard, cursor: !form.asset ? "not-allowed" : "pointer", ...font,
                                 textAlign: "left", display: "flex", gap: 12, alignItems: "center",
-                                opacity: !form.asset ? 0.4 : isPro ? 1 : 0.7,
+                                opacity: !form.asset ? 0.4 : isPro ? 1 : 0.45,
                               }}>
-                                <div style={{ width: 36, height: 36, borderRadius: 7, background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16, color: "rgba(255,255,255,0.6)" }}>{t.icon}</div>
-                                <span style={{ flex: 1, fontSize: 16, color: "#e8f2ff" }}>{t.label}</span>
-                                {!isPro && <span style={{ ...mono, fontSize: 10, color: "#e8f2ff", background: "rgba(255,255,255,0.12)", padding: "3px 8px", borderRadius: 4 }}>PRO</span>}
-                                {form.trigger?.id === t.id && <span style={{ ...mono, fontSize: 13, color: "#e8f2ff", fontWeight: 600 }}>✓</span>}
+                                <div style={{ width: 36, height: 36, borderRadius: 7, background: T.bgDeep, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16, color: T.textFaint }}>{t.icon}</div>
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ fontSize: isMobile ? 16 : 14, color: T.text, fontWeight: isSelected ? 600 : 400 }}>{t.label}</div>
+                                  <div style={{ ...mono, fontSize: 11, color: T.textMid, marginTop: 2 }}>{t.desc}</div>
+                                </div>
+                                {!isPro && <span style={{ ...mono, fontSize: 10, color: T.textFaint, border: `1px solid ${T.border}`, padding: "2px 6px", borderRadius: 3 }}>PRO</span>}
+                                {isSelected && <span style={{ ...mono, fontSize: 13, color: "#0a1f4a", fontWeight: 600 }}>✓</span>}
                               </button>
-                            ))}
+                              {/* Inline input for selected Pro trigger */}
+                              {isSelected && t.input === "ma" && (
+                                <div style={{ padding: "12px 14px" }} onClick={(ev) => ev.stopPropagation()}>
+                                  <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>MOVING AVERAGE PERIOD</div>
+                                  <div style={{ display: "flex", gap: 8 }}>
+                                    {MA_OPTIONS.map(mv => <button key={mv} onClick={() => setForm(f => ({ ...f, ma: mv }))} style={{ ...chipBtn(form.ma === mv), flex: 1, padding: "10px 0", textAlign: "center" }}>{mv}D</button>)}
+                                  </div>
+                                </div>
+                              )}
+                              {isSelected && t.input === "bb" && (
+                                <div style={{ padding: "12px 14px" }} onClick={(ev) => ev.stopPropagation()}>
+                                  <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>BAND</div>
+                                  <div style={{ display: "flex", gap: 8 }}>
+                                    {BB_OPTIONS.map(bv => <button key={bv} onClick={() => setForm(f => ({ ...f, bb: bv }))} style={{ ...chipBtn(form.bb === bv), flex: 1, padding: "10px 0", textAlign: "center" }}>{bv}</button>)}
+                                  </div>
+                                </div>
+                              )}
+                              {isSelected && t.input === "volume" && (
+                                <div style={{ padding: "12px 14px" }} onClick={(ev) => ev.stopPropagation()}>
+                                  <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>SURGE MULTIPLIER</div>
+                                  <div style={{ display: "flex", gap: 8 }}>
+                                    {["2","3","5","10"].map(vv => <button key={vv} onClick={() => setForm(f => ({ ...f, volume: vv }))} style={{ ...chipBtn(form.volume === vv), flex: 1, padding: "10px 0", textAlign: "center" }}>{vv}×</button>)}
+                                  </div>
+                                </div>
+                              )}
+                              {isSelected && t.input === null && (
+                                <div style={{ padding: "10px 14px", ...mono, fontSize: 11, color: T.textMid, background: T.bgDeep, borderRadius: 8, margin: "6px 0", textAlign: "center" }}>
+                                  This trigger fires automatically — no configuration needed.
+                                </div>
+                              )}
+                              </div>
+                              );
+                            })}
                             {!isPro && (
                               <button onClick={() => { setShowModal(false); setTab("pricing"); }} style={{
                                 marginTop: 6, width: "100%", padding: 12, background: "#e8f2ff", color: "#0a1f4a",
