@@ -1593,7 +1593,7 @@ export default function AppPage() {
                       if (isExpanded) { setMobileExpanded(null); }
                       else { setMobileExpanded(m.symbol); openChart(m.symbol, m.label); }
                     } catch (err) { console.error("Mobile expand error:", err); }
-                  }} style={{ padding: isExpanded ? "14px 14px" : "14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                  }} style={{ padding: isExpanded ? "14px 14px" : "14px 8px 14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{m.label}</div>
                       <div style={{ ...mono, fontSize: 14, color: T.textMid }}>{m.symbol}</div>
@@ -1710,7 +1710,7 @@ export default function AppPage() {
                       if (isExpanded) { setMobileExpanded(null); }
                       else { setMobileExpanded(w.symbol); openChart(w.symbol, w.label); }
                     } catch (err) { console.error("Watchlist expand error:", err); }
-                  }} style={{ padding: isExpanded ? "14px 14px" : "14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                  }} style={{ padding: isExpanded ? "14px 14px" : "14px 8px 14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{w.label || w.symbol}</div>
                       <div style={{ ...mono, fontSize: 14, color: T.textMid }}>{w.symbol}</div>
