@@ -1356,104 +1356,79 @@ export default function AppPage() {
               ))}
             </div>
 
-            {/* Main content — side-by-side or card+chart */}
-            {!chartSymbol || !hotlistData.gainers.concat(hotlistData.losers).some(t => t.symbol === chartSymbol) ? (
-              /* No ticker selected — show Gainers + Losers side by side */
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+            {/* Main content — always two columns: lists left, chart+details right */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.6fr", gap: 16 }}>
+              {/* Left — Gainers + Losers stacked */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {/* Gainers */}
                 <div>
                   <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#1a8a44", marginBottom: 8, fontWeight: 600 }}>🟢 TOP GAINERS</div>
                   <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
-                    {hotlistData.gainers.length === 0 && <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 13 }}>Market closed — hotlist updates when market opens</div>}
-                    {hotlistData.gainers.map((t, i) => (
-                      <div key={t.symbol} onClick={() => { openChart(t.symbol, t.name); }} style={{
-                        padding: "14px 16px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
-                        borderBottom: `1px solid ${T.border}`, transition: "background 0.15s",
-                      }} onMouseEnter={e => e.currentTarget.style.background = T.bgDeep} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                        <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(26,138,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: "#1a8a44", fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text }}>{t.symbol} <span style={{ fontSize: 12, color: T.textFaint, fontWeight: 400 }}>{t.name !== t.symbol ? t.name : ""}</span></div>
-                        </div>
-                        <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text, marginRight: 8 }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        <div style={{ ...mono, fontSize: 12, color: "#fff", background: "#1a8a44", padding: "4px 10px", borderRadius: 6, fontWeight: 600 }}>▲{Math.abs(t.changePct).toFixed(2)}%</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#cc2222", marginBottom: 8, fontWeight: 600 }}>🔴 TOP LOSERS</div>
-                  <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
-                    {hotlistData.losers.length === 0 && <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 13 }}>Market closed — hotlist updates when market opens</div>}
-                    {hotlistData.losers.map((t, i) => (
-                      <div key={t.symbol} onClick={() => { openChart(t.symbol, t.name); }} style={{
-                        padding: "14px 16px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
-                        borderBottom: `1px solid ${T.border}`, transition: "background 0.15s",
-                      }} onMouseEnter={e => e.currentTarget.style.background = T.bgDeep} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                        <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(204,34,34,0.12)", display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: "#cc2222", fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text }}>{t.symbol} <span style={{ fontSize: 12, color: T.textFaint, fontWeight: 400 }}>{t.name !== t.symbol ? t.name : ""}</span></div>
-                        </div>
-                        <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text, marginRight: 8 }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        <div style={{ ...mono, fontSize: 12, color: "#fff", background: "#cc2222", padding: "4px 10px", borderRadius: 6, fontWeight: 600 }}>▼{Math.abs(t.changePct).toFixed(2)}%</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* Ticker selected — two column: selected card list on left, chart+details on right */
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 24 }}>
-                {/* Left — ranked list */}
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: hotlistFilter === "losers" ? "#cc2222" : "#1a8a44", fontWeight: 600 }}>
-                      {hotlistFilter === "losers" ? "🔴 LOSERS" : "🟢 GAINERS"}
-                    </div>
-                    <button onClick={() => { setChartSymbol(null); setChartData([]); }} style={{ ...mono, fontSize: 11, color: T.textFaint, background: "none", border: `1px solid ${T.border}`, borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>← Back</button>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).map((t, i) => {
-                      const up = t.changePct >= 0;
-                      const col = up ? "#1a8a44" : "#cc2222";
+                    {hotlistData.gainers.length === 0 && <div style={{ textAlign: "center", padding: 24, color: T.textFaint, ...mono, fontSize: 12 }}>Market closed — updates when market opens</div>}
+                    {hotlistData.gainers.map((t, i) => {
                       const isActive = chartSymbol === t.symbol;
                       return (
                         <div key={t.symbol} onClick={() => openChart(t.symbol, t.name)} style={{
-                          background: isActive ? T.bgDeep : T.bgCard,
-                          border: `1px solid ${isActive ? T.accent : T.border}`,
-                          borderLeft: `4px solid ${col}`,
-                          borderRadius: 10, padding: "14px 16px", cursor: "pointer",
-                          display: "flex", alignItems: "center", gap: 12, transition: "all 0.2s",
-                        }}>
-                          <div style={{ width: 28, height: 28, borderRadius: 8, background: `${col}15`, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 13, color: col, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                          padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
+                          borderBottom: `1px solid ${T.bgDeep}`, transition: "background 0.15s",
+                          background: isActive ? T.bgDeep : "transparent",
+                        }} onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = T.bgDeep; }} onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}>
+                          <div style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(26,138,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: "#1a8a44", fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
                           <div style={{ flex: 1 }}>
-                            <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{t.symbol}</div>
-                            <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 2 }}>{t.name !== t.symbol ? t.name : ""}</div>
+                            <div style={{ ...font, fontSize: 14, fontWeight: 600, color: T.text }}>{t.symbol} <span style={{ fontSize: 11, color: T.textFaint, fontWeight: 400 }}>{t.name !== t.symbol ? t.name : ""}</span></div>
                           </div>
-                          <div style={{ textAlign: "right" }}>
-                            <div style={{ ...font, fontSize: 17, fontWeight: 600, color: T.text }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                            <div style={{ ...mono, fontSize: 12, color: col, fontWeight: 600, marginTop: 2 }}>{up ? "▲" : "▼"} {Math.abs(t.changePct).toFixed(2)}%</div>
-                          </div>
+                          <div style={{ ...font, fontSize: 14, fontWeight: 600, color: T.text }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                          <div style={{ ...mono, fontSize: 11, color: "#fff", background: "#1a8a44", padding: "3px 8px", borderRadius: 5, fontWeight: 600 }}>▲{Math.abs(t.changePct).toFixed(2)}%</div>
                         </div>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Right — chart + details panel */}
-                <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden" }}>
+                {/* Losers */}
+                <div>
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#cc2222", marginBottom: 8, fontWeight: 600 }}>🔴 TOP LOSERS</div>
+                  <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
+                    {hotlistData.losers.length === 0 && <div style={{ textAlign: "center", padding: 24, color: T.textFaint, ...mono, fontSize: 12 }}>Market closed — updates when market opens</div>}
+                    {hotlistData.losers.map((t, i) => {
+                      const isActive = chartSymbol === t.symbol;
+                      return (
+                        <div key={t.symbol} onClick={() => openChart(t.symbol, t.name)} style={{
+                          padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
+                          borderBottom: `1px solid ${T.bgDeep}`, transition: "background 0.15s",
+                          background: isActive ? T.bgDeep : "transparent",
+                        }} onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = T.bgDeep; }} onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}>
+                          <div style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(204,34,34,0.12)", display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: "#cc2222", fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ ...font, fontSize: 14, fontWeight: 600, color: T.text }}>{t.symbol} <span style={{ fontSize: 11, color: T.textFaint, fontWeight: 400 }}>{t.name !== t.symbol ? t.name : ""}</span></div>
+                          </div>
+                          <div style={{ ...font, fontSize: 14, fontWeight: 600, color: T.text }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                          <div style={{ ...mono, fontSize: 11, color: "#fff", background: "#cc2222", padding: "3px 8px", borderRadius: 5, fontWeight: 600 }}>▼{Math.abs(t.changePct).toFixed(2)}%</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right — chart + details panel */}
+              <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", position: "sticky", top: 20, alignSelf: "start" }}>
+                {chartSymbol && hotlistData.gainers.concat(hotlistData.losers).some(x => x.symbol === chartSymbol) ? (
+                  <div>
                   {/* Chart header */}
                   <div style={{ padding: "24px 24px 16px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div>
-                        <div style={{ ...font, fontSize: 26, fontWeight: 700, color: T.text }}>{chartLabel || chartSymbol} <span style={{ ...mono, fontSize: 14, color: T.textFaint }}>{chartSymbol}</span></div>
+                        <div style={{ ...font, fontSize: 24, fontWeight: 700, color: T.text }}>{chartLabel || chartSymbol} <span style={{ ...mono, fontSize: 14, color: T.textFaint }}>{chartSymbol}</span></div>
                         {(() => {
                           const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol);
                           if (!ht) return null;
                           const col = ht.changePct >= 0 ? "#1a8a44" : "#cc2222";
                           return (
-                            <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 6 }}>
-                              <span style={{ ...font, fontSize: 32, fontWeight: 700, color: T.text }}>${Number(ht.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                              <span style={{ ...mono, fontSize: 16, color: col, fontWeight: 700 }}>{ht.changePct >= 0 ? "▲" : "▼"} {Math.abs(ht.changePct).toFixed(2)}%</span>
-                              <span style={{ ...mono, fontSize: 13, color: col }}>{ht.changePct >= 0 ? "+" : ""}${Number(ht.change).toFixed(2)}</span>
+                            <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 4 }}>
+                              <span style={{ ...font, fontSize: 28, fontWeight: 700, color: T.text }}>${Number(ht.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span style={{ ...mono, fontSize: 15, color: col, fontWeight: 700 }}>{ht.changePct >= 0 ? "▲" : "▼"} {Math.abs(ht.changePct).toFixed(2)}%</span>
+                              <span style={{ ...mono, fontSize: 12, color: col }}>{ht.changePct >= 0 ? "+" : ""}${Number(ht.change).toFixed(2)}</span>
                             </div>
                           );
                         })()}
@@ -1547,8 +1522,15 @@ export default function AppPage() {
                     </div>
                   )}
                 </div>
+                ) : (
+                  <div style={{ padding: 60, textAlign: "center" }}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
+                    <div style={{ ...font, fontSize: 18, fontWeight: 600, color: T.text, marginBottom: 6 }}>Select a ticker</div>
+                    <div style={{ ...mono, fontSize: 13, color: T.textFaint }}>Click any gainer or loser to view chart, stats & news</div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         )}
 
