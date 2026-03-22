@@ -390,7 +390,11 @@ export default function AppPage() {
       const key = import.meta.env.VITE_MASSIVE_KEY || "";
       const res = await fetch(`https://api.massive.com/v2/reference/news?ticker=${symbol}&limit=6&sort=published_utc&order=desc&apiKey=${key}`);
       const data = await res.json();
-      if (data.results) setTickerNews(data.results);
+      if (data.results) {
+        console.log("[News] First article fields:", data.results[0] ? Object.keys(data.results[0]) : "none");
+        console.log("[News] First article URL:", data.results[0]?.article_url || data.results[0]?.url || "NO URL FIELD");
+        setTickerNews(data.results);
+      }
     } catch (e) { console.error("Ticker news failed", e); }
     setNewsLoading(false);
   }
@@ -1324,9 +1328,10 @@ export default function AppPage() {
                         {/* Expand button */}
                         <button onClick={(ev) => { ev.stopPropagation(); setMobileChartFull(true); }} style={{
                           position: "absolute", top: 8, right: 8, zIndex: 5,
-                          width: 32, height: 32, borderRadius: 6, border: `1px solid ${T.border}`,
-                          background: "rgba(255,255,255,0.9)", cursor: "pointer",
+                          width: 34, height: 34, borderRadius: 8, border: "none",
+                          background: "#0a1f4a", cursor: "pointer", color: "#e8f2ff",
                           display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
+                          boxShadow: "0 2px 8px rgba(10,31,74,0.3)",
                         }}>⛶</button>
                         {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: "#6a6050" }}>Loading chart...</div>}
                         {!chartLoading && chartData.length > 0 && (
@@ -1338,12 +1343,12 @@ export default function AppPage() {
                           <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: "#6a6050" }}>No chart data</div>
                         )}
                         <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "8px 12px" }}>
-                          {["1D","5D","1M","3M","1Y","5Y"].map(r => (
-                            <span key={r} onClick={(ev) => { ev.stopPropagation(); setChartRange(r); }} style={{
-                              padding: "4px 10px", borderRadius: 5, ...mono, fontSize: 10, cursor: "pointer",
+                          {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
+                            <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
+                              padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
                               background: chartRange === r ? "#0a1f4a" : "transparent",
                               color: chartRange === r ? "#e8f2ff" : "#6a6050",
-                            }}>{r}</span>
+                            }}>{lbl}</span>
                           ))}
                         </div>
                       </div>
@@ -1385,29 +1390,24 @@ export default function AppPage() {
                             {tickerNews[0]?.title}
                           </div>
                         )}
-                        {/* Expanded news items — each is its own link, clicks do NOT toggle */}
+                        {/* Expanded news items */}
                         {mobileNewsOpen && (
                           <div onClick={(ev) => ev.stopPropagation()}>
                             {tickerNews.map((n, i) => {
                               const url = n.article_url || n.url || n.link || "";
                               return (
-                                <div key={i} style={{ borderTop: `1px solid ${T.border}` }}>
-                                  {url ? (
-                                    <a href={url} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "10px 14px", textDecoration: "none" }}>
-                                      <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#0a1f4a", lineHeight: 1.3, textDecoration: "underline" }}>{n.title}</div>
-                                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                                        <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
-                                        <span style={{ color: "#6a6050" }}>·</span>
-                                        <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
-                                      </div>
-                                    </a>
-                                  ) : (
-                                    <div style={{ padding: "10px 14px" }}>
-                                      <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{n.title}</div>
-                                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                                        <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
-                                      </div>
-                                    </div>
+                                <div key={i} style={{ borderTop: `1px solid ${T.border}`, padding: "10px 14px" }}>
+                                  <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#0a1f4a", lineHeight: 1.3 }}>{n.title}</div>
+                                  <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+                                    <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
+                                    <span style={{ color: "#6a6050" }}>·</span>
+                                    <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
+                                  </div>
+                                  {url && (
+                                    <a href={url} target="_blank" rel="noopener noreferrer" style={{
+                                      display: "inline-block", marginTop: 6, ...mono, fontSize: 11,
+                                      color: "#0a1f4a", fontWeight: 600, textDecoration: "underline",
+                                    }}>Read article →</a>
                                   )}
                                 </div>
                               );
@@ -1900,13 +1900,13 @@ export default function AppPage() {
           </div>
           {/* Range buttons */}
           <div style={{ display: "flex", gap: 6, justifyContent: "center", padding: "12px 16px", borderTop: `1px solid ${T.border}` }}>
-            {["1D","5D","1M","3M","1Y","5Y"].map(r => (
-              <span key={r} onClick={() => setChartRange(r)} style={{
+            {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
+              <span key={r} onClick={() => changeChartRange(r)} style={{
                 padding: "8px 16px", borderRadius: 8, ...mono, fontSize: 13, cursor: "pointer", fontWeight: 600,
                 background: chartRange === r ? "#0a1f4a" : T.bgCard,
                 color: chartRange === r ? "#e8f2ff" : "#1a1200",
                 border: chartRange === r ? "none" : `1px solid ${T.border}`,
-              }}>{r}</span>
+              }}>{lbl}</span>
             ))}
           </div>
         </div>
