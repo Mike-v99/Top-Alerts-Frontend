@@ -289,15 +289,6 @@ export default function AppPage() {
     }
     delete swipeRefs.current[symbol];
   }
-  function removeFromWatchlist(symbol) {
-    setWatchlist(prev => {
-      const next = prev.filter(w => w.symbol !== symbol);
-      localStorage.setItem("ta-watchlist", JSON.stringify(next));
-      return next;
-    });
-    setSwipedOpen(null);
-    if (mobileExpanded === symbol) setMobileExpanded(null);
-  }
   // Swipe offset is now handled via direct DOM manipulation in handleTouchMove
 
   // ── Edit mode reorder — simple move up/down ─────────────────────────
@@ -395,9 +386,11 @@ export default function AppPage() {
     // Load all market symbols in one batch request
     async function loadInitialQuotes() {
       const results = await fetchSnapshots(MARKET_SYMBOLS.map(m => m.symbol));
+      console.log("[Massive] loadInitialQuotes results:", results.length, results.map(r => `${r.id}=$${r.price}`).join(", "));
       if (results.length > 0) {
         const out = {};
         results.forEach(r => { out[r.id] = r; });
+        console.log("[Massive] Setting marketData keys:", Object.keys(out).join(", "));
         setMarketData(prev => ({ ...prev, ...out }));
         setMarketLoading(false);
       }
