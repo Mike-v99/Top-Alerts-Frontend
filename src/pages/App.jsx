@@ -76,8 +76,6 @@ export default function AppPage() {
   const [mobileChartFull, setMobileChartFull] = useState(false); // fullscreen chart overlay
   const [mobileProTriggersOpen, setMobileProTriggersOpen] = useState(false);
   const [isLandscape, setIsLandscape] = useState(() => typeof window !== "undefined" && window.innerWidth > window.innerHeight);
-  const [swipeState, setSwipeState] = useState({}); // { symbol: { startX, currentX } }
-  const [swipedOpen, setSwipedOpen] = useState(null); // symbol that has delete revealed
 
   function shareTicker(symbol, label, price, changePct) {
     const text = `Check out ${label || symbol} (${symbol}) on Top-Alerts — currently $${Number(price).toFixed(2)} (${changePct >= 0 ? "▲" : "▼"} ${Math.abs(changePct).toFixed(2)}% today)`;
@@ -90,40 +88,61 @@ export default function AppPage() {
   }
 
   const [swipedJustNow, setSwipedJustNow] = useState(false);
+  const swipeRefs = useRef({}); // { symbol: { startX, startY, currentX, isHorizontal, el } }
+  const [swipeRender, setSwipeRender] = useState(0); // force re-render for swipe visuals
 
   function handleTouchStart(symbol, e) {
     const touch = e.touches[0];
+    swipeRefs.current[symbol] = { startX: touch.clientX, startY: touch.clientY, currentX: touch.clientX, isHorizontal: null };
     setSwipedJustNow(false);
-    setSwipeState(prev => ({ ...prev, [symbol]: { startX: touch.clientX, startY: touch.clientY, currentX: touch.clientX, isHorizontal: null } }));
   }
   function handleTouchMove(symbol, e) {
+    const s = swipeRefs.current[symbol];
+    if (!s) return;
     const touch = e.touches[0];
-    setSwipeState(prev => {
-      const s = prev[symbol];
-      if (!s) return prev;
-      const dx = Math.abs(touch.clientX - s.startX);
-      const dy = Math.abs(touch.clientY - s.startY);
-      let isH = s.isHorizontal;
-      if (isH === null && (dx > 10 || dy > 10)) {
-        isH = dx > dy;
-      }
-      if (isH === false) return prev;
-      return { ...prev, [symbol]: { ...s, currentX: touch.clientX, isHorizontal: isH } };
-    });
+    const dx = Math.abs(touch.clientX - s.startX);
+    const dy = Math.abs(touch.clientY - s.startY);
+    if (s.isHorizontal === null && (dx > 8 || dy > 8)) {
+      s.isHorizontal = dx > dy;
+    }
+    if (s.isHorizontal === false) return;
+    s.currentX = touch.clientX;
+    // Directly update DOM for smooth performance
+    const el = document.getElementById(`swipe-card-${symbol}`);
+    if (el) {
+      const diff = Math.max(0, s.startX - s.currentX);
+      el.style.transform = `translateX(-${diff}px)`;
+      el.style.transition = "none";
+    }
   }
   function handleTouchEnd(symbol) {
-    const s = swipeState[symbol];
+    const s = swipeRefs.current[symbol];
     if (!s) return;
     const diff = s.startX - s.currentX;
+    const el = document.getElementById(`swipe-card-${symbol}`);
     if (s.isHorizontal && diff > 120) {
-      removeFromWatchlist(symbol);
+      // Animate off screen then remove
+      if (el) {
+        el.style.transition = "transform 0.2s ease";
+        el.style.transform = "translateX(-100%)";
+      }
       setSwipedJustNow(true);
-    } else if (s.isHorizontal && diff > 10) {
-      // Was swiping but not enough — suppress the click
-      setSwipedJustNow(true);
-      setTimeout(() => setSwipedJustNow(false), 100);
+      setTimeout(() => {
+        removeFromWatchlist(symbol);
+        setSwipedJustNow(false);
+      }, 200);
+    } else {
+      // Snap back
+      if (el) {
+        el.style.transition = "transform 0.25s ease";
+        el.style.transform = "translateX(0)";
+      }
+      if (s.isHorizontal && diff > 10) {
+        setSwipedJustNow(true);
+        setTimeout(() => setSwipedJustNow(false), 200);
+      }
     }
-    setSwipeState(prev => { const n = { ...prev }; delete n[symbol]; return n; });
+    delete swipeRefs.current[symbol];
   }
   function removeFromWatchlist(symbol) {
     setWatchlist(prev => {
@@ -134,14 +153,7 @@ export default function AppPage() {
     setSwipedOpen(null);
     if (mobileExpanded === symbol) setMobileExpanded(null);
   }
-  function getSwipeOffset(symbol) {
-    const s = swipeState[symbol];
-    if (s && s.isHorizontal) {
-      const diff = s.startX - s.currentX;
-      return Math.max(0, diff);
-    }
-    return 0;
-  }
+  // Swipe offset is now handled via direct DOM manipulation in handleTouchMove
   useEffect(() => {
     const check = () => {
       setIsMobile(window.innerWidth < 768);
@@ -1383,13 +1395,11 @@ export default function AppPage() {
                     </div>
                   </div>
                   {/* Card content — slides left on swipe */}
-                  <div style={{
+                  <div id={`swipe-card-${m.symbol}`} style={{
                     position: "relative", zIndex: 1, background: isExpanded ? T.bgCard : T.bg,
                     border: isExpanded ? "2px solid #0a1f4a" : "none",
                     borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
                     borderRadius: isExpanded ? 12 : 0,
-                    transform: `translateX(-${getSwipeOffset(m.symbol)}px)`,
-                    transition: swipeState[m.symbol] ? "none" : "transform 0.25s ease",
                     touchAction: "pan-y",
                   }}
                     onTouchStart={(e) => handleTouchStart(m.symbol, e)}
@@ -1503,13 +1513,11 @@ export default function AppPage() {
                     </div>
                   </div>
                   {/* Card content — slides left on swipe */}
-                  <div style={{
+                  <div id={`swipe-card-${w.symbol}`} style={{
                     position: "relative", zIndex: 1, background: isExpanded ? T.bgCard : T.bg,
                     border: isExpanded ? "2px solid #0a1f4a" : "none",
                     borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
                     borderRadius: isExpanded ? 12 : 0,
-                    transform: `translateX(-${getSwipeOffset(w.symbol)}px)`,
-                    transition: swipeState[w.symbol] ? "none" : "transform 0.25s ease",
                     touchAction: "pan-y",
                   }}
                     onTouchStart={(e) => handleTouchStart(w.symbol, e)}
