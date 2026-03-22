@@ -1320,11 +1320,10 @@ export default function AppPage() {
                       <div style={{ ...font, fontSize: 22, fontWeight: 700, color: "#1a1200" }}>{m.label}</div>
                       <div style={{ ...mono, fontSize: 14, color: "#6a6050" }}>{m.symbol}</div>
                     </div>
-                    {!isExpanded && (
-                      <div style={{ display: "flex", gap: 12, alignItems: "center", paddingRight: 10 }}>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 10, color: "#8a8070", fontWeight: 500 }}>HIGH</div><div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 500 }}>{snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"}</div></div>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 10, color: "#8a8070", fontWeight: 500 }}>LOW</div><div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 500 }}>{snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"}</div></div>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 10, color: "#8a8070", fontWeight: 500 }}>VOL</div><div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 500 }}>{snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : snap.volume >= 1e3 ? `${(snap.volume/1e3).toFixed(0)}K` : snap.volume) : "—"}</div></div>
+                    {!isExpanded && d && (
+                      <div style={{ textAlign: "center", flexShrink: 0 }}>
+                        <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{d.changePct >= 0 ? "+" : "-"}${d.change != null ? `$${Math.abs(Number(d.change)).toFixed(2)}` : ""}</div>
+                        <div style={{ ...mono, fontSize: 10, color: "#8a8070", marginTop: 2 }}>Open {snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"}</div>
                       </div>
                     )}
                     <div style={{ textAlign: "right", minWidth: 85 }}>
@@ -1428,11 +1427,10 @@ export default function AppPage() {
                       <div style={{ ...font, fontSize: 22, fontWeight: 700, color: "#1a1200" }}>{w.label || w.symbol}</div>
                       <div style={{ ...mono, fontSize: 14, color: "#6a6050" }}>{w.symbol}</div>
                     </div>
-                    {!isExpanded && (
-                      <div style={{ display: "flex", gap: 12, alignItems: "center", paddingRight: 10 }}>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 10, color: "#8a8070", fontWeight: 500 }}>HIGH</div><div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 500 }}>{snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"}</div></div>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 10, color: "#8a8070", fontWeight: 500 }}>LOW</div><div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 500 }}>{snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"}</div></div>
-                        <div style={{ textAlign: "center" }}><div style={{ ...mono, fontSize: 10, color: "#8a8070", fontWeight: 500 }}>VOL</div><div style={{ ...mono, fontSize: 13, color: "#1a1200", fontWeight: 500 }}>{snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : snap.volume >= 1e3 ? `${(snap.volume/1e3).toFixed(0)}K` : snap.volume) : "—"}</div></div>
+                    {!isExpanded && wd && (
+                      <div style={{ textAlign: "center", flexShrink: 0 }}>
+                        <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{wd.changePct >= 0 ? "+" : "-"}${wd.change != null ? `$${Math.abs(Number(wd.change)).toFixed(2)}` : ""}</div>
+                        <div style={{ ...mono, fontSize: 10, color: "#8a8070", marginTop: 2 }}>Open {snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"}</div>
                       </div>
                     )}
                     <div style={{ textAlign: "right", minWidth: 85 }}>
