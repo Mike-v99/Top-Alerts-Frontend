@@ -2490,11 +2490,11 @@ export default function AppPage() {
         <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, touchAction: "none", overscrollBehavior: "contain" }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}
           onTouchMove={e => e.preventDefault()}>
-          <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? 14 : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.3)", touchAction: "pan-y", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}
+          <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? 14 : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: "90vh", boxShadow: "0 40px 80px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column", overflow: "hidden" }}
             onTouchMove={e => e.stopPropagation()}>
 
-            {/* Modal header — cobalt blue with integrated search */}
-            <div style={{ background: "#0a1f4a", borderRadius: "18px 18px 0 0", position: "sticky", top: 0, zIndex: 10 }}>
+            {/* Modal header — cobalt blue, fixed outside scroll */}
+            <div style={{ background: "#0a1f4a", borderRadius: isMobile ? "14px 14px 0 0" : "18px 18px 0 0", flexShrink: 0 }}>
               {/* Top row: step + title + close */}
               <div style={{ padding: "18px 24px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -2569,6 +2569,9 @@ export default function AppPage() {
                 )}
               </div>
             </div>
+
+            {/* Scrollable body */}
+            <div style={{ flex: 1, overflowY: "auto", touchAction: "pan-y", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}>
 
             {/* Step 1 — Triggers */}
             {step === 1 && (
@@ -2828,6 +2831,7 @@ export default function AppPage() {
                 <button onClick={() => setStep(1)} style={{ marginTop: 8, width: "100%", padding: 10, background: "none", border: "none", color: T.textFaint, cursor: "pointer", ...font, fontSize: isMobile ? 14 : 16 }}>← Back</button>
               </div>
             )}
+            </div>{/* end scrollable body */}
           </div>
         </div>
       )}
