@@ -285,90 +285,17 @@ export default function AppPage() {
   }
   // Swipe offset is now handled via direct DOM manipulation in handleTouchMove
 
-  // ── Edit mode drag reorder ─────────────────────────────────────────────
-  const dragRef = useRef({ symbol: null, startY: 0, currentY: 0, startIdx: -1 });
-
-  function onDragStart(symbol, e) {
-    if (!editMode) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    const allSymbols = getAllOrderedSymbols();
-    dragRef.current = { symbol, startY: touch.clientY, currentY: touch.clientY, startIdx: allSymbols.indexOf(symbol) };
-    // Elevate the entire outer wrapper
-    const wrapper = document.getElementById(`swipe-wrapper-${symbol}`);
-    if (wrapper) {
-      wrapper.style.zIndex = "100";
-      wrapper.style.position = "relative";
-    }
-    const el = document.getElementById(`reorder-${symbol}`);
-    if (el) {
-      el.style.opacity = "0.9";
-      el.style.transform = "scale(1.04)";
-      el.style.boxShadow = "0 12px 40px rgba(0,0,0,0.25)";
-      el.style.borderRadius = "12px";
-      el.style.transition = "none";
-    }
-    if (navigator.vibrate) navigator.vibrate(20);
-  }
-
-  function onDragMove(e) {
-    if (!editMode || !dragRef.current.symbol) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    dragRef.current.currentY = touch.clientY;
-
-    // Move the dragged element
-    const el = document.getElementById(`reorder-${dragRef.current.symbol}`);
-    if (el) {
-      const diff = touch.clientY - dragRef.current.startY;
-      el.style.transform = `translateY(${diff}px) scale(1.04)`;
-      el.style.transition = "none";
-    }
-
-    // Find target position
-    const allSymbols = getAllOrderedSymbols();
-    const cards = allSymbols.map(s => document.getElementById(`reorder-${s}`)).filter(Boolean);
-    let targetIdx = dragRef.current.startIdx;
-    cards.forEach((card, i) => {
-      if (card.id === `reorder-${dragRef.current.symbol}`) return;
-      const rect = card.getBoundingClientRect();
-      const mid = rect.top + rect.height / 2;
-      if (touch.clientY > mid && i > targetIdx) targetIdx = i;
-      if (touch.clientY < mid && i < targetIdx) targetIdx = i;
-    });
-
-    // Reorder if position changed
-    const currentIdx = allSymbols.indexOf(dragRef.current.symbol);
-    if (targetIdx !== currentIdx && targetIdx >= 0) {
-      const newOrder = [...allSymbols];
-      newOrder.splice(currentIdx, 1);
-      newOrder.splice(targetIdx, 0, dragRef.current.symbol);
-      saveCardOrder(newOrder.filter(s => DEFAULT_SYMBOLS.some(d => d.symbol === s)));
-      dragRef.current.startIdx = targetIdx;
-      dragRef.current.startY = touch.clientY;
-    }
-  }
-
-  function onDragEnd() {
-    if (!dragRef.current.symbol) return;
-    const el = document.getElementById(`reorder-${dragRef.current.symbol}`);
-    if (el) {
-      el.style.transition = "transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease";
-      el.style.opacity = "";
-      el.style.transform = "";
-      el.style.boxShadow = "";
-      el.style.borderRadius = "";
-    }
-    const wrapper = document.getElementById(`swipe-wrapper-${dragRef.current.symbol}`);
-    if (wrapper) {
-      // Delay resetting zIndex so the drop animation plays on top
-      setTimeout(() => { wrapper.style.zIndex = ""; wrapper.style.position = ""; }, 200);
-    }
-    dragRef.current = { symbol: null, startY: 0, currentY: 0, startIdx: -1 };
-  }
-
-  function getAllOrderedSymbols() {
-    return [...MARKET_SYMBOLS.map(m => m.symbol), ...watchlist.filter(w => !MARKET_SYMBOLS.some(m => m.symbol === w.symbol)).map(w => w.symbol)];
+  // ── Edit mode reorder — simple move up/down ─────────────────────────
+  function moveCard(symbol, direction) {
+    const order = [...cardOrder];
+    const idx = order.indexOf(symbol);
+    if (idx < 0) return;
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= order.length) return;
+    // Swap
+    [order[idx], order[targetIdx]] = [order[targetIdx], order[idx]];
+    saveCardOrder(order);
+    if (navigator.vibrate) navigator.vibrate(15);
   }
   useEffect(() => {
     const check = () => {
@@ -1669,7 +1596,7 @@ export default function AppPage() {
             </div>
             {editMode && (
               <div style={{ background: "rgba(10,31,74,0.06)", border: "2px solid #0a1f4a", borderRadius: 10, padding: "8px 14px", marginBottom: 12, textAlign: "center", ...mono, fontSize: 11, color: "#0a1f4a", fontWeight: 600 }}>
-                Drag ≡ to reorder · Swipe left to remove
+                Tap arrows to reorder · Swipe left to remove
               </div>
             )}
             {MARKET_SYMBOLS.map(m => {
@@ -1697,13 +1624,12 @@ export default function AppPage() {
                     border: isExpanded ? "2px solid #0a1f4a" : "none",
                     borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
                     borderRadius: isExpanded ? 12 : 0,
-                    touchAction: editMode ? "none" : "pan-y",
+                    touchAction: "pan-y",
                   }}
                     onTouchStart={(e) => !editMode && handleTouchStart(m.symbol, e)}
                     onTouchMove={(e) => !editMode && handleTouchMove(m.symbol, e)}
                     onTouchEnd={() => !editMode && handleTouchEnd(m.symbol)}
                   >
-                  <div id={`reorder-${m.symbol}`} style={{ transition: "transform 0.15s ease" }}>
                   {/* Collapsed row */}
                   <div onClick={() => {
                     if (swipedJustNow || editMode) return;
@@ -1712,17 +1638,24 @@ export default function AppPage() {
                       else { setMobileExpanded(m.symbol); openChart(m.symbol, m.label); }
                     } catch (err) { console.error("Mobile expand error:", err); }
                   }} style={{ padding: isExpanded ? "14px 14px" : "14px 8px 14px 0", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
-                    {/* Drag handle — only in edit mode */}
-                    {editMode && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "8px 4px", cursor: "grab", flexShrink: 0, touchAction: "none" }}
-                        onTouchStart={(e) => onDragStart(m.symbol, e)}
-                        onTouchMove={(e) => onDragMove(e)}
-                        onTouchEnd={() => onDragEnd()}>
-                        <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
-                        <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
-                        <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
+                    {/* Move buttons — only in edit mode */}
+                    {editMode && (() => {
+                      const idx = cardOrder.indexOf(m.symbol);
+                      return (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
+                        <button onClick={(ev) => { ev.stopPropagation(); moveCard(m.symbol, -1); }} style={{
+                          width: 30, height: 26, borderRadius: "6px 6px 2px 2px", border: `1px solid ${T.border}`,
+                          background: idx === 0 ? T.bgDeep : T.bgCard, color: idx === 0 ? T.textFaint : T.text,
+                          fontSize: 12, cursor: idx === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>▲</button>
+                        <button onClick={(ev) => { ev.stopPropagation(); moveCard(m.symbol, 1); }} style={{
+                          width: 30, height: 26, borderRadius: "2px 2px 6px 6px", border: `1px solid ${T.border}`,
+                          background: idx === cardOrder.length - 1 ? T.bgDeep : T.bgCard, color: idx === cardOrder.length - 1 ? T.textFaint : T.text,
+                          fontSize: 12, cursor: idx === cardOrder.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>▼</button>
                       </div>
-                    )}
+                      );
+                    })()}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{m.label}</div>
                       <div style={{ ...mono, fontSize: 14, color: T.textMid }}>{m.symbol}</div>
@@ -1798,7 +1731,6 @@ export default function AppPage() {
                       <div style={{ textAlign: "center", marginTop: 8, ...mono, fontSize: 10, color: T.textFaint }}>← Swipe left to remove</div>
                     </div>
                   )}
-                  </div>{/* end reorder wrapper */}
                   </div>
                 </div>
               );
@@ -1829,13 +1761,12 @@ export default function AppPage() {
                     border: isExpanded ? "2px solid #0a1f4a" : "none",
                     borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
                     borderRadius: isExpanded ? 12 : 0,
-                    touchAction: editMode ? "none" : "pan-y",
+                    touchAction: "pan-y",
                   }}
                     onTouchStart={(e) => !editMode && handleTouchStart(w.symbol, e)}
                     onTouchMove={(e) => !editMode && handleTouchMove(w.symbol, e)}
                     onTouchEnd={() => !editMode && handleTouchEnd(w.symbol)}
                   >
-                  <div id={`reorder-${w.symbol}`} style={{ transition: "transform 0.15s ease" }}>
                   <div onClick={() => {
                     if (swipedJustNow || editMode) return;
                     try {
@@ -1843,12 +1774,9 @@ export default function AppPage() {
                       else { setMobileExpanded(w.symbol); openChart(w.symbol, w.label); }
                     } catch (err) { console.error("Watchlist expand error:", err); }
                   }} style={{ padding: isExpanded ? "14px 14px" : "14px 8px 14px 0", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
-                    {/* Drag handle — only in edit mode */}
+                    {/* Move buttons — only in edit mode (user watchlist items don't reorder market symbols) */}
                     {editMode && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "8px 4px", cursor: "grab", flexShrink: 0, touchAction: "none" }}
-                        onTouchStart={(e) => onDragStart(w.symbol, e)}
-                        onTouchMove={(e) => onDragMove(e)}
-                        onTouchEnd={() => onDragEnd()}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "8px 4px", flexShrink: 0 }}>
                         <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
                         <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
                         <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
@@ -1928,7 +1856,6 @@ export default function AppPage() {
                       <div style={{ textAlign: "center", marginTop: 8, ...mono, fontSize: 10, color: T.textFaint }}>← Swipe left to remove</div>
                     </div>
                   )}
-                  </div>{/* end reorder wrapper */}
                   </div>
                 </div>
               );
