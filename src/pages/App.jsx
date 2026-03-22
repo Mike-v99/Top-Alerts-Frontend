@@ -358,13 +358,15 @@ export default function AppPage() {
         const tickers = symbols.join(",");
         const res  = await fetch(`https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers?tickers=${tickers}&apiKey=${key}`);
         const data = await res.json();
-        if (data.tickers && data.tickers[0]) console.log("[Massive] Raw ticker:", JSON.stringify(data.tickers[0]).slice(0, 600));
         return (data.tickers || []).map(t => {
-          const price = t.lastTrade?.p || t.day?.c || t.min?.c || t.prevDay?.c || 0;
+          const isLive = !!(t.lastTrade?.p || (t.day?.c && t.day.c !== 0));
+          const price = isLive ? (t.lastTrade?.p || t.day?.c || t.min?.c || 0) : (t.prevDay?.c || 0);
           const prevClose = t.prevDay?.c || 0;
-          // Use API values directly — todaysChange/todaysChangePerc include Friday's values on weekends
-          const change = t.todaysChange || (price && prevClose ? price - prevClose : 0);
-          const changePct = t.todaysChangePerc || (price && prevClose && prevClose !== 0 ? ((price - prevClose) / prevClose) * 100 : 0);
+          const prevOpen = t.prevDay?.o || 0;
+          // Live market: use API's todaysChange values
+          // Closed market: calculate Friday's open→close change
+          const change = isLive ? (t.todaysChange || 0) : (prevClose && prevOpen ? prevClose - prevOpen : 0);
+          const changePct = isLive ? (t.todaysChangePerc || 0) : (prevOpen && prevOpen !== 0 ? ((prevClose - prevOpen) / prevOpen) * 100 : 0);
           return {
             id: symbolToId[t.ticker] || t.ticker,
             symbol: t.ticker,
@@ -372,12 +374,12 @@ export default function AppPage() {
             change,
             changePct,
             prevClose,
-            high: t.day?.h || t.prevDay?.h || 0,
-            low: t.day?.l || t.prevDay?.l || 0,
-            open: t.day?.o || t.prevDay?.o || 0,
-            volume: t.day?.v || t.prevDay?.v || 0,
+            high: isLive ? (t.day?.h || 0) : (t.prevDay?.h || 0),
+            low: isLive ? (t.day?.l || 0) : (t.prevDay?.l || 0),
+            open: isLive ? (t.day?.o || 0) : (t.prevDay?.o || 0),
+            volume: isLive ? (t.day?.v || 0) : (t.prevDay?.v || 0),
             prevVolume: t.prevDay?.v || 0,
-            marketOpen: !!(t.lastTrade?.p || t.day?.c || t.min?.c),
+            marketOpen: isLive,
           };
         }).filter(r => r.price !== 0);
       } catch (e) {
