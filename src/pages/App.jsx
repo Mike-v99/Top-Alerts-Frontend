@@ -1307,8 +1307,10 @@ export default function AppPage() {
                 }}>
                   {/* Collapsed row */}
                   <div onClick={() => {
-                    if (isExpanded) { setMobileExpanded(null); }
-                    else { setMobileExpanded(m.symbol); setMobileNewsOpen(false); openChart(m.symbol, m.label); }
+                    try {
+                      if (isExpanded) { setMobileExpanded(null); }
+                      else { setMobileExpanded(m.symbol); setMobileNewsOpen(false); openChart(m.symbol, m.label); }
+                    } catch (err) { console.error("Mobile expand error:", err); }
                   }} style={{ padding: isExpanded ? "14px 14px" : "14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ ...font, fontSize: 22, fontWeight: 700, color: "#1a1200" }}>{m.label}</div>
@@ -1331,14 +1333,14 @@ export default function AppPage() {
                   {isExpanded && (
                     <div onClick={(ev) => ev.stopPropagation()} style={{ padding: "0 14px 14px" }}>
                       {/* Chart */}
-                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8, overflow: "hidden" }}>
+                      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 8 }}>
                         {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: "#6a6050" }}>Loading chart...</div>}
-                        {!chartLoading && chartData.length > 0 && (
+                        {!chartLoading && chartData && chartData.length > 0 && (
                           <div style={{ overflowX: "auto" }}>
                             <CandlestickChart data={chartData} T={T} range={chartRange} />
                           </div>
                         )}
-                        {!chartLoading && chartData.length === 0 && (
+                        {!chartLoading && (!chartData || chartData.length === 0) && (
                           <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: "#6a6050" }}>No chart data</div>
                         )}
                         <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "8px 12px", alignItems: "center" }}>
@@ -1365,7 +1367,7 @@ export default function AppPage() {
                           ["Volume", snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : `${snap.volume}`) : "—"],
                           ["Day High", snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"],
                           ["Day Low", snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"],
-                          ["Change", d ? `${d.changePct >= 0 ? "+" : ""}${d.changePct.toFixed(2)}%` : "—"],
+                          ["Change", d && d.changePct != null ? `${d.changePct >= 0 ? "+" : ""}${d.changePct.toFixed(2)}%` : "—"],
                         ].map(([label, val], idx) => (
                           <div key={idx} style={{ background: T.bg, padding: 8, textAlign: "center" }}>
                             <div style={{ ...mono, fontSize: 10, color: "#6a6050", fontWeight: 500 }}>{label}</div>
@@ -1374,21 +1376,20 @@ export default function AppPage() {
                         ))}
                       </div>
 
-                      {/* News — always show first 3 articles, no collapse */}
+                      {/* News — always show first 3 articles */}
                       <div style={{ marginBottom: 8 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
                           <span style={{ fontSize: 12 }}>📰</span>
                           <span style={{ ...mono, fontSize: 13, letterSpacing: "1px", color: "#0a1f4a", fontWeight: 700 }}>LATEST NEWS</span>
                         </div>
-                        {tickerNews.slice(0, 3).map((n, i) => {
+                        {tickerNews && tickerNews.slice(0, 3).map((n, i) => {
                           const url = n.article_url || n.url || n.link || "";
                           return (
                             <div key={i} style={{ padding: "10px 0", borderTop: `1px solid ${T.border}` }}>
-                              <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{n.title}</div>
+                              <div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#1a1200", lineHeight: 1.3 }}>{n.title || "Untitled"}</div>
                               <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                                <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher}</span>
-                                <span style={{ color: "#6a6050" }}>·</span>
-                                <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.published_utc ? new Date(n.published_utc).toLocaleDateString() : ""}</span>
+                                <span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{n.publisher || ""}</span>
+                                {n.published_utc && <><span style={{ color: "#6a6050" }}>·</span><span style={{ ...mono, fontSize: 10, color: "#6a6050" }}>{new Date(n.published_utc).toLocaleDateString()}</span></>}
                               </div>
                               {url && (
                                 <a href={url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} style={{
@@ -1400,7 +1401,7 @@ export default function AppPage() {
                           );
                         })}
                         {newsLoading && <div style={{ ...mono, fontSize: 12, color: "#6a6050", padding: "10px 0" }}>Loading news...</div>}
-                        {!newsLoading && tickerNews.length === 0 && <div style={{ ...font, fontSize: 13, color: "#6a6050", padding: "10px 0" }}>No news available</div>}
+                        {!newsLoading && (!tickerNews || tickerNews.length === 0) && <div style={{ ...font, fontSize: 13, color: "#6a6050", padding: "10px 0" }}>No news available</div>}
                       </div>
 
                       {/* Action buttons */}
@@ -2476,21 +2477,23 @@ function CandlestickChart({ data, T, range }) {
   const [hover, setHover] = useState(null); // { x, y, candle, svgX, svgY }
   const svgRef = useRef(null);
 
+  if (!data || !data.length) return <div style={{ padding: 20, textAlign: "center", color: "#6a6050", fontSize: 12 }}>No data</div>;
+
   const W = range === "1M" ? 700 : 600, H = 200, PAD = { top: 10, right: 10, bottom: 24, left: 52 };
   const cW = W - PAD.left - PAD.right;
   const cH = H - PAD.top - PAD.bottom;
 
-  const highs = data.map(d => d.h);
-  const lows  = data.map(d => d.l);
-  const minP  = Math.min(...lows);
-  const maxP  = Math.max(...highs);
+  const highs = data.map(d => d.h).filter(v => v != null);
+  const lows  = data.map(d => d.l).filter(v => v != null);
+  const minP  = lows.length ? Math.min(...lows) : 0;
+  const maxP  = highs.length ? Math.max(...highs) : 1;
   const priceRange = maxP - minP || 1;
 
   const scaleY  = p => cH - ((p - minP) / priceRange) * cH;
   const barW    = range === "1M"
     ? Math.max(1, (cW / data.length) * 0.5)
     : Math.max(1, Math.min(12, (cW / data.length) * 0.7));
-  const spacing = cW / data.length;
+  const spacing = data.length > 0 ? cW / data.length : 1;
 
   const fmtPrice = n => n >= 1000
     ? `$${(n/1000).toFixed(1)}k`
