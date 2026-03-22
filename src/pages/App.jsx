@@ -294,8 +294,20 @@ export default function AppPage() {
     const touch = e.touches[0];
     const allSymbols = getAllOrderedSymbols();
     dragRef.current = { symbol, startY: touch.clientY, currentY: touch.clientY, startIdx: allSymbols.indexOf(symbol) };
+    // Elevate the entire outer wrapper
+    const wrapper = document.getElementById(`swipe-wrapper-${symbol}`);
+    if (wrapper) {
+      wrapper.style.zIndex = "100";
+      wrapper.style.position = "relative";
+    }
     const el = document.getElementById(`reorder-${symbol}`);
-    if (el) { el.style.opacity = "0.7"; el.style.transform = "scale(1.03)"; el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.15)"; el.style.zIndex = "50"; }
+    if (el) {
+      el.style.opacity = "0.9";
+      el.style.transform = "scale(1.04)";
+      el.style.boxShadow = "0 12px 40px rgba(0,0,0,0.25)";
+      el.style.borderRadius = "12px";
+      el.style.transition = "none";
+    }
     if (navigator.vibrate) navigator.vibrate(20);
   }
 
@@ -309,7 +321,8 @@ export default function AppPage() {
     const el = document.getElementById(`reorder-${dragRef.current.symbol}`);
     if (el) {
       const diff = touch.clientY - dragRef.current.startY;
-      el.style.transform = `translateY(${diff}px) scale(1.03)`;
+      el.style.transform = `translateY(${diff}px) scale(1.04)`;
+      el.style.transition = "none";
     }
 
     // Find target position
@@ -339,7 +352,18 @@ export default function AppPage() {
   function onDragEnd() {
     if (!dragRef.current.symbol) return;
     const el = document.getElementById(`reorder-${dragRef.current.symbol}`);
-    if (el) { el.style.opacity = ""; el.style.transform = ""; el.style.boxShadow = ""; el.style.zIndex = ""; }
+    if (el) {
+      el.style.transition = "transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease";
+      el.style.opacity = "";
+      el.style.transform = "";
+      el.style.boxShadow = "";
+      el.style.borderRadius = "";
+    }
+    const wrapper = document.getElementById(`swipe-wrapper-${dragRef.current.symbol}`);
+    if (wrapper) {
+      // Delay resetting zIndex so the drop animation plays on top
+      setTimeout(() => { wrapper.style.zIndex = ""; wrapper.style.position = ""; }, 200);
+    }
     dragRef.current = { symbol: null, startY: 0, currentY: 0, startIdx: -1 };
   }
 
