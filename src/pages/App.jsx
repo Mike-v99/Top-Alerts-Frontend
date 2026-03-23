@@ -1985,194 +1985,7 @@ export default function AppPage() {
         {/* ── MOBILE LAYOUT ──────────────────────────────────────────────── */}
         {isMobile && tab === "market" && (
           <div>
-            {/* Watchlist / Hotlist segmented toggle */}
-            <div style={{ display: "flex", border: `2px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 12 }}>
-              <div onClick={() => { setMarketView("watchlist"); setHotlistProOpen(false); }} style={{
-                flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
-                ...mono, fontSize: 12, letterSpacing: "0.5px",
-                background: marketView === "watchlist" ? "#0a1f4a" : T.bg,
-                color: marketView === "watchlist" ? "#e8f2ff" : T.textMid,
-                fontWeight: marketView === "watchlist" ? 700 : 500,
-              }}>Watchlist</div>
-              <div onClick={() => { setMarketView("hotlist"); setEditMode(false); setMobileExpanded(null); }} style={{
-                flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
-                ...mono, fontSize: 12, letterSpacing: "0.5px",
-                background: marketView === "hotlist" ? "#0a1f4a" : T.bg,
-                color: marketView === "hotlist" ? "#e8f2ff" : T.textMid,
-                fontWeight: marketView === "hotlist" ? 700 : 500,
-                borderLeft: `1px solid ${T.border}`,
-              }}>🔥 Hotlist</div>
-            </div>
-
-            {/* ── HOTLIST VIEW ─────────────────── */}
-            {marketView === "hotlist" && (
-              <div>
-                {/* Segmented filter bar: Gainers | Losers | Pro */}
-                <div style={{ display: "flex", border: `2px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 10 }}>
-                  <div onClick={() => { setHotlistFilter("gainers"); setHotlistProOpen(false); }} style={{
-                    flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
-                    ...mono, fontSize: 12, letterSpacing: "0.5px",
-                    background: hotlistFilter === "gainers" ? "#1a8a44" : T.bg,
-                    color: hotlistFilter === "gainers" ? "#fff" : "#1a8a44",
-                    fontWeight: 700,
-                  }}>Gainers</div>
-                  <div onClick={() => { setHotlistFilter("losers"); setHotlistProOpen(false); }} style={{
-                    flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
-                    ...mono, fontSize: 12, letterSpacing: "0.5px",
-                    background: hotlistFilter === "losers" ? "#cc2222" : T.bg,
-                    color: hotlistFilter === "losers" ? "#fff" : "#cc2222",
-                    fontWeight: 700,
-                    borderLeft: `1px solid ${T.border}`, borderRight: `1px solid ${T.border}`,
-                  }}>Losers</div>
-                  <div onClick={() => {
-                    setHotlistProOpen(p => !p);
-                  }} style={{
-                    flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
-                    ...mono, fontSize: 12, letterSpacing: "0.5px",
-                    background: "#0a1f4a",
-                    color: "#fff",
-                    fontWeight: 700,
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
-                  }}>
-                    <span style={{ fontSize: 8, background: "rgba(255,255,255,0.2)", color: "#fff", padding: "2px 5px", borderRadius: 2, fontWeight: 700 }}>PRO</span>
-                    More
-                  </div>
-                </div>
-
-                {/* Pro dropdown */}
-                {hotlistProOpen && (
-                  <div style={{ background: "#0a1f4a", borderRadius: 10, padding: "14px 16px", marginBottom: 12 }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 14 }}>
-                      {["Volume","Volatile","52W High","52W Low","Pre-Market","After-Hours"].map(f => (
-                        <button key={f} onClick={() => {
-                          if (isPro) { setHotlistFilter(f.toLowerCase().replace(/\s+/g, '_').replace('52w_', 'w52_')); setHotlistProOpen(false); }
-                          else { showToast("Pro plan required", "warn"); }
-                        }} style={{
-                          ...mono, fontSize: 11, color: "#fff",
-                          background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
-                          borderRadius: 8, padding: "10px 0", textAlign: "center", cursor: "pointer",
-                        }}>{f}</button>
-                      ))}
-                    </div>
-                    {!isPro && (
-                      <button onClick={() => { setHotlistProOpen(false); setTab("pricing"); }} style={{
-                        width: "100%", padding: 11, background: "#e8f2ff", color: "#0a1f4a",
-                        border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 700, cursor: "pointer",
-                      }}>Unlock Pro Filters — $9/mo</button>
-                    )}
-                  </div>
-                )}
-
-                {/* Hotlist results */}
-                <div>
-                  <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: hotlistFilter === "losers" ? "#cc2222" : "#1a8a44", marginBottom: 6, fontWeight: 600 }}>
-                    {hotlistFilter === "losers" ? "TOP LOSERS TODAY" : "TOP GAINERS TODAY"}
-                  </div>
-                  {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).length === 0 && (
-                    <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 12 }}>Market closed — hotlist updates when market opens</div>
-                  )}
-                  {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).map((t, i) => {
-                    const up = t.changePct >= 0;
-                    const col = up ? "#1a8a44" : "#cc2222";
-                    const arrow = up ? "▲" : "▼";
-                    const isExpanded = expandedHotlist === t.symbol;
-                    const d = { price: t.price, changePct: t.changePct, change: t.change };
-                    const snap = { open: null, prevClose: null, dayHigh: null, dayLow: null, volume: t.volume };
-                    return (
-                      <div key={t.symbol} style={{
-                        background: isExpanded ? T.bgCard : T.bg,
-                        border: isExpanded ? "2px solid #0a1f4a" : "none",
-                        borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
-                        borderRadius: isExpanded ? 12 : 0,
-                        marginBottom: isExpanded ? 8 : 0,
-                      }}>
-                        {/* Collapsed row */}
-                        <div onClick={() => {
-                          try {
-                            if (isExpanded) { setExpandedHotlist(null); }
-                            else { setExpandedHotlist(t.symbol); setChartData([]); setChartLoading(true); openChart(t.symbol, t.name); }
-                          } catch (err) { console.error("Hotlist expand error:", err); }
-                        }} style={{ padding: isExpanded ? "14px 14px" : "14px 8px 14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                          <div style={{ width: 26, height: 26, borderRadius: 7, background: `${col}15`, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: col, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{t.symbol}</div>
-                            <div style={{ ...mono, fontSize: 14, color: T.textMid }}>{t.name !== t.symbol ? t.name : ""}</div>
-                          </div>
-                          {!isExpanded && (
-                            <div style={{ textAlign: "center", flexShrink: 0 }}>
-                              <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{up ? "+" : "-"}${t.change != null ? `$${Math.abs(Number(t.change)).toFixed(2)}` : ""}</div>
-                            </div>
-                          )}
-                          <div style={{ textAlign: "right", minWidth: 85 }}>
-                            <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                            <div style={{ ...mono, fontSize: 14, color: col, fontWeight: 600 }}>{arrow} {Math.abs(t.changePct).toFixed(2)}%</div>
-                          </div>
-                        </div>
-
-                        {/* Expanded card */}
-                        {isExpanded && (
-                          <div onClick={(ev) => ev.stopPropagation()} style={{ padding: "0 14px 14px" }}>
-                            {/* Add to watchlist button */}
-                            {(() => {
-                              const alreadyInWatchlist = watchlist.some(w => w.symbol === t.symbol) || MARKET_SYMBOLS.some(ms => ms.symbol === t.symbol);
-                              return alreadyInWatchlist ? (
-                                <button disabled style={{
-                                  width: "100%", padding: 14, background: "#1a8a44", color: "#fff",
-                                  border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 700, marginBottom: 12,
-                                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: 0.8,
-                                }}>✓ In Watchlist</button>
-                              ) : (
-                                <button onClick={(ev) => {
-                                  ev.stopPropagation();
-                                  const newItem = { symbol: t.symbol, label: t.name || t.symbol };
-                                  setWatchlist(prev => { const next = [...prev, newItem]; localStorage.setItem("ta-watchlist", JSON.stringify(next)); return next; });
-                                  showToast(`${t.symbol} added to watchlist`);
-                                }} style={{
-                                  width: "100%", padding: 14, background: "linear-gradient(135deg,#0a1f4a,#1a3a6a)", color: "#e8f2ff",
-                                  border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 12,
-                                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                                  boxShadow: "0 4px 12px rgba(10,31,74,0.2)",
-                                }}>+ Watchlist</button>
-                              );
-                            })()}
-                            {/* Chart */}
-                            <div style={{ background: T.bgDeep, borderRadius: 10, overflow: "hidden", marginBottom: 8, minHeight: 180 }}>
-                              {!chartLoading && chartData && chartData.length > 0 && chartSymbol === t.symbol ? (
-                                <div style={{ width: "100%", overflow: "hidden" }}>
-                                  <CandlestickChart data={chartData} T={T} range={chartRange} />
-                                </div>
-                              ) : (
-                                <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>{chartLoading ? "Loading chart..." : "No data"}</div>
-                              )}
-                              <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "6px 8px", alignItems: "center" }}>
-                                {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
-                                  <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
-                                    padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
-                                    background: chartRange === r ? "#0a1f4a" : "transparent",
-                                    color: chartRange === r ? "#e8f2ff" : T.textMid,
-                                  }}>{lbl}</span>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Action buttons */}
-                            <div style={{ display: "flex", gap: 8 }}>
-                              <button onClick={(ev) => { ev.stopPropagation(); openModal(t.symbol, t.name); }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
-                              <button onClick={(ev) => { ev.stopPropagation(); shareTicker(t.symbol, t.name, t.price, t.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: "#0a1f4a", border: "2px solid #0a1f4a", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                                <span style={{ fontSize: 16 }}>↗</span> Share
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             {/* ── WATCHLIST VIEW ─────────────────── */}
-            {marketView === "watchlist" && (
             <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: 8 }}>
               <button onClick={() => { setEditMode(p => !p); setMobileExpanded(null); }} style={{
@@ -2439,7 +2252,168 @@ export default function AppPage() {
               );
             })}
             </div>
-            )}{/* end watchlist view */}
+            </div>{/* end watchlist view */}
+          </div>
+        )}
+
+        {/* Mobile hotlist tab */}
+        {isMobile && tab === "hotlist" && (
+          <div>
+            {/* Segmented filter bar: Gainers | Losers | Pro */}
+            <div style={{ display: "flex", border: `2px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 10 }}>
+              <div onClick={() => { setHotlistFilter("gainers"); setHotlistProOpen(false); }} style={{
+                flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
+                ...mono, fontSize: 12, letterSpacing: "0.5px",
+                background: hotlistFilter === "gainers" ? "#1a8a44" : T.bg,
+                color: hotlistFilter === "gainers" ? "#fff" : "#1a8a44",
+                fontWeight: 700,
+              }}>Gainers</div>
+              <div onClick={() => { setHotlistFilter("losers"); setHotlistProOpen(false); }} style={{
+                flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
+                ...mono, fontSize: 12, letterSpacing: "0.5px",
+                background: hotlistFilter === "losers" ? "#cc2222" : T.bg,
+                color: hotlistFilter === "losers" ? "#fff" : "#cc2222",
+                fontWeight: 700,
+                borderLeft: `1px solid ${T.border}`, borderRight: `1px solid ${T.border}`,
+              }}>Losers</div>
+              <div onClick={() => setHotlistProOpen(p => !p)} style={{
+                flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
+                ...mono, fontSize: 12, letterSpacing: "0.5px",
+                background: "#0a1f4a", color: "#fff", fontWeight: 700,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+              }}>
+                <span style={{ fontSize: 8, background: "rgba(255,255,255,0.2)", color: "#fff", padding: "2px 5px", borderRadius: 2, fontWeight: 700 }}>PRO</span>
+                More
+              </div>
+            </div>
+
+            {/* Pro dropdown */}
+            {hotlistProOpen && (
+              <div style={{ background: "#0a1f4a", borderRadius: 10, padding: "14px 16px", marginBottom: 12 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 14 }}>
+                  {["Volume","Volatile","52W High","52W Low","Pre-Market","After-Hours"].map(fl => (
+                    <button key={fl} onClick={() => {
+                      if (isPro) { setHotlistFilter(fl.toLowerCase().replace(/\s+/g, '_')); setHotlistProOpen(false); }
+                      else { showToast("Pro plan required", "warn"); }
+                    }} style={{
+                      ...mono, fontSize: 11, color: "#fff",
+                      background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: 8, padding: "10px 0", textAlign: "center", cursor: "pointer",
+                    }}>{fl}</button>
+                  ))}
+                </div>
+                {!isPro && (
+                  <button onClick={() => { setHotlistProOpen(false); setTab("pricing"); }} style={{
+                    width: "100%", padding: 11, background: "#e8f2ff", color: "#0a1f4a",
+                    border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                  }}>Unlock Pro Filters — $9/mo</button>
+                )}
+              </div>
+            )}
+
+            {/* Hotlist results */}
+            <div>
+              <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: hotlistFilter === "losers" ? "#cc2222" : "#1a8a44", marginBottom: 6, fontWeight: 600 }}>
+                {hotlistFilter === "losers" ? "TOP LOSERS TODAY" : "TOP GAINERS TODAY"}
+              </div>
+              {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).length === 0 && (
+                <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 12 }}>Market closed — hotlist updates when market opens</div>
+              )}
+              {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).map((t, i) => {
+                const up = t.changePct >= 0;
+                const col = up ? "#1a8a44" : "#cc2222";
+                const arrow = up ? "▲" : "▼";
+                const isExpanded = expandedHotlist === t.symbol;
+                return (
+                  <div key={t.symbol} style={{
+                    background: isExpanded ? T.bgCard : T.bg,
+                    border: isExpanded ? "2px solid #0a1f4a" : "none",
+                    borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                    borderRadius: isExpanded ? 12 : 0,
+                    marginBottom: isExpanded ? 8 : 0,
+                  }}>
+                    {/* Collapsed row */}
+                    <div onClick={() => {
+                      try {
+                        if (isExpanded) { setExpandedHotlist(null); }
+                        else { setExpandedHotlist(t.symbol); setChartData([]); setChartLoading(true); openChart(t.symbol, t.name); }
+                      } catch (err) { console.error("Hotlist expand error:", err); }
+                    }} style={{ padding: isExpanded ? "14px 14px" : "14px 8px 14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                      <div style={{ width: 26, height: 26, borderRadius: 7, background: `${col}15`, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: col, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{t.symbol}</div>
+                        <div style={{ ...mono, fontSize: 14, color: T.textMid }}>{t.name !== t.symbol ? t.name : ""}</div>
+                      </div>
+                      {!isExpanded && (
+                        <div style={{ textAlign: "center", flexShrink: 0 }}>
+                          <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{up ? "+" : "-"}${t.change != null ? `$${Math.abs(Number(t.change)).toFixed(2)}` : ""}</div>
+                        </div>
+                      )}
+                      <div style={{ textAlign: "right", minWidth: 85 }}>
+                        <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div style={{ ...mono, fontSize: 14, color: col, fontWeight: 600 }}>{arrow} {Math.abs(t.changePct).toFixed(2)}%</div>
+                      </div>
+                    </div>
+
+                    {/* Expanded card */}
+                    {isExpanded && (
+                      <div onClick={(ev) => ev.stopPropagation()} style={{ padding: "0 14px 14px" }}>
+                        {/* Add to watchlist button */}
+                        {(() => {
+                          const alreadyInWatchlist = watchlist.some(w => w.symbol === t.symbol) || MARKET_SYMBOLS.some(ms => ms.symbol === t.symbol);
+                          return alreadyInWatchlist ? (
+                            <button disabled style={{
+                              width: "100%", padding: 14, background: "#1a8a44", color: "#fff",
+                              border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 700, marginBottom: 12,
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: 0.8,
+                            }}>✓ In Watchlist</button>
+                          ) : (
+                            <button onClick={(ev) => {
+                              ev.stopPropagation();
+                              const newItem = { symbol: t.symbol, label: t.name || t.symbol };
+                              setWatchlist(prev => { const next = [...prev, newItem]; localStorage.setItem("ta-watchlist", JSON.stringify(next)); return next; });
+                              showToast(`${t.symbol} added to watchlist`);
+                            }} style={{
+                              width: "100%", padding: 14, background: "linear-gradient(135deg,#0a1f4a,#1a3a6a)", color: "#e8f2ff",
+                              border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 12,
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                              boxShadow: "0 4px 12px rgba(10,31,74,0.2)",
+                            }}>+ Watchlist</button>
+                          );
+                        })()}
+                        {/* Chart */}
+                        <div style={{ background: T.bgDeep, borderRadius: 10, overflow: "hidden", marginBottom: 8, minHeight: 180 }}>
+                          {!chartLoading && chartData && chartData.length > 0 && chartSymbol === t.symbol ? (
+                            <div style={{ width: "100%", overflow: "hidden" }}>
+                              <CandlestickChart data={chartData} T={T} range={chartRange} />
+                            </div>
+                          ) : (
+                            <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>{chartLoading ? "Loading chart..." : "No data"}</div>
+                          )}
+                          <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "6px 8px", alignItems: "center" }}>
+                            {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
+                              <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
+                                padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
+                                background: chartRange === r ? "#0a1f4a" : "transparent",
+                                color: chartRange === r ? "#e8f2ff" : T.textMid,
+                              }}>{lbl}</span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={(ev) => { ev.stopPropagation(); openModal(t.symbol, t.name); }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                          <button onClick={(ev) => { ev.stopPropagation(); shareTicker(t.symbol, t.name, t.price, t.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: "#0a1f4a", border: "2px solid #0a1f4a", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                            <span style={{ fontSize: 16 }}>↗</span> Share
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
