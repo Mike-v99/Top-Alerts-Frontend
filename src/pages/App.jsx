@@ -680,6 +680,7 @@ export default function AppPage() {
       const to = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
       const res = await fetch(`https://finnhub.io/api/v1/calendar/earnings?symbol=${symbol}&from=${fmt(from)}&to=${fmt(to)}&token=${fKey}`);
       const data = await res.json();
+      console.log("[Earnings]", symbol, "response:", (data.earningsCalendar || []).length, "events");
       const all = (data.earningsCalendar || [])
         .filter(e => e.symbol === symbol)
         .sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -1018,18 +1019,22 @@ export default function AppPage() {
       .then(r => r.json())
       .then(data => {
         const t = data.tickers?.[0];
-        const price = t?.lastTrade?.p || t?.day?.c || t?.min?.c || 0;
+        const isLive = !!(t?.lastTrade?.p || (t?.day?.c && t.day.c !== 0));
+        const price = isLive ? (t?.lastTrade?.p || t?.day?.c || t?.min?.c || 0) : (t?.prevDay?.c || 0);
         if (price !== 0) {
+          const prevClose = t.prevDay?.c || 0;
+          const prevOpen = t.prevDay?.o || 0;
           setWatchData(prev => ({ ...prev, [symbol]: {
             id: symbol, symbol, price,
-            change: t.todaysChange || 0,
-            changePct: t.todaysChangePerc || 0,
-            prevClose: t.prevDay?.c || 0,
-            high: t.day?.h || 0,
-            low: t.day?.l || 0,
-            open: t.day?.o || 0,
-            volume: t.day?.v || 0,
+            change: isLive ? (t.todaysChange || 0) : (prevClose && prevOpen ? prevClose - prevOpen : 0),
+            changePct: isLive ? (t.todaysChangePerc || 0) : (prevOpen ? ((prevClose - prevOpen) / prevOpen) * 100 : 0),
+            prevClose,
+            high: isLive ? (t.day?.h || 0) : (t.prevDay?.h || 0),
+            low: isLive ? (t.day?.l || 0) : (t.prevDay?.l || 0),
+            open: isLive ? (t.day?.o || 0) : prevOpen,
+            volume: isLive ? (t.day?.v || 0) : (t.prevDay?.v || 0),
             prevVolume: t.prevDay?.v || 0,
+            marketOpen: isLive,
           }}));
           showToast(`${symbol} added`);
         } else {
@@ -1492,25 +1497,49 @@ export default function AppPage() {
                       })()}
                     </div>
 
-                    {/* Stats grid */}
+                    {/* Stats grid — matches Market tab style */}
                     <div style={{ padding: "0 24px 16px" }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 1, background: T.border, borderRadius: 10, overflow: "hidden" }}>
-                        {[
-                          ["Prev. Close", marketData[chartSymbol]?.prevClose ? `$${Number(marketData[chartSymbol].prevClose).toFixed(2)}` : (() => { const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol); return ht ? `$${(ht.price - ht.change).toFixed(2)}` : "—"; })()],
-                          ["Volume", (() => { const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol); return ht && ht.volume ? (ht.volume >= 1e6 ? (ht.volume / 1e6).toFixed(1) + "M" : ht.volume.toLocaleString()) : "—"; })()],
-                          ["Day Range", marketData[chartSymbol]?.high ? `$${Number(marketData[chartSymbol].low).toFixed(2)} – $${Number(marketData[chartSymbol].high).toFixed(2)}` : "—"],
-                          ["52 Wk Range", week52Data ? `$${Number(week52Data.low).toFixed(2)} – $${Number(week52Data.high).toFixed(2)}` : "—"],
-                          ["Open", marketData[chartSymbol]?.open ? `$${Number(marketData[chartSymbol].open).toFixed(2)}` : "—"],
-                          ["Change", (() => { const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol); return ht ? `${ht.change >= 0 ? "+" : ""}$${Number(ht.change).toFixed(2)}` : "—"; })()],
-                          ["Change %", (() => { const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol); return ht ? `${ht.changePct >= 0 ? "+" : ""}${Number(ht.changePct).toFixed(2)}%` : "—"; })()],
-                          ["1-Yr Change", week52Data ? `${week52Data.yearChange >= 0 ? "+" : ""}${Number(week52Data.yearChange).toFixed(2)}%` : "—"],
-                        ].map(([label, val]) => (
-                          <div key={label} style={{ background: T.bg, padding: "10px 14px" }}>
-                            <div style={{ ...mono, fontSize: 9, color: T.textFaint, letterSpacing: "0.5px" }}>{label}</div>
-                            <div style={{ ...mono, fontSize: 13, color: val.includes("+") ? "#1a8a44" : val.includes("-") ? "#cc2222" : T.text, fontWeight: 500, marginTop: 3 }}>{val}</div>
+                      {(() => {
+                        const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol);
+                        const md = marketData[chartSymbol];
+                        const fmt = v => `$${Number(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                        const fmtVol = v => v >= 1e9 ? `${(v/1e9).toFixed(2)}B` : v >= 1e6 ? `${(v/1e6).toFixed(1)}M` : v >= 1e3 ? `${(v/1e3).toFixed(0)}K` : `${v}`;
+                        const prevClose = md?.prevClose || (ht ? ht.price - ht.change : null);
+                        const vol = md?.volume || ht?.volume || 0;
+                        const high = md?.high || 0;
+                        const low = md?.low || 0;
+                        const open = md?.open || 0;
+                        const change = md?.change ?? ht?.change ?? 0;
+                        const changePct = md?.changePct ?? ht?.changePct ?? 0;
+                        const cell = (label, value, color) => (
+                          <div style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderRight: `1px solid ${T.borderLight}` }}>
+                            <span style={{ ...font, fontSize: 13, color: T.textMid }}>{label}</span>
+                            <span style={{ ...mono, fontSize: 13, color: color || T.text, fontWeight: 500, textAlign: "right" }}>{value}</span>
                           </div>
-                        ))}
-                      </div>
+                        );
+                        return (
+                          <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", borderBottom: `1px solid ${T.borderLight}` }}>
+                              {cell("Prev. Close", prevClose ? fmt(prevClose) : "—")}
+                              {cell("Volume", vol ? fmtVol(vol) : "—")}
+                              {cell("Day's Range", high && low ? `${fmt(low)} – ${fmt(high)}` : "—")}
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", borderBottom: `1px solid ${T.borderLight}` }}>
+                              {cell("Open", open ? fmt(open) : "—")}
+                              {cell("Avg Vol. (3m)", "—")}
+                              {cell("52 Wk Range", week52Data ? `${fmt(week52Data.low)} – ${fmt(week52Data.high)}` : "—")}
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}>
+                              {cell("1-Year Change", week52Data ? `${week52Data.yearChange >= 0 ? "+" : ""}${week52Data.yearChange.toFixed(2)}%` : "—", week52Data?.yearChange >= 0 ? "#1a8a44" : "#cc2222")}
+                              {cell("Change", `${change >= 0 ? "+" : ""}${Number(change).toFixed(2)}`)}
+                              <div style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ ...font, fontSize: 13, color: T.textMid }}>Change %</span>
+                                <span style={{ ...mono, fontSize: 13, fontWeight: 500, color: changePct >= 0 ? "#1a8a44" : "#cc2222" }}>{changePct >= 0 ? "+" : ""}{Number(changePct).toFixed(2)}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* About */}
