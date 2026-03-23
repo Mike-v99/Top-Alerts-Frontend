@@ -1314,24 +1314,35 @@ export default function AppPage() {
           <div>
             {/* Filter pills */}
             <div style={{ display: "flex", gap: 8, marginBottom: 20, alignItems: "center", flexWrap: "wrap" }}>
-              <span style={{
-                ...mono, fontSize: 12, background: "#0a1f4a", color: "#e8f2ff",
+              <span onClick={() => setHotlistFilter("gainers")} style={{
+                ...mono, fontSize: 12, cursor: "pointer",
+                background: hotlistFilter === "gainers" || hotlistFilter === "losers" ? "#0a1f4a" : T.bgCard,
+                color: hotlistFilter === "gainers" || hotlistFilter === "losers" ? "#e8f2ff" : T.textMid,
+                border: `1px solid ${hotlistFilter === "gainers" || hotlistFilter === "losers" ? "#0a1f4a" : T.border}`,
                 borderRadius: 8, padding: "8px 16px", fontWeight: 600,
-              }}>🟢 Gainers & Losers</span>
+              }}>🟢 Gainers & 🔴 Losers</span>
               <span style={{ width: 1, height: 24, background: T.border }} />
-              {["Volume","Volatile","52W High","52W Low","Pre-Market","After-Hours"].map(fl => (
+              {["Volume","Volatile","52W High","52W Low","Pre-Market","After-Hours"].map(fl => {
+                const fKey = fl.toLowerCase().replace(/\s+/g, '_');
+                const isActive = hotlistFilter === fKey;
+                return (
                 <span key={fl} onClick={() => {
-                  if (isPro) { setHotlistFilter(fl.toLowerCase().replace(/\s+/g, '_')); }
+                  if (isPro) { setHotlistFilter(fKey); }
                   else { showToast("Pro plan required", "warn"); }
                 }} style={{
-                  ...mono, fontSize: 12, color: T.textFaint, background: T.bgCard,
-                  border: `1px solid ${T.border}`, borderRadius: 8, padding: "8px 14px",
-                  cursor: "pointer", opacity: isPro ? 1 : 0.5,
-                }}>{fl} {!isPro && <span style={{ ...mono, fontSize: 7, background: "#0a1f4a", color: "#e8f2ff", padding: "1px 5px", borderRadius: 2, marginLeft: 2 }}>PRO</span>}</span>
-              ))}
+                  ...mono, fontSize: 12,
+                  color: isActive ? "#e8f2ff" : T.textFaint,
+                  background: isActive ? "#0a1f4a" : T.bgCard,
+                  border: `1px solid ${isActive ? "#0a1f4a" : T.border}`, borderRadius: 8, padding: "8px 14px",
+                  cursor: "pointer", opacity: isPro || isActive ? 1 : 0.5,
+                }}>{fl} {!isPro && !isActive && <span style={{ ...mono, fontSize: 7, background: "#0a1f4a", color: "#e8f2ff", padding: "1px 5px", borderRadius: 2, marginLeft: 2 }}>PRO</span>}</span>
+                );
+              })}
             </div>
 
-            {/* 3-column layout: Gainers | Losers | Chart */}
+            {/* Content area — switches based on active filter */}
+            {(hotlistFilter === "gainers" || hotlistFilter === "losers") ? (
+            /* Default: Gainers | Losers | Chart */
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr", gap: 20, alignItems: "start" }}>
               {/* Gainers column */}
               <div>
@@ -1505,6 +1516,77 @@ export default function AppPage() {
                 )}
               </div>
             </div>
+            ) : (
+            /* Pro filter: single ranked list in 2 columns (1-10 | 11-20) + Chart */
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr", gap: 20, alignItems: "start" }}>
+              {/* Column 1: ranks 1-10 */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#0a1f4a", fontWeight: 600 }}>
+                    {hotlistFilter === "volume" ? "📊" : hotlistFilter === "volatile" ? "⚡" : hotlistFilter === "52w_high" ? "📈" : hotlistFilter === "52w_low" ? "📉" : hotlistFilter === "pre-market" ? "🌅" : "🌙"}{" "}
+                    {hotlistFilter.toUpperCase().replace(/_/g, " ")} · 1–10
+                  </div>
+                </div>
+                <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
+                  <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 13 }}>
+                    Pro filter data coming soon
+                  </div>
+                </div>
+              </div>
+              {/* Column 2: ranks 11-20 */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#0a1f4a", fontWeight: 600 }}>
+                    {hotlistFilter.toUpperCase().replace(/_/g, " ")} · 11–20
+                  </div>
+                </div>
+                <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
+                  <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...mono, fontSize: 13 }}>
+                    Pro filter data coming soon
+                  </div>
+                </div>
+              </div>
+              {/* Chart panel — same as default */}
+              <div style={{ position: "sticky", top: 20 }}>
+                {chartSymbol ? (
+                  <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden" }}>
+                    <div style={{ padding: "24px 24px 16px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div>
+                          <div style={{ ...font, fontSize: 26, fontWeight: 700, color: T.text }}>{chartLabel || chartSymbol} <span style={{ ...mono, fontSize: 14, color: T.textFaint }}>{chartSymbol}</span></div>
+                        </div>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
+                            <span key={r} onClick={() => changeChartRange(r)} style={{
+                              padding: "6px 14px", borderRadius: 7, ...mono, fontSize: 12, cursor: "pointer", fontWeight: 600,
+                              background: chartRange === r ? "#0a1f4a" : T.bgDeep, color: chartRange === r ? "#e8f2ff" : T.textMid,
+                              border: chartRange === r ? "none" : `1px solid ${T.border}`,
+                            }}>{lbl}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ padding: "0 24px", minHeight: 280 }}>
+                      {chartData.length > 0 ? <CandlestickChart data={chartData} T={T} range={chartRange} /> : <div style={{ textAlign: "center", padding: 60, ...mono, fontSize: 14, color: T.textMid }}>Loading chart...</div>}
+                    </div>
+                    <div style={{ padding: "16px 24px", display: "flex", gap: 10 }}>
+                      <button onClick={() => openModal(chartSymbol, chartLabel)} style={{ padding: "12px 24px", background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                      <button onClick={() => {
+                        setWatchlist(prev => { const next = [...prev, { symbol: chartSymbol, label: chartLabel || chartSymbol }]; localStorage.setItem("ta-watchlist", JSON.stringify(next)); return next; });
+                        showToast(`${chartSymbol} added to watchlist`);
+                      }} style={{ padding: "12px 24px", background: "linear-gradient(135deg,#0a1f4a,#1a3a6a)", color: "#e8f2ff", border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Watchlist</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, padding: 60, textAlign: "center" }}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>📈</div>
+                    <div style={{ ...font, fontSize: 16, color: T.textMid, marginBottom: 4 }}>Select a ticker</div>
+                    <div style={{ ...mono, fontSize: 12, color: T.textFaint }}>Click any stock to view chart, stats & news</div>
+                  </div>
+                )}
+              </div>
+            </div>
+            )}
           </div>
         )}
 
