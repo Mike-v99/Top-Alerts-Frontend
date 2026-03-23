@@ -150,6 +150,17 @@ export default function AppPage() {
   const [mobileNewsOpen, setMobileNewsOpen] = useState(false);
   const [expandedAlert, setExpandedAlert] = useState(null); // id of expanded alert card
   const [editMode, setEditMode] = useState(false); // watchlist reorder mode
+  const [desktopEditMode, setDesktopEditMode] = useState(false); // desktop watchlist edit
+  const [desktopCardOrder, setDesktopCardOrder] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("ta-desktop-order"));
+      if (saved && saved.length) return saved;
+    } catch {}
+    return MARKET_SYMBOLS.map(m => m.symbol);
+  });
+  const [hiddenCards, setHiddenCards] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("ta-hidden-cards") || "[]"); } catch { return []; }
+  });
   const [marketView, setMarketView] = useState("watchlist"); // "watchlist" or "hotlist"
   const [hotlistFilter, setHotlistFilter] = useState("gainers"); // gainers, losers, + pro filters
   const [hotlistProOpen, setHotlistProOpen] = useState(false); // pro dropdown open
@@ -2546,82 +2557,189 @@ export default function AppPage() {
           <div style={{ width: 210, flexShrink: 0 }}>
             {tab === "market" && (
               <div>
-                <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textMid, marginBottom: 10 }}>WATCHLIST</div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                  <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textMid }}>WATCHLIST</div>
+                  <button onClick={() => setDesktopEditMode(p => !p)} style={{
+                    ...mono, fontSize: 10, fontWeight: 600, cursor: "pointer", borderRadius: 6, padding: "3px 10px",
+                    background: desktopEditMode ? "#0a1f4a" : "none",
+                    color: desktopEditMode ? "#e8f2ff" : "#0a1f4a",
+                    border: desktopEditMode ? "none" : `1px solid #0a1f4a`,
+                  }}>{desktopEditMode ? "Done" : "✎ Edit"}</button>
+                </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {MARKET_SYMBOLS.map(m => {
+                  {desktopCardOrder
+                    .map(sym => MARKET_SYMBOLS.find(m => m.symbol === sym))
+                    .filter(Boolean)
+                    .filter(m => !hiddenCards.includes(m.symbol))
+                    .concat(MARKET_SYMBOLS.filter(m => !desktopCardOrder.includes(m.symbol) && !hiddenCards.includes(m.symbol)))
+                    .map((m, idx, arr) => {
                     const d   = marketData[m.id];
                     const up  = d?.changePct >= 0;
                     const col = !d ? T.border : up ? T.green : T.red;
                     const isActive = chartSymbol === m.symbol;
                     return (
-                      <div key={m.id} onClick={(e) => openChart(m.symbol, m.label, e)} style={{
-                        background: isActive ? T.bgDeep : T.bgCard,
-                        border: `1px solid ${isActive ? T.accent : T.border}`,
-                        borderLeft: `4px solid ${col}`,
-                        borderRadius: 10,
-                        padding: "14px 16px",
-                        cursor: "pointer",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        transition: "all 0.2s",
-                      }}>
-                        <div>
-                          <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{m.label}</div>
-                          <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 2 }}>{m.symbol}</div>
-                        </div>
-                        <div style={{ textAlign: "right" }}>
-                          <div style={{ overflow: "hidden" }}>
-                            <div
-                              key={d?.price}
-                              className={flashState[m.id] === "up" ? "price-slide-up" : flashState[m.id] === "down" ? "price-slide-down" : ""}
-                              style={{ ...font, fontSize: 17, fontWeight: 600, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.8s" }}>
-                              {marketLoading && !d ? "—" : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
-                            </div>
+                      <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        {/* Move / Delete controls */}
+                        {desktopEditMode && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
+                            <button onClick={() => {
+                              if (idx === 0) return;
+                              const order = [...desktopCardOrder];
+                              const ci = order.indexOf(m.symbol);
+                              // Find previous visible symbol
+                              const visibleSyms = arr.map(a => a.symbol);
+                              const prevSym = visibleSyms[idx - 1];
+                              const pi = order.indexOf(prevSym);
+                              if (ci >= 0 && pi >= 0) { [order[ci], order[pi]] = [order[pi], order[ci]]; }
+                              setDesktopCardOrder(order);
+                              try { localStorage.setItem("ta-desktop-order", JSON.stringify(order)); } catch {}
+                            }} style={{
+                              width: 20, height: 16, borderRadius: "4px 4px 1px 1px", border: `1px solid ${T.border}`,
+                              background: idx === 0 ? T.bgDeep : T.bgCard, color: idx === 0 ? T.textFaint : T.text,
+                              fontSize: 9, cursor: idx === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                            }}>▲</button>
+                            <button onClick={() => {
+                              if (idx === arr.length - 1) return;
+                              const order = [...desktopCardOrder];
+                              const ci = order.indexOf(m.symbol);
+                              const visibleSyms = arr.map(a => a.symbol);
+                              const nextSym = visibleSyms[idx + 1];
+                              const ni = order.indexOf(nextSym);
+                              if (ci >= 0 && ni >= 0) { [order[ci], order[ni]] = [order[ni], order[ci]]; }
+                              setDesktopCardOrder(order);
+                              try { localStorage.setItem("ta-desktop-order", JSON.stringify(order)); } catch {}
+                            }} style={{
+                              width: 20, height: 16, borderRadius: "1px 1px 4px 4px", border: `1px solid ${T.border}`,
+                              background: idx === arr.length - 1 ? T.bgDeep : T.bgCard, color: idx === arr.length - 1 ? T.textFaint : T.text,
+                              fontSize: 9, cursor: idx === arr.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                            }}>▼</button>
                           </div>
-                          {d && <div style={{ ...mono, fontSize: 12, color: col, marginTop: 2 }}>
-                            {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
-                          </div>}
+                        )}
+                        {/* Card */}
+                        <div onClick={(e) => !desktopEditMode && openChart(m.symbol, m.label, e)} style={{
+                          flex: 1,
+                          background: isActive ? T.bgDeep : T.bgCard,
+                          border: `1px solid ${isActive ? T.accent : T.border}`,
+                          borderLeft: `4px solid ${col}`,
+                          borderRadius: 10,
+                          padding: "14px 16px",
+                          cursor: desktopEditMode ? "default" : "pointer",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          transition: "all 0.2s",
+                        }}>
+                          <div>
+                            <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{m.label}</div>
+                            <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 2 }}>{m.symbol}</div>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <div style={{ overflow: "hidden" }}>
+                              <div
+                                key={d?.price}
+                                className={flashState[m.id] === "up" ? "price-slide-up" : flashState[m.id] === "down" ? "price-slide-down" : ""}
+                                style={{ ...font, fontSize: 17, fontWeight: 600, color: flashState[m.id] === "up" ? T.green : flashState[m.id] === "down" ? T.red : T.text, transition: "color 0.8s" }}>
+                                {marketLoading && !d ? "—" : d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                              </div>
+                            </div>
+                            {d && <div style={{ ...mono, fontSize: 12, color: col, marginTop: 2 }}>
+                              {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
+                            </div>}
+                          </div>
                         </div>
+                        {/* Delete button */}
+                        {desktopEditMode && (
+                          <button onClick={() => {
+                            const next = [...hiddenCards, m.symbol];
+                            setHiddenCards(next);
+                            try { localStorage.setItem("ta-hidden-cards", JSON.stringify(next)); } catch {}
+                          }} style={{
+                            width: 22, height: 22, borderRadius: "50%", border: `1px solid #cc2222`,
+                            background: "none", color: "#cc2222", fontSize: 13, cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, padding: 0, lineHeight: 1,
+                          }}>×</button>
+                        )}
                       </div>
                     );
                   })}
+
+                  {/* Restore hidden cards button */}
+                  {desktopEditMode && hiddenCards.length > 0 && (
+                    <button onClick={() => {
+                      setHiddenCards([]);
+                      try { localStorage.removeItem("ta-hidden-cards"); } catch {}
+                    }} style={{
+                      ...mono, fontSize: 10, color: "#0a1f4a", background: "none", border: `1px solid #0a1f4a`,
+                      borderRadius: 6, padding: "6px 12px", cursor: "pointer", width: "100%", marginTop: 4,
+                    }}>Restore {hiddenCards.length} hidden</button>
+                  )}
 
                   {/* User watchlist items */}
                   {watchlist.length > 0 && (
                     <>
                       <div style={{ height: 1, background: T.border, margin: "6px 0" }} />
-                      {watchlist.map(m => {
+                      {watchlist.map((m, wIdx) => {
                         const d = watchData[m.symbol];
                         const up = d?.changePct >= 0;
                         const col = !d ? T.border : up ? T.green : T.red;
                         const isActive = chartSymbol === m.symbol;
                         return (
-                          <div key={m.symbol} style={{
-                            background: isActive ? T.bgDeep : T.bgCard,
-                            border: `1px solid ${isActive ? T.accent : T.border}`,
-                            borderLeft: `4px solid ${col}`,
-                            borderRadius: 9, padding: "10px 12px", cursor: "pointer",
-                            display: "flex", justifyContent: "space-between", alignItems: "center",
-                            transition: "all 0.2s", position: "relative",
-                          }}>
-                            <div onClick={(e) => openChart(m.symbol, m.label, e)} style={{ flex: 1 }}>
-                              <div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.text }}>{m.label}</div>
-                              <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{m.symbol}</div>
-                            </div>
-                            <div style={{ textAlign: "right" }} onClick={(e) => openChart(m.symbol, m.label, e)}>
-                              <div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>
-                                {d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                          <div key={m.symbol} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            {desktopEditMode && (
+                              <div style={{ display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
+                                <button onClick={() => {
+                                  if (wIdx === 0) return;
+                                  const next = [...watchlist];
+                                  [next[wIdx], next[wIdx - 1]] = [next[wIdx - 1], next[wIdx]];
+                                  setWatchlist(next);
+                                  try { localStorage.setItem("ta-watchlist", JSON.stringify(next)); } catch {}
+                                }} style={{
+                                  width: 20, height: 16, borderRadius: "4px 4px 1px 1px", border: `1px solid ${T.border}`,
+                                  background: wIdx === 0 ? T.bgDeep : T.bgCard, color: wIdx === 0 ? T.textFaint : T.text,
+                                  fontSize: 9, cursor: wIdx === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                                }}>▲</button>
+                                <button onClick={() => {
+                                  if (wIdx === watchlist.length - 1) return;
+                                  const next = [...watchlist];
+                                  [next[wIdx], next[wIdx + 1]] = [next[wIdx + 1], next[wIdx]];
+                                  setWatchlist(next);
+                                  try { localStorage.setItem("ta-watchlist", JSON.stringify(next)); } catch {}
+                                }} style={{
+                                  width: 20, height: 16, borderRadius: "1px 1px 4px 4px", border: `1px solid ${T.border}`,
+                                  background: wIdx === watchlist.length - 1 ? T.bgDeep : T.bgCard, color: wIdx === watchlist.length - 1 ? T.textFaint : T.text,
+                                  fontSize: 9, cursor: wIdx === watchlist.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                                }}>▼</button>
                               </div>
-                              {d && <div style={{ ...mono, fontSize: 10, color: col, marginTop: 1 }}>
-                                {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
-                              </div>}
+                            )}
+                            <div style={{
+                              flex: 1,
+                              background: isActive ? T.bgDeep : T.bgCard,
+                              border: `1px solid ${isActive ? T.accent : T.border}`,
+                              borderLeft: `4px solid ${col}`,
+                              borderRadius: 10, padding: "14px 16px", cursor: desktopEditMode ? "default" : "pointer",
+                              display: "flex", justifyContent: "space-between", alignItems: "center",
+                              transition: "all 0.2s",
+                            }}>
+                              <div onClick={(e) => !desktopEditMode && openChart(m.symbol, m.label, e)} style={{ flex: 1 }}>
+                                <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{m.label}</div>
+                                <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 2 }}>{m.symbol}</div>
+                              </div>
+                              <div style={{ textAlign: "right" }} onClick={(e) => !desktopEditMode && openChart(m.symbol, m.label, e)}>
+                                <div style={{ ...font, fontSize: 17, fontWeight: 600, color: T.text }}>
+                                  {d?.price ? `$${Number(d.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                                </div>
+                                {d && <div style={{ ...mono, fontSize: 12, color: col, marginTop: 2 }}>
+                                  {up ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
+                                </div>}
+                              </div>
                             </div>
-                            <button onClick={() => removeFromWatchlist(m.symbol)} style={{
-                              position: "absolute", top: 2, right: 4,
-                              background: "none", border: "none", color: T.textFaint,
-                              cursor: "pointer", fontSize: 11, lineHeight: 1, opacity: 0.5,
-                            }}>×</button>
+                            {desktopEditMode && (
+                              <button onClick={() => removeFromWatchlist(m.symbol)} style={{
+                                width: 22, height: 22, borderRadius: "50%", border: `1px solid #cc2222`,
+                                background: "none", color: "#cc2222", fontSize: 13, cursor: "pointer",
+                                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, padding: 0, lineHeight: 1,
+                              }}>×</button>
+                            )}
                           </div>
                         );
                       })}
