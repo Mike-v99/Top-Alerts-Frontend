@@ -320,6 +320,7 @@ export default function AppPage() {
   const chartPanelRef = useRef(null);
   const [flyingCard,   setFlyingCard]   = useState(null); // {x,y,label,symbol}
   const [tickerDetails, setTickerDetails] = useState(null); // { name, description, sic_description, market_cap, ... }
+  const [earningsDates, setEarningsDates] = useState([]); // [{ date, epsEstimate, revenueEstimate, quarter }]
   const [week52Data,    setWeek52Data]    = useState(null); // { high, low, yearChange }
   const [tickerNews,    setTickerNews]    = useState([]);
   const [newsLoading,   setNewsLoading]   = useState(false);
@@ -665,6 +666,40 @@ export default function AppPage() {
     } catch (e) { console.error("Ticker details failed", e); }
   }
 
+  // ── Earnings dates (4 quarters) ────────────────────────────────────────
+  async function fetchEarningsDates(symbol) {
+    setEarningsDates([]);
+    try {
+      const fKey = import.meta.env.VITE_FINNHUB_KEY || "";
+      if (!fKey) return;
+      const now = new Date();
+      const pad = n => String(n).padStart(2, "0");
+      const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      // Fetch a wide range: 6 months back + 12 months forward to find 4 quarters
+      const from = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+      const to = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+      const res = await fetch(`https://finnhub.io/api/v1/calendar/earnings?symbol=${symbol}&from=${fmt(from)}&to=${fmt(to)}&token=${fKey}`);
+      const data = await res.json();
+      const all = (data.earningsCalendar || [])
+        .filter(e => e.symbol === symbol)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+      // Get the next 4 upcoming (or mix of past + upcoming to fill 4)
+      const upcoming = all.filter(e => new Date(e.date) >= now);
+      const past = all.filter(e => new Date(e.date) < now).slice(-2);
+      const combined = [...past, ...upcoming].slice(0, 4);
+      setEarningsDates(combined.map(e => ({
+        date: e.date,
+        quarter: e.quarter || null,
+        year: e.year || null,
+        epsEstimate: e.epsEstimate || null,
+        epsActual: e.epsActual || null,
+        revenueEstimate: e.revenueEstimate || null,
+        revenueActual: e.revenueActual || null,
+        hour: e.hour || null, // "bmo" (before market open) or "amc" (after market close)
+      })));
+    } catch (e) { console.error("Earnings dates fetch failed", e); }
+  }
+
   // ── 52-week data ─────────────────────────────────────────────────────────
   async function fetch52Week(symbol) {
     setWeek52Data(null);
@@ -964,6 +999,7 @@ export default function AppPage() {
     fetchTickerDetails(symbol);
     if (!isMobile) fetchTickerNews(symbol);
     fetch52Week(symbol);
+    fetchEarningsDates(symbol);
   }
 
   function changeChartRange(range) {
@@ -2684,6 +2720,55 @@ export default function AppPage() {
                       </div>
                     );
                   })()}
+
+                  {/* Quarterly Earnings Dates */}
+                  {earningsDates.length > 0 && (
+                    <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, padding: "18px 18px", marginBottom: 16 }}>
+                      <div style={{ ...mono, fontSize: 9, letterSpacing: "1px", color: T.textFaint, marginBottom: 12 }}>QUARTERLY EARNINGS · {chartSymbol}</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
+                        {earningsDates.map((e, i) => {
+                          const d = new Date(e.date + "T00:00:00");
+                          const isPast = d < new Date();
+                          const beat = e.epsActual && e.epsEstimate ? e.epsActual > e.epsEstimate : null;
+                          return (
+                            <div key={i} style={{
+                              background: isPast ? T.bgDeep : "rgba(10,31,74,0.04)",
+                              border: `1px solid ${isPast ? T.border : "rgba(10,31,74,0.15)"}`,
+                              borderRadius: 8, padding: "12px 10px", textAlign: "center",
+                              position: "relative", overflow: "hidden",
+                            }}>
+                              {!isPast && i === 0 && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#0a1f4a" }} />}
+                              <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginBottom: 4 }}>
+                                {e.quarter ? `Q${e.quarter} ${e.year || ""}` : `Q${i + 1}`}
+                              </div>
+                              <div style={{ ...font, fontSize: 14, fontWeight: 600, color: T.text }}>
+                                {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                              </div>
+                              <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 2 }}>
+                                {d.getFullYear()}
+                              </div>
+                              {e.hour && (
+                                <div style={{ ...mono, fontSize: 8, color: T.textFaint, marginTop: 4, letterSpacing: "0.5px" }}>
+                                  {e.hour === "bmo" ? "Before Open" : e.hour === "amc" ? "After Close" : e.hour}
+                                </div>
+                              )}
+                              {isPast && e.epsActual != null && (
+                                <div style={{ ...mono, fontSize: 10, color: beat ? "#1a8a44" : beat === false ? "#cc2222" : T.textMid, fontWeight: 600, marginTop: 4 }}>
+                                  EPS: ${Number(e.epsActual).toFixed(2)}
+                                  {e.epsEstimate != null && <span style={{ color: T.textFaint, fontWeight: 400 }}> / est ${Number(e.epsEstimate).toFixed(2)}</span>}
+                                </div>
+                              )}
+                              {!isPast && e.epsEstimate != null && (
+                                <div style={{ ...mono, fontSize: 10, color: T.textMid, marginTop: 4 }}>
+                                  Est: ${Number(e.epsEstimate).toFixed(2)}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Ticker details — company info */}
                   {tickerDetails && (
