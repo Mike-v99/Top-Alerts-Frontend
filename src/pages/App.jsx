@@ -486,8 +486,8 @@ export default function AppPage() {
   // Default chart to DIA on mount
   useEffect(() => {
     setChartSymbol("DIA");
-    setChartRange("1D");
-    fetchChart("DIA", "1D");
+    setChartRange("5m");
+    fetchChart("DIA", "5m");
     fetchTickerDetails("DIA");
     if (window.innerWidth >= 768) fetchTickerNews("DIA");
     fetch52Week("DIA");
@@ -634,7 +634,12 @@ export default function AppPage() {
         fetch(`https://api.massive.com/v2/aggs/ticker/${symbol}/range/${mult}/${span}/${f}/${t}?adjusted=true&sort=asc&limit=300&apiKey=${key}`)
           .then(r => r.json()).then(d => d.results || []).catch(() => []);
 
-      if (range === "15m") {
+      if (range === "5m") {
+        // 1 day chart — 5 min candles
+        const start = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+        const results = await getAggs(5, "minute", fmt(start), fmt(now));
+        if (results.length) setChartData(results.map(mapR));
+      } else if (range === "15m") {
         // 5 day chart — 15 min candles
         const start = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
         const results = await getAggs(15, "minute", fmt(start), fmt(now));
@@ -1006,8 +1011,8 @@ export default function AppPage() {
     }
     setChartSymbol(symbol);
     setChartLabel(label || symbol);
-    setChartRange("1D");
-    fetchChart(symbol, "1D");
+    setChartRange("5m");
+    fetchChart(symbol, "5m");
     fetchTickerDetails(symbol);
     if (!isMobile) fetchTickerNews(symbol);
     fetch52Week(symbol);
@@ -1471,7 +1476,7 @@ export default function AppPage() {
                           })()}
                         </div>
                         <div style={{ display: "flex", gap: 6 }}>
-                          {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
+                          {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                             <span key={r} onClick={() => changeChartRange(r)} style={{
                               padding: "6px 14px", borderRadius: 7, ...mono, fontSize: 12, cursor: "pointer", fontWeight: 600,
                               background: chartRange === r ? "#0a1f4a" : T.bgDeep,
@@ -1632,7 +1637,7 @@ export default function AppPage() {
                           <div style={{ ...font, fontSize: 26, fontWeight: 700, color: T.text }}>{chartLabel || chartSymbol} <span style={{ ...mono, fontSize: 14, color: T.textFaint }}>{chartSymbol}</span></div>
                         </div>
                         <div style={{ display: "flex", gap: 6 }}>
-                          {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
+                          {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                             <span key={r} onClick={() => changeChartRange(r)} style={{
                               padding: "6px 14px", borderRadius: 7, ...mono, fontSize: 12, cursor: "pointer", fontWeight: 600,
                               background: chartRange === r ? "#0a1f4a" : T.bgDeep, color: chartRange === r ? "#e8f2ff" : T.textMid,
@@ -2141,7 +2146,7 @@ export default function AppPage() {
                                 <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>{chartLoading ? "Loading chart..." : "No data"}</div>
                               )}
                               <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "6px 8px", alignItems: "center" }}>
-                                {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
+                                {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                                   <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
                                     padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
                                     background: chartRange === r ? "#0a1f4a" : "transparent",
@@ -2262,7 +2267,7 @@ export default function AppPage() {
                           <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>Loading data...</div>
                         )}
                         <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "6px 8px", alignItems: "center" }}>
-                          {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
+                          {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                             <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
                               padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
                               background: chartRange === r ? "#0a1f4a" : "transparent",
@@ -2387,7 +2392,7 @@ export default function AppPage() {
                           <div style={{ textAlign: "center", padding: 30, ...mono, fontSize: 12, color: T.textMid }}>Loading data...</div>
                         )}
                         <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "6px 8px", alignItems: "center" }}>
-                          {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
+                          {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                             <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
                               padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
                               background: chartRange === r ? "#0a1f4a" : "transparent",
@@ -2781,7 +2786,7 @@ export default function AppPage() {
                         </>}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r,lbl]) => (
+                        {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r,lbl]) => (
                           <button key={r} onClick={() => changeChartRange(r)} style={{
                             ...mono, fontSize: 11, padding: "3px 10px", borderRadius: 6, cursor: "pointer",
                             background: chartRange === r ? T.btnPrimary : "none",
@@ -3166,7 +3171,7 @@ export default function AppPage() {
           </div>
           {/* Range buttons with bottom padding */}
           <div style={{ display: "flex", gap: 6, justifyContent: "center", padding: "12px 24px 20px", borderTop: `1px solid ${T.border}`, flexShrink: 0 }}>
-            {[["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
+            {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
               <span key={r} onClick={() => changeChartRange(r)} style={{
                 padding: "8px 16px", borderRadius: 8, ...mono, fontSize: 13, cursor: "pointer", fontWeight: 600,
                 background: chartRange === r ? "#0a1f4a" : T.bgCard,
