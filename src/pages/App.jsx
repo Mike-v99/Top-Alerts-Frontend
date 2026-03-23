@@ -2013,29 +2013,28 @@ export default function AppPage() {
                     flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
                     ...mono, fontSize: 12, letterSpacing: "0.5px",
                     background: hotlistFilter === "gainers" ? "#1a8a44" : T.bg,
-                    color: hotlistFilter === "gainers" ? "#fff" : T.textMid,
-                    fontWeight: hotlistFilter === "gainers" ? 700 : 500,
+                    color: hotlistFilter === "gainers" ? "#fff" : "#1a8a44",
+                    fontWeight: 700,
                   }}>Gainers</div>
                   <div onClick={() => { setHotlistFilter("losers"); setHotlistProOpen(false); }} style={{
                     flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
                     ...mono, fontSize: 12, letterSpacing: "0.5px",
                     background: hotlistFilter === "losers" ? "#cc2222" : T.bg,
-                    color: hotlistFilter === "losers" ? "#fff" : T.textMid,
-                    fontWeight: hotlistFilter === "losers" ? 700 : 500,
+                    color: hotlistFilter === "losers" ? "#fff" : "#cc2222",
+                    fontWeight: 700,
                     borderLeft: `1px solid ${T.border}`, borderRight: `1px solid ${T.border}`,
                   }}>Losers</div>
                   <div onClick={() => {
-                    if (isPro) { setHotlistProOpen(p => !p); }
-                    else { setHotlistProOpen(p => !p); }
+                    setHotlistProOpen(p => !p);
                   }} style={{
                     flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
                     ...mono, fontSize: 12, letterSpacing: "0.5px",
-                    background: hotlistProOpen ? "#0a1f4a" : T.bg,
-                    color: hotlistProOpen ? "#e8f2ff" : "#0a1f4a",
+                    background: "#0a1f4a",
+                    color: "#fff",
                     fontWeight: 700,
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
                   }}>
-                    <span style={{ fontSize: 8, background: hotlistProOpen ? "rgba(255,255,255,0.2)" : "#0a1f4a", color: "#e8f2ff", padding: "2px 5px", borderRadius: 2, fontWeight: 700 }}>PRO</span>
+                    <span style={{ fontSize: 8, background: "rgba(255,255,255,0.2)", color: "#fff", padding: "2px 5px", borderRadius: 2, fontWeight: 700 }}>PRO</span>
                     More
                   </div>
                 </div>
@@ -2049,7 +2048,7 @@ export default function AppPage() {
                           if (isPro) { setHotlistFilter(f.toLowerCase().replace(/\s+/g, '_').replace('52w_', 'w52_')); setHotlistProOpen(false); }
                           else { showToast("Pro plan required", "warn"); }
                         }} style={{
-                          ...mono, fontSize: 11, color: isPro ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.4)",
+                          ...mono, fontSize: 11, color: "#fff",
                           background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
                           borderRadius: 8, padding: "10px 0", textAlign: "center", cursor: "pointer",
                         }}>{f}</button>
