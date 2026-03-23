@@ -1986,7 +1986,6 @@ export default function AppPage() {
         {isMobile && tab === "market" && (
           <div>
             {/* ── WATCHLIST VIEW ─────────────────── */}
-            <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: 8 }}>
               <button onClick={() => { setEditMode(p => !p); setMobileExpanded(null); }} style={{
                 ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "6px 16px",
@@ -2252,7 +2251,6 @@ export default function AppPage() {
               );
             })}
             </div>
-            </div>{/* end watchlist view */}
           </div>
         )}
 
