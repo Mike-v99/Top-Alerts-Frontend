@@ -47,6 +47,7 @@ const THEMES = {
     sparkStroke: "rgba(255,255,255,0.4)", sparkFire: "rgba(255,255,255,0.6)", icon: "◑",
     // Whisper glass extras
     cardGradient: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))",
+    cardBg: "#0a0a0a",
     cardShadow: "none",
     cardBottomGreen: "linear-gradient(90deg, transparent, rgba(61,220,132,0.2), transparent)",
     cardBottomRed: "linear-gradient(90deg, transparent, rgba(255,90,90,0.2), transparent)",
@@ -2028,15 +2029,14 @@ export default function AppPage() {
                   {/* Card content */}
                   <div id={`swipe-card-${m.symbol}`} data-reorder-id={`reorder-${m.symbol}`} style={{
                     position: "relative", zIndex: 1,
-                    background: T.cardGradient,
+                    backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#ffffff",
+                    backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none",
                     border: `1px solid ${T.border}`,
                     borderRadius: 16,
                     marginBottom: 10,
                     touchAction: "pan-y",
                     overflow: "hidden",
                     boxShadow: T.cardShadow,
-                    backdropFilter: themeName === "charcoal" ? "blur(24px)" : "none",
-                    WebkitBackdropFilter: themeName === "charcoal" ? "blur(24px)" : "none",
                   }}
                     onTouchStart={(e) => !editMode && handleTouchStart(m.symbol, e)}
                     onTouchMove={(e) => !editMode && handleTouchMove(m.symbol, e)}
@@ -2160,15 +2160,14 @@ export default function AppPage() {
                   {/* Card content */}
                   <div id={`swipe-card-${w.symbol}`} style={{
                     position: "relative", zIndex: 1,
-                    background: T.cardGradient,
+                    backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#ffffff",
+                    backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none",
                     border: `1px solid ${T.border}`,
                     borderRadius: 16,
                     marginBottom: 10,
                     touchAction: "pan-y",
                     overflow: "hidden",
                     boxShadow: T.cardShadow,
-                    backdropFilter: themeName === "charcoal" ? "blur(24px)" : "none",
-                    WebkitBackdropFilter: themeName === "charcoal" ? "blur(24px)" : "none",
                   }}
                     onTouchStart={(e) => !editMode && handleTouchStart(w.symbol, e)}
                     onTouchMove={(e) => !editMode && handleTouchMove(w.symbol, e)}
@@ -2341,32 +2340,37 @@ export default function AppPage() {
                 const isExpanded = expandedHotlist === t.symbol;
                 return (
                   <div key={t.symbol} style={{
-                    background: isExpanded ? T.bgCard : T.bg,
-                    border: isExpanded ? `2px solid ${T.accent}` : "none",
-                    borderBottom: isExpanded ? `2px solid ${T.accent}` : `1px solid ${T.border}`,
-                    borderRadius: isExpanded ? 12 : 0,
-                    marginBottom: isExpanded ? 8 : 0,
+                    backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#ffffff",
+                    backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none",
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 16,
+                    marginBottom: 10,
+                    position: "relative",
+                    overflow: "hidden",
+                    boxShadow: T.cardShadow,
                   }}>
+                    {/* Colored bottom accent line */}
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: up ? T.cardBottomGreen : T.cardBottomRed }} />
                     {/* Collapsed row */}
                     <div onClick={() => {
                       try {
                         if (isExpanded) { setExpandedHotlist(null); }
                         else { setExpandedHotlist(t.symbol); setChartData([]); setChartLoading(true); openChart(t.symbol, t.name); }
                       } catch (err) { console.error("Hotlist expand error:", err); }
-                    }} style={{ padding: isExpanded ? "14px 14px" : "14px 8px 14px 0", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                      <div style={{ width: 26, height: 26, borderRadius: 7, background: `${col}15`, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: col, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                    }} style={{ padding: "20px 22px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: `${col}12`, border: `1px solid ${col}25`, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: col, fontWeight: 500, flexShrink: 0 }}>{i + 1}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{t.symbol}</div>
-                        <div style={{ ...mono, fontSize: 14, color: T.textMid }}>{t.name !== t.symbol ? t.name : ""}</div>
+                        <div style={{ ...font, fontSize: 17, fontWeight: 400, color: T.text }}>{t.symbol}</div>
+                        <div style={{ ...font, fontSize: 10, fontWeight: 300, color: T.textFaint, marginTop: 4 }}>{t.name !== t.symbol ? t.name : ""}</div>
                       </div>
                       {!isExpanded && (
                         <div style={{ textAlign: "center", flexShrink: 0 }}>
-                          <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{up ? "+" : "-"}${t.change != null ? `$${Math.abs(Number(t.change)).toFixed(2)}` : ""}</div>
+                          <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400 }}>{up ? "+" : "-"}${t.change != null ? `$${Math.abs(Number(t.change)).toFixed(2)}` : ""}</div>
                         </div>
                       )}
                       <div style={{ textAlign: "right", minWidth: 85 }}>
-                        <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        <div style={{ ...mono, fontSize: 14, color: col, fontWeight: 600 }}>{arrow} {Math.abs(t.changePct).toFixed(2)}%</div>
+                        <div style={{ ...font, fontSize: 18, fontWeight: 400, color: T.text }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400, marginTop: 3 }}>{arrow} {Math.abs(t.changePct).toFixed(2)}%</div>
                       </div>
                     </div>
 
