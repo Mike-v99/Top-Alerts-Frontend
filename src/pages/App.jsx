@@ -2017,9 +2017,9 @@ export default function AppPage() {
               const snap = d || {};
 
               return (
-                <div key={m.id} id={`swipe-wrapper-${m.symbol}`} style={{ position: "relative", overflow: "hidden", marginBottom: isExpanded ? 8 : 0, maxHeight: 2000 }}>
+                <div key={m.id} id={`swipe-wrapper-${m.symbol}`} style={{ position: "relative", overflow: "hidden", marginBottom: 10, borderRadius: 16 }}>
                   {/* Delete button revealed by swipe */}
-                  <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: T.red, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: isExpanded ? "0 12px 12px 0" : 0 }}
+                  <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: T.red, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0 16px 16px 0" }}
                     onClick={() => removeFromWatchlist(m.symbol)}>
                     <div style={{ color: "#fff", ...font, fontSize: 13, fontWeight: 600, textAlign: "center" }}>
                       <div style={{ fontSize: 18, marginBottom: 2 }}>✕</div>
@@ -2033,7 +2033,6 @@ export default function AppPage() {
                     backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none",
                     border: `1px solid ${T.border}`,
                     borderRadius: 16,
-                    marginBottom: 10,
                     touchAction: "pan-y",
                     overflow: "hidden",
                     boxShadow: T.cardShadow,
@@ -2148,9 +2147,9 @@ export default function AppPage() {
               const isExpanded = mobileExpanded === w.symbol;
               const snap = wd || {};
               return (
-                <div key={w.symbol} id={`swipe-wrapper-${w.symbol}`} style={{ position: "relative", overflow: "hidden", marginBottom: isExpanded ? 8 : 0, maxHeight: 2000 }}>
+                <div key={w.symbol} id={`swipe-wrapper-${w.symbol}`} style={{ position: "relative", overflow: "hidden", marginBottom: 10, borderRadius: 16 }}>
                   {/* Delete button revealed by swipe */}
-                  <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: T.red, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: isExpanded ? "0 12px 12px 0" : 0 }}
+                  <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: T.red, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0 16px 16px 0" }}
                     onClick={() => removeFromWatchlist(w.symbol)}>
                     <div style={{ color: "#fff", ...font, fontSize: 13, fontWeight: 600, textAlign: "center" }}>
                       <div style={{ fontSize: 18, marginBottom: 2 }}>✕</div>
@@ -2164,7 +2163,6 @@ export default function AppPage() {
                     backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none",
                     border: `1px solid ${T.border}`,
                     borderRadius: 16,
-                    marginBottom: 10,
                     touchAction: "pan-y",
                     overflow: "hidden",
                     boxShadow: T.cardShadow,
