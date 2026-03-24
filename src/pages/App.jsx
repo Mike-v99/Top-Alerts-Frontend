@@ -1934,38 +1934,43 @@ export default function AppPage() {
                           )}
 
                           {type === "earnings" && (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                               {items.map((e, i) => (
                                 <div key={i} style={{
                                   backgroundColor: themeName === "charcoal" ? "#111" : "#f9f8f5",
                                   border: `1px solid ${T.border}`,
-                                  borderRadius: 12, padding: "12px 14px", position: "relative", overflow: "hidden",
+                                  borderRadius: 12, padding: "12px", position: "relative", overflow: "hidden",
                                 }}>
                                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${col}25, transparent)` }} />
-                                  {/* Top row: symbol + label + beat/miss + alert */}
-                                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                                    <span style={{ ...font, fontSize: 15, fontWeight: 500, color: T.text }}>{e.symbol}</span>
-                                    <span style={{ ...font, fontSize: 11, fontWeight: 300, color: T.textFaint }}>{e.label}</span>
-                                    {e.beatMiss === "beat" && <span style={{ ...mono, fontSize: 8, color: T.green, background: `${T.green}15`, border: `1px solid ${T.green}30`, padding: "1px 5px", borderRadius: 3 }}>BEAT</span>}
-                                    {e.beatMiss === "miss" && <span style={{ ...mono, fontSize: 8, color: T.red, background: `${T.red}15`, border: `1px solid ${T.red}30`, padding: "1px 5px", borderRadius: 3 }}>MISS</span>}
+                                  {/* Symbol + alert button */}
+                                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                                    <span style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>{e.symbol}</span>
                                     <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
-                                      marginLeft: "auto", flexShrink: 0, background: "none",
+                                      width: 26, height: 26, borderRadius: "50%", background: "none",
                                       border: `1px solid ${T.border}`,
-                                      borderRadius: 6, padding: "4px 10px", cursor: "pointer",
-                                      ...mono, fontSize: 9, color: T.textMid,
-                                    }}>🔔</button>
+                                      display: "flex", alignItems: "center", justifyContent: "center",
+                                      cursor: "pointer", flexShrink: 0, padding: 0,
+                                      boxShadow: themeName === "charcoal" ? "0 0 6px rgba(255,255,255,0.06)" : "none",
+                                    }}>
+                                      <span style={{ fontSize: 14, fontWeight: 300, color: T.textMid, lineHeight: 1 }}>+</span>
+                                    </button>
                                   </div>
-                                  {/* Pill badges */}
-                                  <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                                    <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9, color: T.textMid }}>{e.time || "—"}</span>
-                                    {e.est && <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9, color: T.textMid }}>EPS {e.est}</span>}
+                                  {/* Label + badge */}
+                                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
+                                    <span style={{ ...font, fontSize: 10, color: T.textFaint }}>{e.label}</span>
+                                    {e.beatMiss === "beat" && <span style={{ ...mono, fontSize: 7, color: T.green, background: `${T.green}15`, border: `1px solid ${T.green}30`, padding: "1px 4px", borderRadius: 3 }}>BEAT</span>}
+                                    {e.beatMiss === "miss" && <span style={{ ...mono, fontSize: 7, color: T.red, background: `${T.red}15`, border: `1px solid ${T.red}30`, padding: "1px 4px", borderRadius: 3 }}>MISS</span>}
+                                  </div>
+                                  {/* Pills */}
+                                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                                    <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "2px 8px", ...mono, fontSize: 8, color: T.textMid }}>{e.time || "—"}</span>
+                                    {e.est && <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "2px 8px", ...mono, fontSize: 8, color: T.textMid }}>EPS {e.est}</span>}
                                     {e.actual && <span style={{
                                       background: e.beatMiss === "beat" ? `${T.green}12` : e.beatMiss === "miss" ? `${T.red}12` : T.accentBg,
                                       border: `1px solid ${e.beatMiss === "beat" ? `${T.green}30` : e.beatMiss === "miss" ? `${T.red}30` : T.border}`,
-                                      borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9,
+                                      borderRadius: 20, padding: "2px 8px", ...mono, fontSize: 8,
                                       color: e.beatMiss === "beat" ? T.green : e.beatMiss === "miss" ? T.red : T.textMid,
-                                    }}>Actual {e.actual}</span>}
-                                    {e.revEst && <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9, color: T.textMid }}>Rev {e.revEst}</span>}
+                                    }}>{e.actual}</span>}
                                   </div>
                                 </div>
                               ))}
@@ -1973,30 +1978,34 @@ export default function AppPage() {
                           )}
 
                           {(type === "ipo" || type === "split" || type === "dividend" || type === "holiday") && (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                               {items.map((e, i) => (
                                 <div key={i} style={{
                                   backgroundColor: themeName === "charcoal" ? "#111" : "#f9f8f5",
                                   border: `1px solid ${T.border}`,
-                                  borderRadius: 12, padding: "12px 14px", position: "relative", overflow: "hidden",
+                                  borderRadius: 12, padding: "12px", position: "relative", overflow: "hidden",
                                 }}>
                                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${col}25, transparent)` }} />
-                                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                                    {e.symbol && <span style={{ ...font, fontSize: 15, fontWeight: 500, color: T.text }}>{e.symbol}</span>}
-                                    <span style={{ ...font, fontSize: 11, fontWeight: 300, color: T.textFaint }}>{e.label}</span>
+                                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                                    {e.symbol && <span style={{ ...font, fontSize: 14, fontWeight: 500, color: T.text }}>{e.symbol}</span>}
+                                    {!e.symbol && <span style={{ ...font, fontSize: 11, fontWeight: 400, color: T.text }}>{(e.label || "").split(" ").slice(0, 2).join(" ")}</span>}
                                     {type !== "holiday" && e.symbol && (
                                       <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
-                                        marginLeft: "auto", flexShrink: 0, background: "none",
+                                        width: 26, height: 26, borderRadius: "50%", background: "none",
                                         border: `1px solid ${T.border}`,
-                                        borderRadius: 6, padding: "4px 10px", cursor: "pointer",
-                                        ...mono, fontSize: 9, color: T.textMid,
-                                      }}>🔔</button>
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        cursor: "pointer", flexShrink: 0, padding: 0,
+                                        boxShadow: themeName === "charcoal" ? "0 0 6px rgba(255,255,255,0.06)" : "none",
+                                      }}>
+                                        <span style={{ fontSize: 14, fontWeight: 300, color: T.textMid, lineHeight: 1 }}>+</span>
+                                      </button>
                                     )}
                                   </div>
-                                  <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                                    {e.time && <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9, color: T.textMid }}>{e.time}</span>}
-                                    {e.price && <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9, color: T.textMid }}>{e.price}</span>}
-                                    {e.impact && <span style={{ background: impactColor(e.impact) + "12", border: `1px solid ${impactColor(e.impact)}30`, borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9, color: impactColor(e.impact) }}>{e.impact.toUpperCase()}</span>}
+                                  <div style={{ ...font, fontSize: 10, color: T.textFaint, marginBottom: 6 }}>{e.label}</div>
+                                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                                    {e.time && <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "2px 8px", ...mono, fontSize: 8, color: T.textMid }}>{e.time}</span>}
+                                    {e.price && <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "2px 8px", ...mono, fontSize: 8, color: T.textMid }}>{e.price}</span>}
+                                    {e.impact && <span style={{ background: impactColor(e.impact) + "12", border: `1px solid ${impactColor(e.impact)}30`, borderRadius: 20, padding: "2px 8px", ...mono, fontSize: 8, color: impactColor(e.impact) }}>{e.impact.toUpperCase()}</span>}
                                   </div>
                                 </div>
                               ))}
