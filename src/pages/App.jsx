@@ -1221,9 +1221,11 @@ export default function AppPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
+    <>
     <div style={{ minHeight: "100vh", background: T.bg, ...font, color: T.text, position: "relative", overflowX: "hidden", transition: "background 0.3s" }}>
       <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
       <style>{`
+        html, body { background: ${T.bg}; margin: 0; }
         @keyframes slideFromLeft  { from { transform: translateX(-60%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideFromRight { from { transform: translateX(60%);  opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideUpIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -2271,54 +2273,70 @@ export default function AppPage() {
         {/* Mobile hotlist tab */}
         {isMobile && tab === "hotlist" && (
           <div>
-            {/* Segmented filter bar: Gainers | Losers | Pro */}
-            <div style={{ display: "flex", border: `2px solid ${T.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 10 }}>
+            {/* Segmented filter bar: Gainers | Losers | Pro — Glow Accent style */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <div onClick={() => { setHotlistFilter("gainers"); setHotlistProOpen(false); }} style={{
-                flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
-                ...mono, fontSize: 12, letterSpacing: "0.5px",
-                background: hotlistFilter === "gainers" ? T.green : T.bg,
-                color: hotlistFilter === "gainers" ? "#fff" : T.green,
-                fontWeight: 700,
+                flex: 1, padding: 12, textAlign: "center", cursor: "pointer", borderRadius: 12,
+                ...font, fontSize: 13, fontWeight: 500,
+                background: hotlistFilter === "gainers" ? T.green : "transparent",
+                color: hotlistFilter === "gainers" ? "#000" : T.green,
+                border: hotlistFilter === "gainers" ? "none" : `1px solid ${T.border}`,
+                boxShadow: hotlistFilter === "gainers" ? `0 0 12px ${T.green}30` : "none",
               }}>Gainers</div>
               <div onClick={() => { setHotlistFilter("losers"); setHotlistProOpen(false); }} style={{
-                flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
-                ...mono, fontSize: 12, letterSpacing: "0.5px",
-                background: hotlistFilter === "losers" ? T.red : T.bg,
+                flex: 1, padding: 12, textAlign: "center", cursor: "pointer", borderRadius: 12,
+                ...font, fontSize: 13, fontWeight: 500,
+                background: hotlistFilter === "losers" ? T.red : "transparent",
                 color: hotlistFilter === "losers" ? "#fff" : T.red,
-                fontWeight: 700,
-                borderLeft: `1px solid ${T.border}`, borderRight: `1px solid ${T.border}`,
+                border: hotlistFilter === "losers" ? "none" : `1px solid ${T.border}`,
+                boxShadow: hotlistFilter === "losers" ? `0 0 12px ${T.red}30` : "none",
               }}>Losers</div>
               <div onClick={() => setHotlistProOpen(p => !p)} style={{
-                flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
-                ...mono, fontSize: 12, letterSpacing: "0.5px",
-                background: T.accent, color: "#fff", fontWeight: 700,
+                flex: 1, padding: 12, textAlign: "center", cursor: "pointer", borderRadius: 12,
+                ...font, fontSize: 13, fontWeight: 500,
+                background: themeName === "charcoal" ? "rgba(255,255,255,0.08)" : T.accent,
+                color: themeName === "charcoal" ? "#fff" : T.btnText,
+                border: themeName === "charcoal" ? `1px solid rgba(255,255,255,0.15)` : "none",
+                boxShadow: themeName === "charcoal" ? "0 0 12px rgba(255,255,255,0.08)" : "0 2px 8px rgba(0,0,0,0.15)",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
               }}>
-                <span style={{ fontSize: 8, background: "rgba(255,255,255,0.2)", color: "#fff", padding: "2px 5px", borderRadius: 2, fontWeight: 700 }}>PRO</span>
+                <span style={{ ...mono, fontSize: 7, background: "rgba(255,255,255,0.15)", padding: "2px 6px", borderRadius: 3, color: themeName === "charcoal" ? "#fff" : T.btnText }}>PRO</span>
                 More
               </div>
             </div>
 
-            {/* Pro dropdown */}
+            {/* Pro dropdown — Glow Accent glass panel */}
             {hotlistProOpen && (
-              <div style={{ background: T.accent, borderRadius: 10, padding: "14px 16px", marginBottom: 12 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 14 }}>
-                  {["Volume","Volatile","52W High","52W Low","Pre-Market","After-Hours"].map(fl => (
+              <div style={{
+                background: themeName === "charcoal" ? "rgba(255,255,255,0.02)" : "#ffffff",
+                border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.1)"}`,
+                borderRadius: 16, padding: 16, marginBottom: 16,
+                boxShadow: themeName === "charcoal" ? "0 0 20px rgba(255,255,255,0.02)" : "0 4px 16px rgba(0,0,0,0.06)",
+              }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
+                  {["Volume","Volatile","52W High","52W Low","Pre-Mkt","After-Hrs"].map(fl => (
                     <button key={fl} onClick={() => {
                       if (isPro) { setHotlistFilter(fl.toLowerCase().replace(/\s+/g, '_')); setHotlistProOpen(false); }
                       else { showToast("Pro plan required", "warn"); }
                     }} style={{
-                      ...mono, fontSize: 11, color: "#fff",
-                      background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
-                      borderRadius: 8, padding: "10px 0", textAlign: "center", cursor: "pointer",
+                      ...font, fontSize: 12, fontWeight: 400, cursor: "pointer",
+                      color: T.textMid,
+                      background: themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+                      border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}`,
+                      borderRadius: 10, padding: "12px 0", textAlign: "center",
+                      boxShadow: themeName === "charcoal" ? "0 0 8px rgba(255,255,255,0.04)" : "none",
                     }}>{fl}</button>
                   ))}
                 </div>
                 {!isPro && (
                   <button onClick={() => { setHotlistProOpen(false); setTab("pricing"); }} style={{
-                    width: "100%", padding: 11, background: T.btnText, color: T.accent,
-                    border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 700, cursor: "pointer",
-                  }}>Unlock Pro Filters — $9/mo</button>
+                    width: "100%", padding: 12,
+                    background: themeName === "charcoal" ? "rgba(255,255,255,0.1)" : T.accent,
+                    border: themeName === "charcoal" ? `1px solid rgba(255,255,255,0.15)` : "none",
+                    borderRadius: 12, ...font, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                    color: themeName === "charcoal" ? "#fff" : T.btnText,
+                    boxShadow: themeName === "charcoal" ? "0 0 12px rgba(255,255,255,0.08)" : "0 2px 10px rgba(0,0,0,0.15)",
+                  }}>Unlock Pro — $9/mo</button>
                 )}
               </div>
             )}
@@ -2539,28 +2557,6 @@ export default function AppPage() {
             {!loading && allAlerts.filter(a => a.status !== "deleted").length === 0 && (
               <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...font, fontSize: 14 }}>No alerts yet — create one above</div>
             )}
-          </div>
-        )}
-
-        {/* ── MOBILE FLOATING BOTTOM BAR ──────────────────────────────── */}
-        {isMobile && (
-          <div style={{
-            position: "fixed", bottom: 20, left: 16, right: 16, zIndex: 100,
-            background: T.barBg, backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)",
-            border: `1px solid ${T.barBorder}`, borderRadius: 20,
-            padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between",
-            boxShadow: T.barShadow,
-          }}>
-            <div onClick={() => { setEditMode(p => !p); setMobileExpanded(null); }} style={{ ...font, fontSize: 12, fontWeight: 500, color: T.textMid, cursor: "pointer" }}>
-              {editMode ? "Done" : "Edit"}
-            </div>
-            <div onClick={() => openModal()} style={{
-              background: T.btnPrimary, border: themeName === "charcoal" ? `1px solid ${T.barBorder}` : "none",
-              borderRadius: 14, padding: "11px 28px",
-              ...font, fontSize: 13, fontWeight: 500, color: T.btnText, cursor: "pointer",
-              boxShadow: themeName === "paper" ? "0 2px 10px rgba(0,0,0,0.15)" : "none",
-            }}>+ New Alert</div>
-            <div style={{ ...font, fontSize: 12, fontWeight: 500, color: T.textMid, cursor: "pointer" }}>Filter</div>
           </div>
         )}
 
@@ -4210,5 +4206,34 @@ function PricingPage({ T, font, mono, currentPlan, onUpgrade, isMobile }) {
         </div>
       )}
     </div>
+
+    {/* ── MOBILE FLOATING BOTTOM BAR (outside scroll container) ──── */}
+    {isMobile && (
+      <div style={{
+        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
+        padding: "12px 16px 20px",
+        background: `linear-gradient(to top, ${T.bg}, ${T.bg}ee, transparent)`,
+      }}>
+        <div style={{
+          background: T.barBg, backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)",
+          border: `1px solid ${T.barBorder}`, borderRadius: 20,
+          padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          boxShadow: T.barShadow,
+        }}>
+          <div onClick={() => { setEditMode(p => !p); setMobileExpanded(null); }} style={{ ...font, fontSize: 12, fontWeight: 500, color: T.textMid, cursor: "pointer" }}>
+            {editMode ? "Done" : "Edit"}
+          </div>
+          <div onClick={() => openModal()} style={{
+            background: T.btnPrimary, border: themeName === "charcoal" ? `1px solid ${T.barBorder}` : "none",
+            borderRadius: 14, padding: "11px 28px",
+            ...font, fontSize: 13, fontWeight: 500, color: T.btnText, cursor: "pointer",
+            boxShadow: themeName === "paper" ? "0 2px 10px rgba(0,0,0,0.15)" : "none",
+          }}>+ New Alert</div>
+          <div style={{ ...font, fontSize: 12, fontWeight: 500, color: T.textMid, cursor: "pointer" }}>Filter</div>
+        </div>
+      </div>
+    )}
+
+    </>
   );
 }
