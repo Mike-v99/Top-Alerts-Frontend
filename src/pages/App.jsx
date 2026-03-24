@@ -1218,6 +1218,45 @@ export default function AppPage() {
     window.location.href = data.url;  // redirect to Stripe Checkout
   }
 
+  // ── Mobile floating bar (injected into document.body via DOM to bypass all CSS containment) ──
+  const floatingBarRef = useRef(null);
+  const openModalRef = useRef(openModal);
+  openModalRef.current = openModal;
+
+  useEffect(() => {
+    if (!isMobile) {
+      if (floatingBarRef.current) { floatingBarRef.current.remove(); floatingBarRef.current = null; }
+      return;
+    }
+    if (!floatingBarRef.current) {
+      const el = document.createElement("div");
+      el.id = "ta-floating-bar";
+      document.body.appendChild(el);
+      floatingBarRef.current = el;
+    }
+    const el = floatingBarRef.current;
+    const isDark = themeName === "charcoal";
+    el.style.cssText = `position:fixed;bottom:0;left:0;right:0;z-index:9999;padding:12px 16px 20px;background:linear-gradient(to top,${T.bg},${T.bg}ee,transparent);pointer-events:none;font-family:'Outfit',sans-serif;`;
+    el.innerHTML = `<div style="background:${T.barBg};backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid ${T.barBorder};border-radius:20px;padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:16px;box-shadow:${T.barShadow};pointer-events:auto;">
+      <div id="ta-bar-edit" style="font-size:12px;font-weight:500;color:${T.textMid};cursor:pointer;">${editMode ? "Done" : "Edit"}</div>
+      <div id="ta-bar-alert" style="background:${T.btnPrimary};${isDark ? `border:1px solid ${T.barBorder};` : ""}border-radius:14px;padding:11px 28px;font-size:13px;font-weight:500;color:${T.btnText};cursor:pointer;${!isDark ? "box-shadow:0 2px 10px rgba(0,0,0,0.15);" : ""}">+ New Alert</div>
+    </div>`;
+    const editBtn = el.querySelector("#ta-bar-edit");
+    const alertBtn = el.querySelector("#ta-bar-alert");
+    const handleEdit = () => { setEditMode(p => !p); setMobileExpanded(null); };
+    const handleAlert = () => openModalRef.current();
+    editBtn.addEventListener("click", handleEdit);
+    alertBtn.addEventListener("click", handleAlert);
+    return () => {
+      editBtn.removeEventListener("click", handleEdit);
+      alertBtn.removeEventListener("click", handleAlert);
+    };
+  }, [isMobile, themeName, editMode, T]);
+
+  useEffect(() => {
+    return () => { if (floatingBarRef.current) { floatingBarRef.current.remove(); floatingBarRef.current = null; } };
+  }, []);
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -3749,32 +3788,7 @@ export default function AppPage() {
         </div>
       )}
 
-      {/* ── MOBILE FLOATING BOTTOM BAR ──────────────────────────────── */}
-      {isMobile && (
-        <div style={{
-          position: "sticky", bottom: 0, left: 0, right: 0, zIndex: 100,
-          padding: "12px 16px 20px",
-          background: `linear-gradient(to top, ${T.bg}, ${T.bg}ee, ${T.bg}00)`,
-          marginTop: -40,
-        }}>
-          <div style={{
-            background: T.barBg, backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)",
-            border: `1px solid ${T.barBorder}`, borderRadius: 20,
-            padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "center", gap: 16,
-            boxShadow: T.barShadow,
-          }}>
-            <div onClick={() => { setEditMode(p => !p); setMobileExpanded(null); }} style={{ ...font, fontSize: 12, fontWeight: 500, color: T.textMid, cursor: "pointer" }}>
-              {editMode ? "Done" : "Edit"}
-            </div>
-            <div onClick={() => openModal()} style={{
-              background: T.btnPrimary, border: themeName === "charcoal" ? `1px solid ${T.barBorder}` : "none",
-              borderRadius: 14, padding: "11px 28px",
-              ...font, fontSize: 13, fontWeight: 500, color: T.btnText, cursor: "pointer",
-              boxShadow: themeName === "paper" ? "0 2px 10px rgba(0,0,0,0.15)" : "none",
-            }}>+ New Alert</div>
-          </div>
-        </div>
-      )}
+      {/* Floating bar is injected via useEffect below */}
 
     </div>
   );
