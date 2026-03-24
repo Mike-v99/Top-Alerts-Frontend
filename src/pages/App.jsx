@@ -9,28 +9,56 @@ import { useAuth }   from "../context/AuthContext.jsx";
 import { useAlerts } from "../hooks/useAlerts.js";
 import { billingApi } from "../api/client.js";
 
-// ── Themes (same as v3) ───────────────────────────────────────────────────────
+// ── Themes — Whisper #9 (Glass) ──────────────────────────────────────────────
 const THEMES = {
   paper: {
-    bg: "#faf9f6", bgCard: "#f4f2ed", bgDeep: "#ede9e0", bgModal: "#f4f2ed", bgInput: "#ede9e0",
-    border: "#d0c8b8", borderLight: "#ddd5c5", text: "#1a1200", textMid: "#6a6050", textFaint: "#aaa090",
-    accent: "#8a6a00", accentBg: "rgba(138,106,0,0.1)", accentBorder: "rgba(138,106,0,0.25)",
-    green: "#1a8a44", greenGlow: "none", yellow: "#c89000", yellowGlow: "none", red: "#cc2222", redGlow: "none",
-    gridColor: "rgba(138,106,0,0.06)", proGradient: "#ede5cc", proBorder: "rgba(138,106,0,0.3)",
-    btnPrimary: "#1a1200", btnText: "#f4f0e8", activeTab: "#1a1200", activeTabBorder: "#1a1200",
-    planActiveBg: "#1a1200", planActiveText: "#f4f0e8", planInactiveText: "#aaa090",
-    sparkStroke: "#8a6a00", sparkFire: "#8a6a00", icon: "☀",
+    bg: "#f5f4f0", bgCard: "#ffffff", bgDeep: "#f9f8f5", bgModal: "#ffffff", bgInput: "#ffffff",
+    border: "rgba(0,0,0,0.1)", borderLight: "rgba(0,0,0,0.06)", text: "#111111", textMid: "#555555", textFaint: "#999999",
+    accent: "#111111", accentBg: "rgba(0,0,0,0.04)", accentBorder: "rgba(0,0,0,0.12)",
+    green: "#16803c", greenGlow: "none", yellow: "#b45309", yellowGlow: "none", red: "#c41d1d", redGlow: "none",
+    gridColor: "rgba(0,0,0,0.04)", proGradient: "#f0efeb", proBorder: "rgba(0,0,0,0.1)",
+    btnPrimary: "#111111", btnText: "#ffffff", activeTab: "#111111", activeTabBorder: "#111111",
+    planActiveBg: "#111111", planActiveText: "#ffffff", planInactiveText: "#999999",
+    sparkStroke: "#555", sparkFire: "#111", icon: "☀",
+    // Whisper glass extras
+    cardGradient: "linear-gradient(180deg, #ffffff, #ffffff)",
+    cardShadow: "0 1px 4px rgba(0,0,0,0.04)",
+    cardBottomGreen: "linear-gradient(90deg, transparent, rgba(22,128,60,0.3), transparent)",
+    cardBottomRed: "linear-gradient(90deg, transparent, rgba(196,29,29,0.3), transparent)",
+    searchShadow: "0 1px 3px rgba(0,0,0,0.04)",
+    barBg: "rgba(255,255,255,0.9)",
+    barBorder: "rgba(0,0,0,0.1)",
+    barShadow: "0 -2px 24px rgba(0,0,0,0.06)",
+    pillBg: "#111111",
+    pillText: "rgba(255,255,255,0.7)",
+    pillAvatar: "rgba(255,255,255,0.15)",
+    pillAvatarText: "#ffffff",
+    tabInactive: "#888888",
   },
   charcoal: {
-    bg: "#141414", bgCard: "#1a1a1a", bgDeep: "#0f0f0f", bgModal: "#1a1a1a", bgInput: "#0f0f0f",
-    border: "#282828", borderLight: "#222", text: "#e0e0e0", textMid: "#888", textFaint: "#444",
-    accent: "#cccccc", accentBg: "rgba(255,255,255,0.06)", accentBorder: "rgba(255,255,255,0.15)",
-    green: "#3ddc84", greenGlow: "0 0 8px #3ddc84", yellow: "#bbbbbb", yellowGlow: "none",
-    red: "#ff5a5a", redGlow: "0 0 8px #ff5a5a",
-    gridColor: "rgba(255,255,255,0.02)", proGradient: "#1e1e1e", proBorder: "rgba(255,255,255,0.12)",
-    btnPrimary: "#e0e0e0", btnText: "#141414", activeTab: "#e0e0e0", activeTabBorder: "#888",
-    planActiveBg: "#282828", planActiveText: "#e0e0e0", planInactiveText: "#444",
-    sparkStroke: "#aaa", sparkFire: "#ccc", icon: "◑",
+    bg: "#0a0a0a", bgCard: "rgba(255,255,255,0.03)", bgDeep: "rgba(255,255,255,0.02)", bgModal: "#111111", bgInput: "rgba(255,255,255,0.025)",
+    border: "rgba(255,255,255,0.04)", borderLight: "rgba(255,255,255,0.03)", text: "#ffffff", textMid: "rgba(255,255,255,0.5)", textFaint: "rgba(255,255,255,0.2)",
+    accent: "rgba(255,255,255,0.7)", accentBg: "rgba(255,255,255,0.06)", accentBorder: "rgba(255,255,255,0.15)",
+    green: "#3ddc84", greenGlow: "none", yellow: "rgba(255,255,255,0.5)", yellowGlow: "none",
+    red: "#ff5a5a", redGlow: "none",
+    gridColor: "rgba(255,255,255,0.02)", proGradient: "#111111", proBorder: "rgba(255,255,255,0.08)",
+    btnPrimary: "rgba(255,255,255,0.1)", btnText: "#ffffff", activeTab: "#ffffff", activeTabBorder: "#ffffff",
+    planActiveBg: "rgba(255,255,255,0.08)", planActiveText: "#ffffff", planInactiveText: "rgba(255,255,255,0.2)",
+    sparkStroke: "rgba(255,255,255,0.4)", sparkFire: "rgba(255,255,255,0.6)", icon: "◑",
+    // Whisper glass extras
+    cardGradient: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))",
+    cardShadow: "none",
+    cardBottomGreen: "linear-gradient(90deg, transparent, rgba(61,220,132,0.2), transparent)",
+    cardBottomRed: "linear-gradient(90deg, transparent, rgba(255,90,90,0.2), transparent)",
+    searchShadow: "none",
+    barBg: "rgba(255,255,255,0.04)",
+    barBorder: "rgba(255,255,255,0.08)",
+    barShadow: "0 4px 24px rgba(0,0,0,0.4)",
+    pillBg: "rgba(255,255,255,0.08)",
+    pillText: "rgba(255,255,255,0.5)",
+    pillAvatar: "rgba(255,255,255,0.12)",
+    pillAvatarText: "rgba(255,255,255,0.7)",
+    tabInactive: "rgba(255,255,255,0.4)",
   },
 };
 
@@ -99,7 +127,7 @@ export default function AppPage() {
     }
   }
 
-  const [themeName, setThemeName] = useState("paper");
+  const [themeName, setThemeName] = useState("charcoal");
   const [tab,       setTab]       = useState("market");
   const [showModal, setShowModal] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -500,8 +528,8 @@ export default function AppPage() {
   });
 
   const T    = THEMES[themeName];
-  const font = { fontFamily: "'Roboto', sans-serif" };
-  const mono = { fontFamily: "'Roboto', sans-serif" };
+  const font = { fontFamily: "'Outfit', sans-serif" };
+  const mono = { fontFamily: "'Space Mono', monospace" };
 
   const chipBtn = (active) => ({
     padding: "7px 14px", borderRadius: 7,
@@ -1193,7 +1221,7 @@ export default function AppPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, ...font, color: T.text, position: "relative", overflowX: "hidden", transition: "background 0.3s" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
       <style>{`
         @keyframes slideFromLeft  { from { transform: translateX(-60%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideFromRight { from { transform: translateX(60%);  opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -1223,51 +1251,44 @@ export default function AppPage() {
         </div>
       )}
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: isMobile ? "16px 16px" : "32px 20px" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: isMobile ? "16px 16px" : "32px 20px", paddingBottom: isMobile ? 100 : 20 }}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isMobile ? 16 : 36 }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 4 : 8 }}>
-              <span style={{ fontSize: isMobile ? 20 : 38, color: isMobile ? T.text : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A", lineHeight: 1 }}>◈</span>
-              <span style={{ fontSize: isMobile ? 22 : 45, letterSpacing: "1px", fontWeight: isMobile ? 700 : 400 }}>
-                <span style={{ color: isMobile ? T.text : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A" }}>TOP</span>
-                <span style={{ color: isMobile ? T.text : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A" }}>-</span>
-                <span style={{ color: isMobile ? T.text : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A" }}>ALERTS</span>
-              </span>
-            </div>
-            {!isMobile && <div style={{ ...mono, fontSize: 9, letterSpacing: "3px", color: themeName === "charcoal" ? "#888" : "#5F5E5A", marginTop: 2 }}>INTELLIGENT PRICE ALERTS</div>}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: isMobile ? 18 : 22, color: isMobile ? T.text : T.text, lineHeight: 1 }}>◇</span>
+            <span style={{ ...font, fontSize: isMobile ? 15 : 18, fontWeight: 600, letterSpacing: "4px", color: T.text }}>TOP-ALERTS</span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 4 : 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {/* Theme toggle */}
             <button onClick={() => setThemeName(t => t === "paper" ? "charcoal" : "paper")} style={{
-              ...font, fontSize: isMobile ? 14 : 18, background: T.bgCard,
-              border: themeName === "paper" ? "2px solid #f5a623" : "2px solid #ffffff",
-              borderRadius: 8, padding: isMobile ? "4px 8px" : "6px 12px", cursor: "pointer",
+              ...font, fontSize: 14, background: "none",
+              border: "none", cursor: "pointer", padding: "6px 8px",
+              color: T.textMid, display: "flex", alignItems: "center",
             }}>
-              <span style={{ color: themeName === "paper" ? "#f5a623" : "#ffffff" }}>{T.icon}</span>
+              <span>{T.icon}</span>
             </button>
 
             {/* User profile / sign in */}
             {user ? (
               <button onClick={() => setShowProfile(p => !p)} style={{
-                ...font, fontSize: isMobile ? 14 : 16, background: T.bgCard, border: `1px solid ${T.border}`,
-                borderRadius: 8, padding: isMobile ? "6px 12px" : "8px 14px", cursor: "pointer", color: T.text,
-                display: "flex", alignItems: "center", gap: 6, fontWeight: 500,
+                ...font, fontSize: 11, background: T.pillBg, border: themeName === "charcoal" ? `1px solid ${T.barBorder}` : "none",
+                borderRadius: 12, padding: "8px 14px", cursor: "pointer", color: T.pillText,
+                display: "flex", alignItems: "center", gap: 6, fontWeight: 400,
               }}>
-                <span style={{ width: 24, height: 24, borderRadius: "50%", background: "#0a1f4a", color: "#e8f2ff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+                <span style={{ width: 22, height: 22, borderRadius: "50%", background: T.pillAvatar, color: T.pillAvatarText, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 500, flexShrink: 0 }}>
                   {(user?.email?.[0] || "U").toUpperCase()}
                 </span>
                 {!isMobile && <span>{user?.email?.split("@")[0]}</span>}
+                {isMobile && <span>Mike</span>}
               </button>
             ) : (
               <button onClick={() => navigate("/login")} style={{
-                ...font, fontSize: isMobile ? 14 : 18, background: "none",
-                border: `2px solid ${isMobile ? T.text : themeName === "charcoal" ? "#e0e0e0" : T.textMid}`,
-                borderRadius: 8, padding: isMobile ? "4px 10px" : "6px 16px", cursor: "pointer",
-                color: isMobile ? T.text : themeName === "charcoal" ? "#e0e0e0" : "#5F5E5A",
-                fontWeight: isMobile ? 600 : 400,
+                ...font, fontSize: 12, background: T.pillBg,
+                border: themeName === "charcoal" ? `1px solid ${T.barBorder}` : "none",
+                borderRadius: 12, padding: "8px 16px", cursor: "pointer",
+                color: T.pillText, fontWeight: 500,
               }}>
                 SIGN IN
               </button>
@@ -1279,14 +1300,14 @@ export default function AppPage() {
         {showProBanner && (
           <div style={{ overflow: "hidden", marginBottom: 12 }}>
             <div style={{
-              background: "linear-gradient(135deg,#0a1f4a,#1a3a6a)", borderRadius: 12, padding: "16px 20px",
+              background: T.accent, borderRadius: 12, padding: "16px 20px",
               display: "flex", alignItems: "center", gap: 12,
               boxShadow: "0 4px 16px rgba(10,31,74,0.2)",
               animation: proBannerExiting ? "slideDownOut 0.4s ease forwards" : "slideUpIn 0.4s cubic-bezier(0.22,1,0.36,1) forwards",
             }}>
               <span style={{ fontSize: 22 }}>⚡</span>
               <div style={{ flex: 1 }}>
-                <div style={{ ...font, fontSize: 16, fontWeight: 600, color: "#e8f2ff" }}>Pro Plan Active</div>
+                <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.btnText }}>Pro Plan Active</div>
                 <div style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>All premium features unlocked</div>
               </div>
               <button onClick={() => { setProBannerExiting(true); setTimeout(() => { setShowProBanner(false); setProBannerExiting(false); }, 400); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 18 }}>×</button>
@@ -1295,25 +1316,19 @@ export default function AppPage() {
         )}
 
         {/* Tabs */}
-        <div style={{ display: "flex", flexWrap: isMobile ? "wrap" : "nowrap", gap: isMobile ? 0 : 0, marginBottom: isMobile ? 10 : 28, borderBottom: `1px solid ${T.border}` }}>
+        <div style={{ display: "flex", flexWrap: isMobile ? "wrap" : "nowrap", gap: 0, marginBottom: isMobile ? 10 : 28, borderBottom: isMobile ? "none" : `1px solid ${T.border}` }}>
           {(isPro ? ["market","hotlist","alerts","calendar"] : ["market","hotlist","alerts","calendar","pricing"]).map(t => (
             <button key={t} onClick={() => { setTab(t); if (t === "hotlist") setMarketView("hotlist"); }} style={{
-              padding: isMobile ? "8px 10px" : "10px 22px", background: "none", border: "none", cursor: "pointer",
-              ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px", fontWeight: isMobile && tab === t ? 700 : (t === "alerts" || t === "hotlist" ? 600 : 400),
-              color: t === "alerts" ? "#cc2222" : t === "hotlist" ? (tab === t ? "#f5a623" : "#c89000") : (tab === t ? (isMobile ? T.text : T.activeTab) : T.textMid),
-              borderBottom: tab === t ? `2px solid ${t === "alerts" ? "#cc2222" : t === "hotlist" ? "#f5a623" : (isMobile ? T.text : T.activeTabBorder)}` : "2px solid transparent",
+              padding: isMobile ? "8px 0" : "10px 22px", marginRight: isMobile ? 24 : 0, background: "none", border: "none", cursor: "pointer",
+              ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px",
+              fontWeight: tab === t ? (isMobile ? 600 : 600) : (isMobile ? 400 : 400),
+              color: tab === t ? T.text : T.tabInactive,
+              borderBottom: !isMobile && tab === t ? `2px solid ${T.text}` : "2px solid transparent",
               marginBottom: -1, transition: "all 0.2s", flexShrink: 0,
             }}>
-              {t === "hotlist" ? "🔥 HOTLIST" : t.toUpperCase()}
+              {t === "hotlist" ? (isMobile ? "Hot" : "HOT") : t === "calendar" ? (isMobile ? "Calendar" : "CALENDAR") : t === "market" ? (isMobile ? "Market" : "MARKET") : t === "alerts" ? (isMobile ? "Alerts" : "ALERTS") : (isMobile ? "Pricing" : "PRICING")}
             </button>
           ))}
-          <button onClick={() => openModal()} style={{
-            marginLeft: "auto", padding: isMobile ? "6px 14px" : "8px 22px", background: "#0a1f4a", border: "none",
-            borderRadius: 8, cursor: "pointer", ...font, fontSize: isMobile ? 12 : 20, color: "#e8f2ff", flexShrink: 0,
-            fontWeight: 600,
-          }}>
-            + ALERT
-          </button>
         </div>
 
         {/* Search bar — full width above columns (market tab only) */}
@@ -1325,10 +1340,11 @@ export default function AppPage() {
               value={search}
               onChange={e => { setSearch(e.target.value); searchSymbols(e.target.value); }}
               style={{
-                width: "100%", padding: isMobile ? "10px 14px" : "12px 16px", boxSizing: "border-box",
-                background: T.bgCard, border: isMobile ? `2px solid ${search ? T.accent : T.textMid}` : `1px solid ${search ? T.accent : T.border}`,
-                borderRadius: 10, color: T.text, ...font, fontSize: isMobile ? 16 : 18,
+                width: "100%", padding: isMobile ? "14px 18px" : "12px 16px", boxSizing: "border-box",
+                background: T.bgCard, border: `1px solid ${search ? T.accent : T.border}`,
+                borderRadius: 14, color: T.text, ...font, fontSize: isMobile ? 14 : 18,
                 outline: "none", transition: "border 0.2s",
+                boxShadow: T.searchShadow,
               }}
             />
             {search && (
@@ -1373,9 +1389,9 @@ export default function AppPage() {
             <div style={{ display: "flex", gap: 8, marginBottom: 20, alignItems: "center", flexWrap: "wrap" }}>
               <span onClick={() => setHotlistFilter("gainers")} style={{
                 ...mono, fontSize: 12, cursor: "pointer",
-                background: hotlistFilter === "gainers" || hotlistFilter === "losers" ? "#0a1f4a" : T.bgCard,
-                color: hotlistFilter === "gainers" || hotlistFilter === "losers" ? "#e8f2ff" : T.textMid,
-                border: `1px solid ${hotlistFilter === "gainers" || hotlistFilter === "losers" ? "#0a1f4a" : T.border}`,
+                background: hotlistFilter === "gainers" || hotlistFilter === "losers" ? T.accent : T.bgCard,
+                color: hotlistFilter === "gainers" || hotlistFilter === "losers" ? T.btnText : T.textMid,
+                border: `1px solid ${hotlistFilter === "gainers" || hotlistFilter === "losers" ? T.accent : T.border}`,
                 borderRadius: 8, padding: "8px 16px", fontWeight: 600,
               }}>🟢 Gainers & 🔴 Losers</span>
               <span style={{ width: 1, height: 24, background: T.border }} />
@@ -1388,11 +1404,11 @@ export default function AppPage() {
                   else { showToast("Pro plan required", "warn"); }
                 }} style={{
                   ...mono, fontSize: 12,
-                  color: isActive ? "#e8f2ff" : T.textFaint,
-                  background: isActive ? "#0a1f4a" : T.bgCard,
-                  border: `1px solid ${isActive ? "#0a1f4a" : T.border}`, borderRadius: 8, padding: "8px 14px",
+                  color: isActive ? T.btnText : T.textFaint,
+                  background: isActive ? T.accent : T.bgCard,
+                  border: `1px solid ${isActive ? T.accent : T.border}`, borderRadius: 8, padding: "8px 14px",
                   cursor: "pointer", opacity: isPro || isActive ? 1 : 0.5,
-                }}>{fl} {!isPro && !isActive && <span style={{ ...mono, fontSize: 7, background: "#0a1f4a", color: "#e8f2ff", padding: "1px 5px", borderRadius: 2, marginLeft: 2 }}>PRO</span>}</span>
+                }}>{fl} {!isPro && !isActive && <span style={{ ...mono, fontSize: 7, background: T.accent, color: T.btnText, padding: "1px 5px", borderRadius: 2, marginLeft: 2 }}>PRO</span>}</span>
                 );
               })}
             </div>
@@ -1404,7 +1420,7 @@ export default function AppPage() {
               {/* Gainers column */}
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#1a8a44", fontWeight: 600 }}>🟢 TOP GAINERS</div>
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.green, fontWeight: 600 }}>🟢 TOP GAINERS</div>
                   <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>{hotlistData.gainers.length} stocks</div>
                 </div>
                 <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
@@ -1415,13 +1431,13 @@ export default function AppPage() {
                       borderBottom: `1px solid ${T.border}`, transition: "background 0.15s",
                       background: chartSymbol === t.symbol ? T.bgDeep : "transparent",
                     }} onMouseEnter={e => e.currentTarget.style.background = T.bgDeep} onMouseLeave={e => { if (chartSymbol !== t.symbol) e.currentTarget.style.background = "transparent"; }}>
-                      <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(26,138,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: "#1a8a44", fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                      <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(26,138,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: T.green, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text }}>{t.symbol}</div>
                         <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{t.name !== t.symbol ? t.name : ""}</div>
                       </div>
                       <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text, marginRight: 8 }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                      <div style={{ ...mono, fontSize: 11, color: "#fff", background: "#1a8a44", padding: "4px 10px", borderRadius: 6, fontWeight: 600 }}>▲{Math.abs(t.changePct).toFixed(2)}%</div>
+                      <div style={{ ...mono, fontSize: 11, color: "#fff", background: T.green, padding: "4px 10px", borderRadius: 6, fontWeight: 600 }}>▲{Math.abs(t.changePct).toFixed(2)}%</div>
                     </div>
                   ))}
                 </div>
@@ -1430,7 +1446,7 @@ export default function AppPage() {
               {/* Losers column */}
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#cc2222", fontWeight: 600 }}>🔴 TOP LOSERS</div>
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.red, fontWeight: 600 }}>🔴 TOP LOSERS</div>
                   <div style={{ ...mono, fontSize: 10, color: T.textFaint }}>{hotlistData.losers.length} stocks</div>
                 </div>
                 <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
@@ -1441,13 +1457,13 @@ export default function AppPage() {
                       borderBottom: `1px solid ${T.border}`, transition: "background 0.15s",
                       background: chartSymbol === t.symbol ? T.bgDeep : "transparent",
                     }} onMouseEnter={e => e.currentTarget.style.background = T.bgDeep} onMouseLeave={e => { if (chartSymbol !== t.symbol) e.currentTarget.style.background = "transparent"; }}>
-                      <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(204,34,34,0.12)", display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: "#cc2222", fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                      <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(204,34,34,0.12)", display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 12, color: T.red, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text }}>{t.symbol}</div>
                         <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 1 }}>{t.name !== t.symbol ? t.name : ""}</div>
                       </div>
                       <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.text, marginRight: 8 }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                      <div style={{ ...mono, fontSize: 11, color: "#fff", background: "#cc2222", padding: "4px 10px", borderRadius: 6, fontWeight: 600 }}>▼{Math.abs(t.changePct).toFixed(2)}%</div>
+                      <div style={{ ...mono, fontSize: 11, color: "#fff", background: T.red, padding: "4px 10px", borderRadius: 6, fontWeight: 600 }}>▼{Math.abs(t.changePct).toFixed(2)}%</div>
                     </div>
                   ))}
                 </div>
@@ -1465,7 +1481,7 @@ export default function AppPage() {
                           {(() => {
                             const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol);
                             if (!ht) return null;
-                            const col = ht.changePct >= 0 ? "#1a8a44" : "#cc2222";
+                            const col = ht.changePct >= 0 ? T.green : T.red;
                             return (
                               <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 6 }}>
                                 <span style={{ ...font, fontSize: 32, fontWeight: 700, color: T.text }}>${Number(ht.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -1479,8 +1495,8 @@ export default function AppPage() {
                           {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                             <span key={r} onClick={() => changeChartRange(r)} style={{
                               padding: "6px 14px", borderRadius: 7, ...mono, fontSize: 12, cursor: "pointer", fontWeight: 600,
-                              background: chartRange === r ? "#0a1f4a" : T.bgDeep,
-                              color: chartRange === r ? "#e8f2ff" : T.textMid,
+                              background: chartRange === r ? T.accent : T.bgDeep,
+                              color: chartRange === r ? T.btnText : T.textMid,
                               border: chartRange === r ? "none" : `1px solid ${T.border}`,
                             }}>{lbl}</span>
                           ))}
@@ -1495,20 +1511,20 @@ export default function AppPage() {
 
                     {/* Action buttons */}
                     <div style={{ padding: "16px 24px", display: "flex", gap: 10 }}>
-                      <button onClick={() => openModal(chartSymbol, chartLabel)} style={{ padding: "12px 24px", background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                      <button onClick={() => openModal(chartSymbol, chartLabel)} style={{ padding: "12px 24px", background: T.accent, color: T.btnText, border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
                       <button onClick={() => {
                         const ht = hotlistData.gainers.concat(hotlistData.losers).find(x => x.symbol === chartSymbol);
                         if (ht) shareTicker(ht.symbol, ht.name, ht.price, ht.changePct);
-                      }} style={{ padding: "12px 24px", background: "none", color: "#0a1f4a", border: "2px solid #0a1f4a", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>↗ Share</button>
+                      }} style={{ padding: "12px 24px", background: "none", color: T.accent, border: `2px solid ${T.accent}`, borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>↗ Share</button>
                       {(() => {
                         const alreadyIn = watchlist.some(w => w.symbol === chartSymbol) || MARKET_SYMBOLS.some(ms => ms.symbol === chartSymbol);
                         return alreadyIn ? (
-                          <span style={{ padding: "12px 24px", ...font, fontSize: 15, fontWeight: 600, color: "#1a8a44" }}>✓ In Watchlist</span>
+                          <span style={{ padding: "12px 24px", ...font, fontSize: 15, fontWeight: 600, color: T.green }}>✓ In Watchlist</span>
                         ) : (
                           <button onClick={() => {
                             setWatchlist(prev => { const next = [...prev, { symbol: chartSymbol, label: chartLabel || chartSymbol }]; localStorage.setItem("ta-watchlist", JSON.stringify(next)); return next; });
                             showToast(`${chartSymbol} added to watchlist`);
-                          }} style={{ padding: "12px 24px", background: "linear-gradient(135deg,#0a1f4a,#1a3a6a)", color: "#e8f2ff", border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Watchlist</button>
+                          }} style={{ padding: "12px 24px", background: T.accent, color: T.btnText, border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Watchlist</button>
                         );
                       })()}
                     </div>
@@ -1546,11 +1562,11 @@ export default function AppPage() {
                               {cell("52 Wk Range", week52Data ? `${fmt(week52Data.low)} – ${fmt(week52Data.high)}` : "—")}
                             </div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}>
-                              {cell("1-Year Change", week52Data ? `${week52Data.yearChange >= 0 ? "+" : ""}${week52Data.yearChange.toFixed(2)}%` : "—", week52Data?.yearChange >= 0 ? "#1a8a44" : "#cc2222")}
+                              {cell("1-Year Change", week52Data ? `${week52Data.yearChange >= 0 ? "+" : ""}${week52Data.yearChange.toFixed(2)}%` : "—", week52Data?.yearChange >= 0 ? T.green : T.red)}
                               {cell("Change", `${change >= 0 ? "+" : ""}${Number(change).toFixed(2)}`)}
                               <div style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <span style={{ ...font, fontSize: 13, color: T.textMid }}>Change %</span>
-                                <span style={{ ...mono, fontSize: 13, fontWeight: 500, color: changePct >= 0 ? "#1a8a44" : "#cc2222" }}>{changePct >= 0 ? "+" : ""}{Number(changePct).toFixed(2)}%</span>
+                                <span style={{ ...mono, fontSize: 13, fontWeight: 500, color: changePct >= 0 ? T.green : T.red }}>{changePct >= 0 ? "+" : ""}{Number(changePct).toFixed(2)}%</span>
                               </div>
                             </div>
                           </div>
@@ -1603,7 +1619,7 @@ export default function AppPage() {
               {/* Column 1: ranks 1-10 */}
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#0a1f4a", fontWeight: 600 }}>
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.accent, fontWeight: 600 }}>
                     {hotlistFilter === "volume" ? "📊" : hotlistFilter === "volatile" ? "⚡" : hotlistFilter === "52w_high" ? "📈" : hotlistFilter === "52w_low" ? "📉" : hotlistFilter === "pre-market" ? "🌅" : "🌙"}{" "}
                     {hotlistFilter.toUpperCase().replace(/_/g, " ")} · 1–10
                   </div>
@@ -1617,7 +1633,7 @@ export default function AppPage() {
               {/* Column 2: ranks 11-20 */}
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: "#0a1f4a", fontWeight: 600 }}>
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.accent, fontWeight: 600 }}>
                     {hotlistFilter.toUpperCase().replace(/_/g, " ")} · 11–20
                   </div>
                 </div>
@@ -1640,7 +1656,7 @@ export default function AppPage() {
                           {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                             <span key={r} onClick={() => changeChartRange(r)} style={{
                               padding: "6px 14px", borderRadius: 7, ...mono, fontSize: 12, cursor: "pointer", fontWeight: 600,
-                              background: chartRange === r ? "#0a1f4a" : T.bgDeep, color: chartRange === r ? "#e8f2ff" : T.textMid,
+                              background: chartRange === r ? T.accent : T.bgDeep, color: chartRange === r ? T.btnText : T.textMid,
                               border: chartRange === r ? "none" : `1px solid ${T.border}`,
                             }}>{lbl}</span>
                           ))}
@@ -1651,11 +1667,11 @@ export default function AppPage() {
                       {chartData.length > 0 ? <CandlestickChart data={chartData} T={T} range={chartRange} /> : <div style={{ textAlign: "center", padding: 60, ...mono, fontSize: 14, color: T.textMid }}>Loading chart...</div>}
                     </div>
                     <div style={{ padding: "16px 24px", display: "flex", gap: 10 }}>
-                      <button onClick={() => openModal(chartSymbol, chartLabel)} style={{ padding: "12px 24px", background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                      <button onClick={() => openModal(chartSymbol, chartLabel)} style={{ padding: "12px 24px", background: T.accent, color: T.btnText, border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
                       <button onClick={() => {
                         setWatchlist(prev => { const next = [...prev, { symbol: chartSymbol, label: chartLabel || chartSymbol }]; localStorage.setItem("ta-watchlist", JSON.stringify(next)); return next; });
                         showToast(`${chartSymbol} added to watchlist`);
-                      }} style={{ padding: "12px 24px", background: "linear-gradient(135deg,#0a1f4a,#1a3a6a)", color: "#e8f2ff", border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Watchlist</button>
+                      }} style={{ padding: "12px 24px", background: T.accent, color: T.btnText, border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Watchlist</button>
                     </div>
                   </div>
                 ) : (
@@ -1689,8 +1705,8 @@ export default function AppPage() {
           const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
           const fullDayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
-          const dotColor = t => t === "earnings" ? "#378ADD" : t === "economic" ? "#f5a623" : t === "ipo" ? "#1a8a44" : t === "split" ? "#9b59b6" : t === "holiday" ? "#5F5E5A" : "#cc2222";
-          const impactColor = i => i === "high" ? "#cc2222" : i === "medium" ? "#f5a623" : T.textFaint;
+          const dotColor = t => t === "earnings" ? "#378ADD" : t === "economic" ? "#f5a623" : t === "ipo" ? T.green : t === "split" ? "#9b59b6" : t === "holiday" ? "#5F5E5A" : T.red;
+          const impactColor = i => i === "high" ? T.red : i === "medium" ? "#f5a623" : T.textFaint;
 
           const eventsByDay = {};
           calEvents.filter(e => calFilters[e.type]).forEach(e => {
@@ -1710,9 +1726,9 @@ export default function AppPage() {
           const eventTypes = [
             ["economic","Economic","#f5a623","📅"],
             ["earnings","Earnings","#378ADD","📊"],
-            ["ipo","IPO","#1a8a44","🚀"],
+            ["ipo","IPO",T.green,"🚀"],
             ["split","Split","#9b59b6","✂️"],
-            ["dividend","Dividend","#cc2222","💰"],
+            ["dividend","Dividend",T.red,"💰"],
             ["holiday","Holiday","#5F5E5A","🏖️"],
           ];
 
@@ -1777,7 +1793,7 @@ export default function AppPage() {
                       return (
                         <div key={d} onClick={() => setCalSelectedDay(d)} style={{
                           background: isToday ? T.bgDeep : T.bg,
-                          border: isSel ? "2px solid #0a1f4a" : "2px solid transparent",
+                          border: isSel ? `2px solid ${T.accent}` : "2px solid transparent",
                           padding: isMobile ? 4 : 8, minHeight: isMobile ? 60 : 90, cursor: "pointer", transition: "all 0.15s",
                         }}>
                           <div style={{ fontSize: isMobile ? 12 : 16, fontWeight: isToday ? 700 : 500, color: isWeekend ? T.textFaint : T.text, marginBottom: isMobile ? 2 : 5 }}>
@@ -1814,12 +1830,12 @@ export default function AppPage() {
                   </div>
 
                   {/* Detail panel below — cobalt style */}
-                  <div style={{ marginTop: isMobile ? 12 : 20, background: "#0a1f4a", borderRadius: isMobile ? 10 : 14, padding: isMobile ? "14px 16px" : "22px 28px" }}>
+                  <div style={{ marginTop: isMobile ? 12 : 20, background: T.accent, borderRadius: isMobile ? 10 : 14, padding: isMobile ? "14px 16px" : "22px 28px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                       <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.35)", letterSpacing: "2px" }}>
                         EVENTS · {new Date(yr, mo, calSelectedDay).toLocaleDateString("en-US", { month: "long", day: "numeric" }).toUpperCase()}
                       </div>
-                      <div style={{ ...font, fontSize: 16, fontWeight: 500, color: "#e8f2ff" }}>
+                      <div style={{ ...font, fontSize: 16, fontWeight: 500, color: T.btnText }}>
                         {fullDayNames[new Date(yr, mo, calSelectedDay).getDay()]}, {new Date(yr, mo, calSelectedDay).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                       </div>
                     </div>
@@ -1883,7 +1899,7 @@ export default function AppPage() {
                               {items.map((e, i) => (
                                 <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${col}`, borderRadius: 8, padding: "12px 16px" }}>
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <div style={{ ...font, fontSize: 15, fontWeight: 500, color: "#e8f2ff" }}>{e.label}</div>
+                                    <div style={{ ...font, fontSize: 15, fontWeight: 500, color: T.btnText }}>{e.label}</div>
                                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                       {e.impact && <span style={{ ...mono, fontSize: 9, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}44`, background: impactColor(e.impact) + "22", padding: "2px 8px", borderRadius: 4 }}>{e.impact.toUpperCase()}</span>}
                                       {e.time && <span style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{e.time}</span>}
@@ -1891,12 +1907,12 @@ export default function AppPage() {
                                   </div>
                                   <div style={{ display: "flex", gap: 24, marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)", alignItems: "center" }}>
                                     <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>PREVIOUS</span><div style={{ ...mono, fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 2 }}>{e.prev ?? "—"}</div></div>
-                                    <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>FORECAST</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.est ?? "—"}</div></div>
+                                    <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>FORECAST</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.btnText, marginTop: 2 }}>{e.est ?? "—"}</div></div>
                                     <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: e.actual != null ? "#3ddc84" : "rgba(255,255,255,0.2)", marginTop: 2 }}>{e.actual ?? "Pending"}</div></div>
                                     <div style={{ flex: 1 }} />
                                     <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
                                       padding: "8px 16px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-                                      borderRadius: 8, cursor: "pointer", ...font, fontSize: 13, color: "#e8f2ff",
+                                      borderRadius: 8, cursor: "pointer", ...font, fontSize: 13, color: T.btnText,
                                       display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
                                     }}>🔔 Set Alert</button>
                                   </div>
@@ -1912,9 +1928,9 @@ export default function AppPage() {
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                        <span style={{ ...font, fontSize: 16, fontWeight: 600, color: "#e8f2ff" }}>{e.symbol}</span>
+                                        <span style={{ ...font, fontSize: 16, fontWeight: 600, color: T.btnText }}>{e.symbol}</span>
                                         {e.beatMiss === "beat" && <span style={{ ...mono, fontSize: 9, color: "#3ddc84", background: "rgba(61,220,132,0.15)", border: "1px solid rgba(61,220,132,0.3)", padding: "1px 6px", borderRadius: 4 }}>▲ BEAT</span>}
-                                        {e.beatMiss === "miss" && <span style={{ ...mono, fontSize: 9, color: "#cc2222", background: "rgba(204,34,34,0.15)", border: "1px solid rgba(204,34,34,0.3)", padding: "1px 6px", borderRadius: 4 }}>▼ MISS</span>}
+                                        {e.beatMiss === "miss" && <span style={{ ...mono, fontSize: 9, color: T.red, background: "rgba(204,34,34,0.15)", border: "1px solid rgba(204,34,34,0.3)", padding: "1px 6px", borderRadius: 4 }}>▼ MISS</span>}
                                         {e.beatMiss === "met" && <span style={{ ...mono, fontSize: 9, color: "#f5a623", background: "rgba(245,166,35,0.15)", border: "1px solid rgba(245,166,35,0.3)", padding: "1px 6px", borderRadius: 4 }}>— MET</span>}
                                       </div>
                                       {e.companyName && <div style={{ ...font, fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.companyName}</div>}
@@ -1924,15 +1940,15 @@ export default function AppPage() {
                                       {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.06)", padding: "2px 8px", borderRadius: 4 }}>{e.time}</span>}
                                       <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
                                         padding: "6px 12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-                                        borderRadius: 6, cursor: "pointer", ...font, fontSize: 12, color: "#e8f2ff",
+                                        borderRadius: 6, cursor: "pointer", ...font, fontSize: 12, color: T.btnText,
                                         display: "flex", alignItems: "center", gap: 4,
                                       }}>🔔 Alert</button>
                                     </div>
                                   </div>
                                   <div style={{ display: "flex", gap: 20, marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap" }}>
-                                    <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>EST EPS</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.est || "—"}</div></div>
-                                    {e.actual && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL EPS</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: e.beatMiss === "beat" ? "#3ddc84" : e.beatMiss === "miss" ? "#cc2222" : "#e8f2ff", marginTop: 2 }}>{e.actual}</div></div>}
-                                    {e.revEst && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>REV EST</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#e8f2ff", marginTop: 2 }}>{e.revEst}</div></div>}
+                                    <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>EST EPS</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.btnText, marginTop: 2 }}>{e.est || "—"}</div></div>
+                                    {e.actual && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL EPS</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: e.beatMiss === "beat" ? "#3ddc84" : e.beatMiss === "miss" ? T.red : T.btnText, marginTop: 2 }}>{e.actual}</div></div>}
+                                    {e.revEst && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>REV EST</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.btnText, marginTop: 2 }}>{e.revEst}</div></div>}
                                     {e.revActual && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>REV ACTUAL</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#3ddc84", marginTop: 2 }}>{e.revActual}</div></div>}
                                   </div>
                                 </div>
@@ -1946,19 +1962,19 @@ export default function AppPage() {
                                 <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${col}`, borderRadius: 8, padding: "12px 16px" }}>
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                     <div>
-                                      {e.symbol && <div style={{ ...font, fontSize: 15, fontWeight: 600, color: "#e8f2ff" }}>{e.symbol}</div>}
-                                      <div style={{ ...font, fontSize: 13, color: e.symbol ? "rgba(255,255,255,0.45)" : "#e8f2ff", marginTop: e.symbol ? 2 : 0 }}>{e.label}</div>
+                                      {e.symbol && <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.btnText }}>{e.symbol}</div>}
+                                      <div style={{ ...font, fontSize: 13, color: e.symbol ? "rgba(255,255,255,0.45)" : T.btnText, marginTop: e.symbol ? 2 : 0 }}>{e.label}</div>
                                     </div>
                                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                                         {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{e.time}</span>}
-                                        {e.price && <span style={{ ...mono, fontSize: 11, color: "#e8f2ff" }}>{e.price}</span>}
+                                        {e.price && <span style={{ ...mono, fontSize: 11, color: T.btnText }}>{e.price}</span>}
                                         {e.impact && <span style={{ ...mono, fontSize: 9, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}44`, background: impactColor(e.impact) + "22", padding: "2px 6px", borderRadius: 4 }}>{e.impact.toUpperCase()}</span>}
                                       </div>
                                       {type !== "holiday" && e.symbol && (
                                         <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
                                           padding: "6px 12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-                                          borderRadius: 6, cursor: "pointer", ...font, fontSize: 12, color: "#e8f2ff",
+                                          borderRadius: 6, cursor: "pointer", ...font, fontSize: 12, color: T.btnText,
                                           display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
                                         }}>🔔</button>
                                       )}
@@ -1986,16 +2002,8 @@ export default function AppPage() {
         {isMobile && tab === "market" && (
           <div>
             {/* ── WATCHLIST VIEW ─────────────────── */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: 8 }}>
-              <button onClick={() => { setEditMode(p => !p); setMobileExpanded(null); }} style={{
-                ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "6px 16px",
-                background: editMode ? "#0a1f4a" : "none",
-                color: editMode ? "#e8f2ff" : "#0a1f4a",
-                border: editMode ? "none" : "2px solid #0a1f4a",
-              }}>{editMode ? "Done" : "✎ Edit"}</button>
-            </div>
             {editMode && (
-              <div style={{ background: "rgba(10,31,74,0.06)", border: "2px solid #0a1f4a", borderRadius: 10, padding: "8px 14px", marginBottom: 12, textAlign: "center", ...mono, fontSize: 11, color: "#0a1f4a", fontWeight: 600 }}>
+              <div style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 10, padding: "8px 14px", marginBottom: 12, textAlign: "center", ...mono, fontSize: 11, color: T.textMid, fontWeight: 500 }}>
                 Tap arrows to reorder · Swipe left to remove
               </div>
             )}
@@ -2010,7 +2018,7 @@ export default function AppPage() {
               return (
                 <div key={m.id} id={`swipe-wrapper-${m.symbol}`} style={{ position: "relative", overflow: "hidden", marginBottom: isExpanded ? 8 : 0, maxHeight: 2000 }}>
                   {/* Delete button revealed by swipe */}
-                  <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: "#cc2222", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: isExpanded ? "0 12px 12px 0" : 0 }}
+                  <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: T.red, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: isExpanded ? "0 12px 12px 0" : 0 }}
                     onClick={() => removeFromWatchlist(m.symbol)}>
                     <div style={{ color: "#fff", ...font, fontSize: 13, fontWeight: 600, textAlign: "center" }}>
                       <div style={{ fontSize: 18, marginBottom: 2 }}>✕</div>
@@ -2020,16 +2028,22 @@ export default function AppPage() {
                   {/* Card content */}
                   <div id={`swipe-card-${m.symbol}`} data-reorder-id={`reorder-${m.symbol}`} style={{
                     position: "relative", zIndex: 1,
-                    background: isExpanded ? T.bgCard : T.bg,
-                    border: isExpanded ? "2px solid #0a1f4a" : "none",
-                    borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
-                    borderRadius: isExpanded ? 12 : 0,
+                    background: T.cardGradient,
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 16,
+                    marginBottom: 10,
                     touchAction: "pan-y",
+                    overflow: "hidden",
+                    boxShadow: T.cardShadow,
+                    backdropFilter: themeName === "charcoal" ? "blur(24px)" : "none",
+                    WebkitBackdropFilter: themeName === "charcoal" ? "blur(24px)" : "none",
                   }}
                     onTouchStart={(e) => !editMode && handleTouchStart(m.symbol, e)}
                     onTouchMove={(e) => !editMode && handleTouchMove(m.symbol, e)}
                     onTouchEnd={() => !editMode && handleTouchEnd(m.symbol)}
                   >
+                  {/* Colored bottom accent line */}
+                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: up ? 2 : 2, background: up ? T.cardBottomGreen : T.cardBottomRed }} />
                   {/* Collapsed row */}
                   <div onClick={() => {
                     if (swipedJustNow || editMode) return;
@@ -2037,7 +2051,7 @@ export default function AppPage() {
                       if (isExpanded) { setMobileExpanded(null); }
                       else { setMobileExpanded(m.symbol); openChart(m.symbol, m.label); }
                     } catch (err) { console.error("Mobile expand error:", err); }
-                  }} style={{ padding: isExpanded ? "14px 14px" : "14px 8px 14px 0", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
+                  }} style={{ padding: "20px 22px", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
                     {/* Edit mode indicator */}
                     {editMode && (
                       <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "8px 4px", flexShrink: 0 }}>
@@ -2047,18 +2061,17 @@ export default function AppPage() {
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{m.label}</div>
-                      <div style={{ ...mono, fontSize: 14, color: T.textMid }}>{m.symbol}</div>
+                      <div style={{ ...font, fontSize: 18, fontWeight: 400, color: T.text }}>{m.label}</div>
+                      <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 6, letterSpacing: "3px" }}>{m.symbol}</div>
                     </div>
                     {!isExpanded && d && (
                       <div style={{ textAlign: "center", flexShrink: 0 }}>
-                        <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{d.changePct >= 0 ? "+" : "-"}${d.change != null ? `$${Math.abs(Number(d.change)).toFixed(2)}` : ""}</div>
-                        <div style={{ ...mono, fontSize: 10, color: T.textMid, marginTop: 2 }}>Open {snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"}</div>
+                        <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400 }}>{d.changePct >= 0 ? "+" : "-"}${d.change != null ? `$${Math.abs(Number(d.change)).toFixed(2)}` : ""}</div>
                       </div>
                     )}
                     <div style={{ textAlign: "right", minWidth: 85 }}>
-                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
-                      <div style={{ ...mono, fontSize: 14, color: col, fontWeight: 600 }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
+                      <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400, marginTop: 4 }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
                     </div>
                   </div>
 
@@ -2081,13 +2094,13 @@ export default function AppPage() {
                           {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                             <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
                               padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
-                              background: chartRange === r ? "#0a1f4a" : "transparent",
-                              color: chartRange === r ? "#e8f2ff" : T.textMid,
+                              background: chartRange === r ? T.accent : "transparent",
+                              color: chartRange === r ? T.btnText : T.textMid,
                             }}>{lbl}</span>
                           ))}
                           <button onClick={(ev) => { ev.stopPropagation(); setMobileChartFull(true); }} style={{
                             marginLeft: "auto", width: 30, height: 30, borderRadius: 6, border: "none",
-                            background: "#0a1f4a", cursor: "pointer", color: "#e8f2ff",
+                            background: T.accent, cursor: "pointer", color: T.btnText,
                             display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
                           }}>⛶</button>
                         </div>
@@ -2112,8 +2125,8 @@ export default function AppPage() {
 
                       {/* Action buttons */}
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={(ev) => { ev.stopPropagation(); openModal(m.symbol, m.label); }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
-                        <button onClick={(ev) => { ev.stopPropagation(); if (d) shareTicker(m.symbol, m.label, d.price, d.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: "#0a1f4a", border: "2px solid #0a1f4a", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                        <button onClick={(ev) => { ev.stopPropagation(); openModal(m.symbol, m.label); }} style={{ flex: 1, padding: 11, background: T.accent, color: T.btnText, border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                        <button onClick={(ev) => { ev.stopPropagation(); if (d) shareTicker(m.symbol, m.label, d.price, d.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: T.accent, border: `2px solid ${T.accent}`, borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                           <span style={{ fontSize: 16 }}>↗</span> Share
                         </button>
                       </div>
@@ -2137,7 +2150,7 @@ export default function AppPage() {
               return (
                 <div key={w.symbol} id={`swipe-wrapper-${w.symbol}`} style={{ position: "relative", overflow: "hidden", marginBottom: isExpanded ? 8 : 0, maxHeight: 2000 }}>
                   {/* Delete button revealed by swipe */}
-                  <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: "#cc2222", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: isExpanded ? "0 12px 12px 0" : 0 }}
+                  <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: T.red, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: isExpanded ? "0 12px 12px 0" : 0 }}
                     onClick={() => removeFromWatchlist(w.symbol)}>
                     <div style={{ color: "#fff", ...font, fontSize: 13, fontWeight: 600, textAlign: "center" }}>
                       <div style={{ fontSize: 18, marginBottom: 2 }}>✕</div>
@@ -2147,24 +2160,30 @@ export default function AppPage() {
                   {/* Card content */}
                   <div id={`swipe-card-${w.symbol}`} style={{
                     position: "relative", zIndex: 1,
-                    background: isExpanded ? T.bgCard : T.bg,
-                    border: isExpanded ? "2px solid #0a1f4a" : "none",
-                    borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
-                    borderRadius: isExpanded ? 12 : 0,
+                    background: T.cardGradient,
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 16,
+                    marginBottom: 10,
                     touchAction: "pan-y",
+                    overflow: "hidden",
+                    boxShadow: T.cardShadow,
+                    backdropFilter: themeName === "charcoal" ? "blur(24px)" : "none",
+                    WebkitBackdropFilter: themeName === "charcoal" ? "blur(24px)" : "none",
                   }}
                     onTouchStart={(e) => !editMode && handleTouchStart(w.symbol, e)}
                     onTouchMove={(e) => !editMode && handleTouchMove(w.symbol, e)}
                     onTouchEnd={() => !editMode && handleTouchEnd(w.symbol)}
                   >
+                  {/* Colored bottom accent line */}
+                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: up ? T.cardBottomGreen : T.cardBottomRed }} />
                   <div onClick={() => {
                     if (swipedJustNow || editMode) return;
                     try {
                       if (isExpanded) { setMobileExpanded(null); }
                       else { setMobileExpanded(w.symbol); openChart(w.symbol, w.label); }
                     } catch (err) { console.error("Watchlist expand error:", err); }
-                  }} style={{ padding: isExpanded ? "14px 14px" : "14px 8px 14px 0", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
-                    {/* Move buttons — only in edit mode (user watchlist items don't reorder market symbols) */}
+                  }} style={{ padding: "20px 22px", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
+                    {/* Move buttons — only in edit mode */}
                     {editMode && (
                       <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "8px 4px", flexShrink: 0 }}>
                         <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
@@ -2173,18 +2192,17 @@ export default function AppPage() {
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{w.label || w.symbol}</div>
-                      <div style={{ ...mono, fontSize: 14, color: T.textMid }}>{w.symbol}</div>
+                      <div style={{ ...font, fontSize: 18, fontWeight: 400, color: T.text }}>{w.label || w.symbol}</div>
+                      <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 6, letterSpacing: "3px" }}>{w.symbol}</div>
                     </div>
                     {!isExpanded && wd && (
                       <div style={{ textAlign: "center", flexShrink: 0 }}>
-                        <div style={{ ...mono, fontSize: 13, color: col, fontWeight: 600 }}>{wd.changePct >= 0 ? "+" : "-"}${wd.change != null ? `$${Math.abs(Number(wd.change)).toFixed(2)}` : ""}</div>
-                        <div style={{ ...mono, fontSize: 10, color: T.textMid, marginTop: 2 }}>Open {snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"}</div>
+                        <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400 }}>{wd.changePct >= 0 ? "+" : "-"}${wd.change != null ? `$${Math.abs(Number(wd.change)).toFixed(2)}` : ""}</div>
                       </div>
                     )}
                     <div style={{ textAlign: "right", minWidth: 85 }}>
-                      <div style={{ ...font, fontSize: 22, fontWeight: 700, color: T.text }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
-                      <div style={{ ...mono, fontSize: 14, color: col, fontWeight: 600 }}>{wd ? `${arrow} ${Math.abs(wd.changePct).toFixed(2)}%` : ""}</div>
+                      <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400, marginTop: 4 }}>{wd ? `${arrow} ${Math.abs(wd.changePct).toFixed(2)}%` : ""}</div>
                     </div>
                   </div>
 
@@ -2206,13 +2224,13 @@ export default function AppPage() {
                           {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                             <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
                               padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
-                              background: chartRange === r ? "#0a1f4a" : "transparent",
-                              color: chartRange === r ? "#e8f2ff" : T.textMid,
+                              background: chartRange === r ? T.accent : "transparent",
+                              color: chartRange === r ? T.btnText : T.textMid,
                             }}>{lbl}</span>
                           ))}
                           <button onClick={(ev) => { ev.stopPropagation(); setMobileChartFull(true); }} style={{
                             marginLeft: "auto", width: 30, height: 30, borderRadius: 6, border: "none",
-                            background: "#0a1f4a", cursor: "pointer", color: "#e8f2ff",
+                            background: T.accent, cursor: "pointer", color: T.btnText,
                             display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
                           }}>⛶</button>
                         </div>
@@ -2237,8 +2255,8 @@ export default function AppPage() {
 
                       {/* Action buttons */}
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={(ev) => { ev.stopPropagation(); openModal(w.symbol, w.label); }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
-                        <button onClick={(ev) => { ev.stopPropagation(); if (wd) shareTicker(w.symbol, w.label, wd.price, wd.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: "#0a1f4a", border: "2px solid #0a1f4a", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                        <button onClick={(ev) => { ev.stopPropagation(); openModal(w.symbol, w.label); }} style={{ flex: 1, padding: 11, background: T.accent, color: T.btnText, border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                        <button onClick={(ev) => { ev.stopPropagation(); if (wd) shareTicker(w.symbol, w.label, wd.price, wd.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: T.accent, border: `2px solid ${T.accent}`, borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                           <span style={{ fontSize: 16 }}>↗</span> Share
                         </button>
                       </div>
@@ -2261,22 +2279,22 @@ export default function AppPage() {
               <div onClick={() => { setHotlistFilter("gainers"); setHotlistProOpen(false); }} style={{
                 flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
                 ...mono, fontSize: 12, letterSpacing: "0.5px",
-                background: hotlistFilter === "gainers" ? "#1a8a44" : T.bg,
-                color: hotlistFilter === "gainers" ? "#fff" : "#1a8a44",
+                background: hotlistFilter === "gainers" ? T.green : T.bg,
+                color: hotlistFilter === "gainers" ? "#fff" : T.green,
                 fontWeight: 700,
               }}>Gainers</div>
               <div onClick={() => { setHotlistFilter("losers"); setHotlistProOpen(false); }} style={{
                 flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
                 ...mono, fontSize: 12, letterSpacing: "0.5px",
-                background: hotlistFilter === "losers" ? "#cc2222" : T.bg,
-                color: hotlistFilter === "losers" ? "#fff" : "#cc2222",
+                background: hotlistFilter === "losers" ? T.red : T.bg,
+                color: hotlistFilter === "losers" ? "#fff" : T.red,
                 fontWeight: 700,
                 borderLeft: `1px solid ${T.border}`, borderRight: `1px solid ${T.border}`,
               }}>Losers</div>
               <div onClick={() => setHotlistProOpen(p => !p)} style={{
                 flex: 1, padding: 12, textAlign: "center", cursor: "pointer",
                 ...mono, fontSize: 12, letterSpacing: "0.5px",
-                background: "#0a1f4a", color: "#fff", fontWeight: 700,
+                background: T.accent, color: "#fff", fontWeight: 700,
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
               }}>
                 <span style={{ fontSize: 8, background: "rgba(255,255,255,0.2)", color: "#fff", padding: "2px 5px", borderRadius: 2, fontWeight: 700 }}>PRO</span>
@@ -2286,7 +2304,7 @@ export default function AppPage() {
 
             {/* Pro dropdown */}
             {hotlistProOpen && (
-              <div style={{ background: "#0a1f4a", borderRadius: 10, padding: "14px 16px", marginBottom: 12 }}>
+              <div style={{ background: T.accent, borderRadius: 10, padding: "14px 16px", marginBottom: 12 }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 14 }}>
                   {["Volume","Volatile","52W High","52W Low","Pre-Market","After-Hours"].map(fl => (
                     <button key={fl} onClick={() => {
@@ -2301,7 +2319,7 @@ export default function AppPage() {
                 </div>
                 {!isPro && (
                   <button onClick={() => { setHotlistProOpen(false); setTab("pricing"); }} style={{
-                    width: "100%", padding: 11, background: "#e8f2ff", color: "#0a1f4a",
+                    width: "100%", padding: 11, background: T.btnText, color: T.accent,
                     border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 700, cursor: "pointer",
                   }}>Unlock Pro Filters — $9/mo</button>
                 )}
@@ -2310,7 +2328,7 @@ export default function AppPage() {
 
             {/* Hotlist results */}
             <div>
-              <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: hotlistFilter === "losers" ? "#cc2222" : "#1a8a44", marginBottom: 6, fontWeight: 600 }}>
+              <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: hotlistFilter === "losers" ? T.red : T.green, marginBottom: 6, fontWeight: 600 }}>
                 {hotlistFilter === "losers" ? "TOP LOSERS TODAY" : "TOP GAINERS TODAY"}
               </div>
               {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).length === 0 && (
@@ -2318,14 +2336,14 @@ export default function AppPage() {
               )}
               {(hotlistFilter === "losers" ? hotlistData.losers : hotlistData.gainers).map((t, i) => {
                 const up = t.changePct >= 0;
-                const col = up ? "#1a8a44" : "#cc2222";
+                const col = up ? T.green : T.red;
                 const arrow = up ? "▲" : "▼";
                 const isExpanded = expandedHotlist === t.symbol;
                 return (
                   <div key={t.symbol} style={{
                     background: isExpanded ? T.bgCard : T.bg,
-                    border: isExpanded ? "2px solid #0a1f4a" : "none",
-                    borderBottom: isExpanded ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                    border: isExpanded ? `2px solid ${T.accent}` : "none",
+                    borderBottom: isExpanded ? `2px solid ${T.accent}` : `1px solid ${T.border}`,
                     borderRadius: isExpanded ? 12 : 0,
                     marginBottom: isExpanded ? 8 : 0,
                   }}>
@@ -2360,7 +2378,7 @@ export default function AppPage() {
                           const alreadyInWatchlist = watchlist.some(w => w.symbol === t.symbol) || MARKET_SYMBOLS.some(ms => ms.symbol === t.symbol);
                           return alreadyInWatchlist ? (
                             <button disabled style={{
-                              width: "100%", padding: 14, background: "#1a8a44", color: "#fff",
+                              width: "100%", padding: 14, background: T.green, color: "#fff",
                               border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 700, marginBottom: 12,
                               display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: 0.8,
                             }}>✓ In Watchlist</button>
@@ -2371,7 +2389,7 @@ export default function AppPage() {
                               setWatchlist(prev => { const next = [...prev, newItem]; localStorage.setItem("ta-watchlist", JSON.stringify(next)); return next; });
                               showToast(`${t.symbol} added to watchlist`);
                             }} style={{
-                              width: "100%", padding: 14, background: "linear-gradient(135deg,#0a1f4a,#1a3a6a)", color: "#e8f2ff",
+                              width: "100%", padding: 14, background: T.accent, color: T.btnText,
                               border: "none", borderRadius: 10, ...font, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 12,
                               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                               boxShadow: "0 4px 12px rgba(10,31,74,0.2)",
@@ -2391,8 +2409,8 @@ export default function AppPage() {
                             {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
                               <span key={r} onClick={(ev) => { ev.stopPropagation(); changeChartRange(r); }} style={{
                                 padding: "4px 12px", borderRadius: 5, ...mono, fontSize: 11, cursor: "pointer",
-                                background: chartRange === r ? "#0a1f4a" : "transparent",
-                                color: chartRange === r ? "#e8f2ff" : T.textMid,
+                                background: chartRange === r ? T.accent : "transparent",
+                                color: chartRange === r ? T.btnText : T.textMid,
                               }}>{lbl}</span>
                             ))}
                           </div>
@@ -2400,8 +2418,8 @@ export default function AppPage() {
 
                         {/* Action buttons */}
                         <div style={{ display: "flex", gap: 8 }}>
-                          <button onClick={(ev) => { ev.stopPropagation(); openModal(t.symbol, t.name); }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
-                          <button onClick={(ev) => { ev.stopPropagation(); shareTicker(t.symbol, t.name, t.price, t.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: "#0a1f4a", border: "2px solid #0a1f4a", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                          <button onClick={(ev) => { ev.stopPropagation(); openModal(t.symbol, t.name); }} style={{ flex: 1, padding: 11, background: T.accent, color: T.btnText, border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                          <button onClick={(ev) => { ev.stopPropagation(); shareTicker(t.symbol, t.name, t.price, t.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: T.accent, border: `2px solid ${T.accent}`, borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                             <span style={{ fontSize: 16 }}>↗</span> Share
                           </button>
                         </div>
@@ -2425,7 +2443,7 @@ export default function AppPage() {
               const deliveryArr = Array.isArray(a.delivery) ? a.delivery : [];
               return (
               <div key={a.id} style={{
-                background: T.bgCard, border: isOpen ? "2px solid #0a1f4a" : `1px solid ${T.border}`, borderRadius: 12,
+                background: T.bgCard, border: isOpen ? `2px solid ${T.accent}` : `1px solid ${T.border}`, borderRadius: 12,
                 overflow: "hidden",
               }}>
                 {/* Collapsed row — tap to expand */}
@@ -2475,7 +2493,7 @@ export default function AppPage() {
                           </span>
                         )) : <span style={{ ...mono, fontSize: 12, color: T.textFaint }}>None set</span>}
                       </div>
-                      {!user && <div style={{ ...font, fontSize: 13, color: "#cc2222", marginTop: 8, fontWeight: 500 }}>⚠ Please sign in to activate alerts</div>}
+                      {!user && <div style={{ ...font, fontSize: 13, color: T.red, marginTop: 8, fontWeight: 500 }}>⚠ Please sign in to activate alerts</div>}
                     </div>
 
                     {/* Created date */}
@@ -2494,7 +2512,7 @@ export default function AppPage() {
                         fetchModalPrice(a.asset);
                         setStep(3);
                         setShowModal(true);
-                      }} style={{ flex: 1, padding: 11, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                      }} style={{ flex: 1, padding: 11, background: T.accent, color: T.btnText, border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                         ✎ Edit Delivery
                       </button>
                       <button onClick={() => handleTogglePause(a.id)} style={{
@@ -2508,7 +2526,7 @@ export default function AppPage() {
                     </div>
                     <button onClick={() => { handleDeleteAlert(a.id); setExpandedAlert(null); }} style={{
                       marginTop: 6, width: "100%", padding: 10, background: "none",
-                      color: "#cc2222", border: "1px solid #cc2222", borderRadius: 8,
+                      color: T.red, border: `1px solid ${T.red}`, borderRadius: 8,
                       ...font, fontSize: 13, fontWeight: 500, cursor: "pointer",
                     }}>Delete Alert</button>
                   </div>
@@ -2519,6 +2537,28 @@ export default function AppPage() {
             {!loading && allAlerts.filter(a => a.status !== "deleted").length === 0 && (
               <div style={{ textAlign: "center", padding: 40, color: T.textFaint, ...font, fontSize: 14 }}>No alerts yet — create one above</div>
             )}
+          </div>
+        )}
+
+        {/* ── MOBILE FLOATING BOTTOM BAR ──────────────────────────────── */}
+        {isMobile && (
+          <div style={{
+            position: "fixed", bottom: 20, left: 16, right: 16, zIndex: 100,
+            background: T.barBg, backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)",
+            border: `1px solid ${T.barBorder}`, borderRadius: 20,
+            padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between",
+            boxShadow: T.barShadow,
+          }}>
+            <div onClick={() => { setEditMode(p => !p); setMobileExpanded(null); }} style={{ ...font, fontSize: 12, fontWeight: 500, color: T.textMid, cursor: "pointer" }}>
+              {editMode ? "Done" : "Edit"}
+            </div>
+            <div onClick={() => openModal()} style={{
+              background: T.btnPrimary, border: themeName === "charcoal" ? `1px solid ${T.barBorder}` : "none",
+              borderRadius: 14, padding: "11px 28px",
+              ...font, fontSize: 13, fontWeight: 500, color: T.btnText, cursor: "pointer",
+              boxShadow: themeName === "paper" ? "0 2px 10px rgba(0,0,0,0.15)" : "none",
+            }}>+ New Alert</div>
+            <div style={{ ...font, fontSize: 12, fontWeight: 500, color: T.textMid, cursor: "pointer" }}>Filter</div>
           </div>
         )}
 
@@ -2536,9 +2576,9 @@ export default function AppPage() {
                   <div style={{ ...mono, fontSize: 9, letterSpacing: "2px", color: T.textMid }}>WATCHLIST</div>
                   <button onClick={() => setDesktopEditMode(p => !p)} style={{
                     ...mono, fontSize: 10, fontWeight: 600, cursor: "pointer", borderRadius: 6, padding: "3px 10px",
-                    background: desktopEditMode ? "#0a1f4a" : "none",
-                    color: desktopEditMode ? "#e8f2ff" : "#0a1f4a",
-                    border: desktopEditMode ? "none" : `1px solid #0a1f4a`,
+                    background: desktopEditMode ? T.accent : "none",
+                    color: desktopEditMode ? T.btnText : T.accent,
+                    border: desktopEditMode ? "none" : `1px solid ${T.accent}`,
                   }}>{desktopEditMode ? "Done" : "✎ Edit"}</button>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -2629,8 +2669,8 @@ export default function AppPage() {
                             setHiddenCards(next);
                             try { localStorage.setItem("ta-hidden-cards", JSON.stringify(next)); } catch {}
                           }} style={{
-                            width: 22, height: 22, borderRadius: "50%", border: `1px solid #cc2222`,
-                            background: "none", color: "#cc2222", fontSize: 13, cursor: "pointer",
+                            width: 22, height: 22, borderRadius: "50%", border: `1px solid ${T.red}`,
+                            background: "none", color: T.red, fontSize: 13, cursor: "pointer",
                             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, padding: 0, lineHeight: 1,
                           }}>×</button>
                         )}
@@ -2644,7 +2684,7 @@ export default function AppPage() {
                       setHiddenCards([]);
                       try { localStorage.removeItem("ta-hidden-cards"); } catch {}
                     }} style={{
-                      ...mono, fontSize: 10, color: "#0a1f4a", background: "none", border: `1px solid #0a1f4a`,
+                      ...mono, fontSize: 10, color: T.accent, background: "none", border: `1px solid ${T.accent}`,
                       borderRadius: 6, padding: "6px 12px", cursor: "pointer", width: "100%", marginTop: 4,
                     }}>Restore {hiddenCards.length} hidden</button>
                   )}
@@ -2710,8 +2750,8 @@ export default function AppPage() {
                             </div>
                             {desktopEditMode && (
                               <button onClick={() => removeFromWatchlist(m.symbol)} style={{
-                                width: 22, height: 22, borderRadius: "50%", border: `1px solid #cc2222`,
-                                background: "none", color: "#cc2222", fontSize: 13, cursor: "pointer",
+                                width: 22, height: 22, borderRadius: "50%", border: `1px solid ${T.red}`,
+                                background: "none", color: T.red, fontSize: 13, cursor: "pointer",
                                 display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, padding: 0, lineHeight: 1,
                               }}>×</button>
                             )}
@@ -2859,7 +2899,7 @@ export default function AppPage() {
                               borderRadius: 8, padding: "12px 10px", textAlign: "center",
                               position: "relative", overflow: "hidden",
                             }}>
-                              {!isPast && i === 0 && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "#0a1f4a" }} />}
+                              {!isPast && i === 0 && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: T.accent }} />}
                               <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginBottom: 4 }}>
                                 {e.quarter ? `Q${e.quarter} ${e.year || ""}` : `Q${i + 1}`}
                               </div>
@@ -2875,7 +2915,7 @@ export default function AppPage() {
                                 </div>
                               )}
                               {isPast && e.epsActual != null && (
-                                <div style={{ ...mono, fontSize: 10, color: beat ? "#1a8a44" : beat === false ? "#cc2222" : T.textMid, fontWeight: 600, marginTop: 4 }}>
+                                <div style={{ ...mono, fontSize: 10, color: beat ? T.green : beat === false ? T.red : T.textMid, fontWeight: 600, marginTop: 4 }}>
                                   EPS: ${Number(e.epsActual).toFixed(2)}
                                   {e.epsEstimate != null && <span style={{ color: T.textFaint, fontWeight: 400 }}> / est ${Number(e.epsEstimate).toFixed(2)}</span>}
                                 </div>
@@ -3012,7 +3052,7 @@ export default function AppPage() {
               return (
               <div key={a.id} style={{
                 background: T.bgCard,
-                border: isOpen ? "2px solid #0a1f4a" : `1px solid ${a.status === "triggered" ? T.red + "55" : T.border}`,
+                border: isOpen ? `2px solid ${T.accent}` : `1px solid ${a.status === "triggered" ? T.red + "55" : T.border}`,
                 borderRadius: 11, overflow: "hidden", cursor: "pointer",
               }}>
                 {/* Collapsed row */}
@@ -3055,7 +3095,7 @@ export default function AppPage() {
                             </span>
                           )) : <span style={{ ...mono, fontSize: 11, color: T.textFaint }}>None set</span>}
                         </div>
-                        {!user && <div style={{ ...font, fontSize: 13, color: "#cc2222", marginTop: 8, fontWeight: 500 }}>⚠ Please sign in to activate alerts</div>}
+                        {!user && <div style={{ ...font, fontSize: 13, color: T.red, marginTop: 8, fontWeight: 500 }}>⚠ Please sign in to activate alerts</div>}
                       </div>
                       {/* Meta */}
                       <div>
@@ -3074,7 +3114,7 @@ export default function AppPage() {
                         fetchModalPrice(a.asset);
                         setStep(3);
                         setShowModal(true);
-                      }} style={{ padding: "8px 18px", background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                      }} style={{ padding: "8px 18px", background: T.accent, color: T.btnText, border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                         ✎ Edit Delivery
                       </button>
                       <button onClick={(ev) => { ev.stopPropagation(); handleTogglePause(a.id); }} style={{
@@ -3086,7 +3126,7 @@ export default function AppPage() {
                         {a.status === "paused" ? "▶ Resume" : "⏸ Pause"}
                       </button>
                       <button onClick={(ev) => { ev.stopPropagation(); handleDeleteAlert(a.id); setExpandedAlert(null); }} style={{
-                        padding: "8px 18px", background: "none", color: "#cc2222", border: "1px solid #cc2222",
+                        padding: "8px 18px", background: "none", color: T.red, border: `1px solid ${T.red}`,
                         borderRadius: 8, ...font, fontSize: 14, cursor: "pointer",
                       }}>Delete</button>
                     </div>
@@ -3130,7 +3170,7 @@ export default function AppPage() {
             </div>
             <button onClick={() => setMobileChartFull(false)} style={{
               width: 40, height: 40, borderRadius: 10, border: "none",
-              background: "#0a1f4a", cursor: "pointer", fontSize: 20, color: "#e8f2ff",
+              background: T.accent, cursor: "pointer", fontSize: 20, color: T.btnText,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>×</button>
           </div>
@@ -3144,8 +3184,8 @@ export default function AppPage() {
             {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([r, lbl]) => (
               <span key={r} onClick={() => changeChartRange(r)} style={{
                 padding: "8px 16px", borderRadius: 8, ...mono, fontSize: 13, cursor: "pointer", fontWeight: 600,
-                background: chartRange === r ? "#0a1f4a" : T.bgCard,
-                color: chartRange === r ? "#e8f2ff" : T.text,
+                background: chartRange === r ? T.accent : T.bgCard,
+                color: chartRange === r ? T.btnText : T.text,
                 border: chartRange === r ? "none" : `1px solid ${T.border}`,
               }}>{lbl}</span>
             ))}
@@ -3161,18 +3201,18 @@ export default function AppPage() {
           <div style={{ position: "relative", width: isMobile ? "95vw" : 480, maxHeight: "90vh", overflowY: "auto", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", touchAction: "pan-y", overscrollBehavior: "contain" }}
             onTouchMove={e => e.stopPropagation()}>
             {/* Header */}
-            <div style={{ background: "#0a1f4a", padding: "18px 24px" }}>
+            <div style={{ background: T.accent, padding: "18px 24px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                <div style={{ ...font, fontSize: 20, color: "#e8f2ff" }}>🔔 Set Event Alert</div>
+                <div style={{ ...font, fontSize: 20, color: T.btnText }}>🔔 Set Event Alert</div>
                 <button onClick={() => { setCalEventAlert(null); setCalAlertTiming("1day"); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 22 }}>×</button>
               </div>
               {/* Event card */}
               <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "12px 14px" }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: `${calEventAlert.type === "earnings" ? "#378ADD" : calEventAlert.type === "economic" ? "#f5a623" : calEventAlert.type === "ipo" ? "#1a8a44" : "#9b59b6"}25`, border: `1px solid ${calEventAlert.type === "earnings" ? "#378ADD" : calEventAlert.type === "economic" ? "#f5a623" : calEventAlert.type === "ipo" ? "#1a8a44" : "#9b59b6"}55`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: `${calEventAlert.type === "earnings" ? "#378ADD" : calEventAlert.type === "economic" ? "#f5a623" : calEventAlert.type === "ipo" ? T.green : "#9b59b6"}25`, border: `1px solid ${calEventAlert.type === "earnings" ? "#378ADD" : calEventAlert.type === "economic" ? "#f5a623" : calEventAlert.type === "ipo" ? T.green : "#9b59b6"}55`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>
                   {calEventAlert.type === "earnings" ? "📊" : calEventAlert.type === "economic" ? "📅" : calEventAlert.type === "ipo" ? "🚀" : "✂️"}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ ...font, fontSize: 15, fontWeight: 500, color: "#e8f2ff" }}>
+                  <div style={{ ...font, fontSize: 15, fontWeight: 500, color: T.btnText }}>
                     {calEventAlert.symbol ? `${calEventAlert.symbol} — ` : ""}{calEventAlert.label}
                   </div>
                   {calEventAlert.companyName && <div style={{ ...font, fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>{calEventAlert.companyName}</div>}
@@ -3181,7 +3221,7 @@ export default function AppPage() {
                   </div>
                 </div>
                 {calEventAlert.impact && (
-                  <span style={{ ...mono, fontSize: 9, color: calEventAlert.impact === "high" ? "#cc2222" : "#f5a623", border: `1px solid ${calEventAlert.impact === "high" ? "#cc2222" : "#f5a623"}44`, background: `${calEventAlert.impact === "high" ? "#cc2222" : "#f5a623"}22`, padding: "2px 8px", borderRadius: 4 }}>{calEventAlert.impact.toUpperCase()}</span>
+                  <span style={{ ...mono, fontSize: 9, color: calEventAlert.impact === "high" ? T.red : "#f5a623", border: `1px solid ${calEventAlert.impact === "high" ? T.red : "#f5a623"}44`, background: `${calEventAlert.impact === "high" ? T.red : "#f5a623"}22`, padding: "2px 8px", borderRadius: 4 }}>{calEventAlert.impact.toUpperCase()}</span>
                 )}
               </div>
             </div>
@@ -3199,7 +3239,7 @@ export default function AppPage() {
                   ["after", "📊", "After results", "Get the actual data"],
                 ].map(([id, icon, title, desc]) => (
                   <button key={id} onClick={() => setCalAlertTiming(id)} style={{
-                    background: T.bgCard, border: calAlertTiming === id ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                    background: T.bgCard, border: calAlertTiming === id ? `2px solid ${T.accent}` : `1px solid ${T.border}`,
                     borderRadius: 10, padding: 14, cursor: "pointer", textAlign: "left",
                   }}>
                     <div style={{ fontSize: 20, marginBottom: 4 }}>{icon}</div>
@@ -3251,7 +3291,7 @@ export default function AppPage() {
                 showToast(`Alert set for ${calEventAlert.symbol || calEventAlert.label} — ${timingLabels[calAlertTiming]}`);
                 setCalEventAlert(null);
                 setCalAlertTiming("1day");
-              }} style={{ width: "100%", padding: 14, background: "#0a1f4a", color: "#e8f2ff", border: "none", borderRadius: 10, ...font, fontSize: 16, fontWeight: 500, cursor: "pointer" }}>
+              }} style={{ width: "100%", padding: 14, background: T.accent, color: T.btnText, border: "none", borderRadius: 10, ...font, fontSize: 16, fontWeight: 500, cursor: "pointer" }}>
                 Save Alert
               </button>
             </div>
@@ -3282,11 +3322,11 @@ export default function AppPage() {
             boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
           }}>
             {/* Profile header */}
-            <div style={{ background: "#0a1f4a", padding: "24px 20px", textAlign: "center" }}>
-              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(55,138,221,0.25)", border: "2px solid rgba(55,138,221,0.4)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700, color: "#e8f2ff", marginBottom: 10 }}>
+            <div style={{ background: T.accent, padding: "24px 20px", textAlign: "center" }}>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(55,138,221,0.25)", border: "2px solid rgba(55,138,221,0.4)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700, color: T.btnText, marginBottom: 10 }}>
                 {(user?.email?.[0] || "U").toUpperCase()}
               </div>
-              <div style={{ ...font, fontSize: 18, fontWeight: 600, color: "#e8f2ff" }}>{user?.email?.split("@")[0]}</div>
+              <div style={{ ...font, fontSize: 18, fontWeight: 600, color: T.btnText }}>{user?.email?.split("@")[0]}</div>
               <div style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>{user?.email}</div>
             </div>
 
@@ -3300,7 +3340,7 @@ export default function AppPage() {
                 </div>
                 {!isPro && (
                   <button onClick={() => { setShowProfile(false); setTab("pricing"); }} style={{
-                    ...font, fontSize: 13, fontWeight: 600, background: "#0a1f4a", color: "#e8f2ff",
+                    ...font, fontSize: 13, fontWeight: 600, background: T.accent, color: T.btnText,
                     border: "none", borderRadius: 8, padding: "8px 16px", cursor: "pointer",
                   }}>Upgrade</button>
                 )}
@@ -3326,8 +3366,8 @@ export default function AppPage() {
             {/* Actions */}
             <div style={{ padding: "12px 20px" }}>
               <button onClick={() => { setShowProfile(false); signOut(); navigate("/"); }} style={{
-                width: "100%", padding: 12, background: "none", color: "#cc2222",
-                border: "1px solid #cc2222", borderRadius: 10,
+                width: "100%", padding: 12, background: "none", color: T.red,
+                border: `1px solid ${T.red}`, borderRadius: 10,
                 ...font, fontSize: 15, fontWeight: 600, cursor: "pointer",
               }}>Sign Out</button>
             </div>
@@ -3343,15 +3383,15 @@ export default function AppPage() {
             onTouchMove={e => e.stopPropagation()}>
 
             {/* Modal header — cobalt blue, fixed outside scroll */}
-            <div style={{ background: "#0a1f4a", borderRadius: isMobile ? "14px 14px 0 0" : "18px 18px 0 0", flexShrink: 0 }}>
+            <div style={{ background: T.accent, borderRadius: isMobile ? "14px 14px 0 0" : "18px 18px 0 0", flexShrink: 0 }}>
               {/* Top row: step + title + close */}
               <div style={{ padding: "18px 24px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: "50%", border: "2px solid #378ADD", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#e8f2ff", flexShrink: 0 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: "50%", border: "2px solid #378ADD", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: T.btnText, flexShrink: 0 }}>
                     {step}
                   </div>
                   <div>
-                    <div style={{ fontSize: isMobile ? 26 : 20, color: "#e8f2ff" }}>{step === 1 ? "Set Alert" : "Delivery"}</div>
+                    <div style={{ fontSize: isMobile ? 26 : 20, color: T.btnText }}>{step === 1 ? "Set Alert" : "Delivery"}</div>
                     <div style={{ display: "flex", gap: 4, marginTop: 5 }}>
                       {[1,3].map(s => <div key={s} style={{ width: s <= step ? 20 : 6, height: 3, borderRadius: 2, background: s <= step ? "#378ADD" : "rgba(255,255,255,0.15)", transition: "all 0.3s" }} />)}
                     </div>
@@ -3371,7 +3411,7 @@ export default function AppPage() {
                       value={modalSymbolSearch}
                       onChange={e => { setModalSymbolSearch(e.target.value); searchModalSymbols(e.target.value); }}
                       autoFocus
-                      style={{ width: "100%", padding: "11px 14px", boxSizing: "border-box", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, color: "#e8f2ff", ...font, fontSize: 15, outline: "none", caretColor: "#378ADD" }}
+                      style={{ width: "100%", padding: "11px 14px", boxSizing: "border-box", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, color: T.btnText, ...font, fontSize: 15, outline: "none", caretColor: "#378ADD" }}
                     />
                     {modalSymbolSearch && (
                       <button onClick={() => { setModalSymbolSearch(""); setModalSearchResults([]); }} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 18 }}>×</button>
@@ -3384,11 +3424,11 @@ export default function AppPage() {
                       <span style={{ ...mono, fontSize: 10, color: "#378ADD", fontWeight: 700 }}>{form.asset?.slice(0,3)}</span>
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ ...font, fontSize: isMobile ? 20 : 15, fontWeight: isMobile ? 600 : 500, color: "#e8f2ff" }}>{form.asset}</div>
+                      <div style={{ ...font, fontSize: isMobile ? 20 : 15, fontWeight: isMobile ? 600 : 500, color: T.btnText }}>{form.asset}</div>
                       <div style={{ ...mono, fontSize: isMobile ? 13 : 10, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <div style={{ ...font, fontSize: isMobile ? 22 : 15, fontWeight: isMobile ? 600 : 500, color: "#e8f2ff" }}>
+                      <div style={{ ...font, fontSize: isMobile ? 22 : 15, fontWeight: isMobile ? 600 : 500, color: T.btnText }}>
                         {modalPrice ? `$${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
                       </div>
                       {modalPrice && (
@@ -3410,7 +3450,7 @@ export default function AppPage() {
                         onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
                         onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                         <div style={{ ...mono, fontSize: 11, color: "#378ADD", minWidth: 52, fontWeight: 500 }}>{r.symbol}</div>
-                        <div style={{ ...font, fontSize: 14, color: "#e8f2ff", flex: 1 }}>{(r.name || "").slice(0, 32)}</div>
+                        <div style={{ ...font, fontSize: 14, color: T.btnText, flex: 1 }}>{(r.name || "").slice(0, 32)}</div>
                         <div style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>{r.type}</div>
                       </div>
                     ))}
@@ -3437,7 +3477,7 @@ export default function AppPage() {
                         const disabled = !form.asset;
                         return (
                           <div key={t.id} style={{
-                            background: T.bgCard, border: isSelected ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                            background: T.bgCard, border: isSelected ? `2px solid ${T.accent}` : `1px solid ${T.border}`,
                             borderRadius: 12, padding: 16, marginBottom: 8, cursor: disabled ? "not-allowed" : "pointer",
                             opacity: disabled ? 0.4 : 1,
                           }} onClick={() => { if (!disabled) setForm(f => ({ ...f, trigger: t })); }}>
@@ -3447,7 +3487,7 @@ export default function AppPage() {
                                 <div style={{ ...font, fontSize: 20, fontWeight: isSelected ? 600 : 500, color: T.text }}>{t.label}</div>
                                 <div style={{ ...mono, fontSize: 13, color: "#3a3a3a", marginTop: 3 }}>{t.desc}</div>
                               </div>
-                              {isSelected && <span style={{ ...mono, fontSize: 13, color: "#0a1f4a", fontWeight: 600 }}>✓</span>}
+                              {isSelected && <span style={{ ...mono, fontSize: 13, color: T.accent, fontWeight: 600 }}>✓</span>}
                               {!isSelected && <span style={{ fontSize: 18, color: T.textFaint }}>→</span>}
                             </div>
                             {/* Inline input when selected */}
@@ -3470,24 +3510,24 @@ export default function AppPage() {
                       })}
 
                       {/* Pro triggers — collapsible, cobalt blue promotional */}
-                      <div style={{ background: "#0a1f4a", borderRadius: 12, overflow: "hidden", marginTop: 10, marginBottom: 20 }}>
+                      <div style={{ background: T.accent, borderRadius: 12, overflow: "hidden", marginTop: 10, marginBottom: 20 }}>
                         <div onClick={() => setMobileProTriggersOpen(p => !p)} style={{
                           padding: "16px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
                           cursor: "pointer",
                         }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             <span style={{ fontSize: 14 }}>⚡</span>
-                            <span style={{ ...mono, fontSize: 13, letterSpacing: "1.5px", color: "#e8f2ff", fontWeight: 700 }}>PRO TRIGGERS</span>
+                            <span style={{ ...mono, fontSize: 13, letterSpacing: "1.5px", color: T.btnText, fontWeight: 700 }}>PRO TRIGGERS</span>
                             <span style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.4)" }}>({PRO_TRIGGERS.length})</span>
                           </div>
-                          <span style={{ ...font, fontSize: 14, color: mobileProTriggersOpen ? "#e8f2ff" : "rgba(255,255,255,0.5)" }}>{mobileProTriggersOpen ? "▲ Hide" : "▼ Show"}</span>
+                          <span style={{ ...font, fontSize: 14, color: mobileProTriggersOpen ? T.btnText : "rgba(255,255,255,0.5)" }}>{mobileProTriggersOpen ? "▲ Hide" : "▼ Show"}</span>
                         </div>
                         {!mobileProTriggersOpen && (
                           <div style={{ padding: "0 16px 14px" }}>
                             <div style={{ ...font, fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 10 }}>Unlock advanced triggers like MA crossovers, RSI, Bollinger Bands & more</div>
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                               {PRO_TRIGGERS.slice(0, 4).map(t => (
-                                <span key={t.id} style={{ ...mono, fontSize: 11, color: "#e8f2ff", background: "rgba(255,255,255,0.1)", padding: "5px 10px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.15)" }}>{t.label.split(" ").slice(0, 2).join(" ")}</span>
+                                <span key={t.id} style={{ ...mono, fontSize: 11, color: T.btnText, background: "rgba(255,255,255,0.1)", padding: "5px 10px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.15)" }}>{t.label.split(" ").slice(0, 2).join(" ")}</span>
                               ))}
                               <span style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.4)", padding: "5px 0" }}>+{PRO_TRIGGERS.length - 4} more</span>
                             </div>
@@ -3506,7 +3546,7 @@ export default function AppPage() {
                                 setForm(f => ({ ...f, trigger: t }));
                               }} style={{
                                 width: "100%", padding: 16, borderRadius: 12,
-                                border: isSelected ? "2px solid #0a1f4a" : `1px solid ${T.border}`,
+                                border: isSelected ? `2px solid ${T.accent}` : `1px solid ${T.border}`,
                                 background: T.bgCard, cursor: !form.asset ? "not-allowed" : "pointer", ...font,
                                 textAlign: "left", display: "flex", gap: 12, alignItems: "center",
                                 opacity: !form.asset ? 0.4 : isPro ? 1 : 0.45,
@@ -3517,7 +3557,7 @@ export default function AppPage() {
                                   <div style={{ ...mono, fontSize: isMobile ? 13 : 11, color: T.textMid, marginTop: 3 }}>{t.desc}</div>
                                 </div>
                                 {!isPro && <span style={{ ...mono, fontSize: 10, color: T.textFaint, border: `1px solid ${T.border}`, padding: "2px 6px", borderRadius: 3 }}>PRO</span>}
-                                {isSelected && <span style={{ ...mono, fontSize: 13, color: "#0a1f4a", fontWeight: 600 }}>✓</span>}
+                                {isSelected && <span style={{ ...mono, fontSize: 13, color: T.accent, fontWeight: 600 }}>✓</span>}
                                 {!isSelected && isPro && <span style={{ fontSize: isMobile ? 18 : 14, color: T.textFaint }}>→</span>}
                               </button>
                               {/* Inline input for selected Pro trigger */}
@@ -3555,7 +3595,7 @@ export default function AppPage() {
                             })}
                             {!isPro && (
                               <button onClick={() => { setShowModal(false); setTab("pricing"); }} style={{
-                                marginTop: 6, width: "100%", padding: 12, background: "#e8f2ff", color: "#0a1f4a",
+                                marginTop: 6, width: "100%", padding: 12, background: T.btnText, color: T.accent,
                                 border: "none", borderRadius: 8, ...font, fontSize: 15, fontWeight: 700, cursor: "pointer",
                               }}>Upgrade to Pro →</button>
                             )}
@@ -3565,7 +3605,7 @@ export default function AppPage() {
 
                       {/* Continue button — goes to step 3 (delivery) */}
                       <button onClick={() => { if (form.trigger) setStep(3); }} style={{
-                        width: "100%", padding: 16, background: form.trigger ? "#0a1f4a" : T.border, color: form.trigger ? "#e8f2ff" : T.textFaint,
+                        width: "100%", padding: 16, background: form.trigger ? T.accent : T.border, color: form.trigger ? T.btnText : T.textFaint,
                         border: "none", borderRadius: 10, ...font, fontSize: 20, fontWeight: 600, cursor: form.trigger ? "pointer" : "not-allowed",
                       }}>CONTINUE →</button>
                     </div>
@@ -3585,7 +3625,7 @@ export default function AppPage() {
                       <div style={{ ...font, fontSize: 16, fontWeight: 600, color: T.text }}>{form.trigger.label}</div>
                       <div style={{ ...mono, fontSize: 14, color: form.trigger.id === "price_above" ? T.green : form.trigger.id === "price_below" ? T.red : T.accent, fontWeight: 600, marginTop: 2 }}>{form.value ? (form.trigger.input === "percent" ? `${form.value}%` : `$${form.value}`) : ""}</div>
                     </div>
-                    <div onClick={() => setStep(1)} style={{ ...mono, fontSize: 11, color: "#0a1f4a", fontWeight: 600, cursor: "pointer" }}>Edit ✎</div>
+                    <div onClick={() => setStep(1)} style={{ ...mono, fontSize: 11, color: T.accent, fontWeight: 600, cursor: "pointer" }}>Edit ✎</div>
                   </div>
                 )}
 
@@ -3614,9 +3654,9 @@ export default function AppPage() {
                             </div>
                           </div>
                           {blocked ? (
-                            <span style={{ ...mono, fontSize: 10, color: "#0a1f4a", border: "1px solid #0a1f4a", padding: "3px 8px", borderRadius: 4, fontWeight: 600 }}>PRO</span>
+                            <span style={{ ...mono, fontSize: 10, color: T.accent, border: `1px solid ${T.accent}`, padding: "3px 8px", borderRadius: 4, fontWeight: 600 }}>PRO</span>
                           ) : (
-                            <div style={{ width: 52, height: 30, borderRadius: 15, background: active ? "#0a1f4a" : T.border, padding: 3, display: "flex", alignItems: "center", justifyContent: active ? "flex-end" : "flex-start", transition: "all 0.2s" }}>
+                            <div style={{ width: 52, height: 30, borderRadius: 15, background: active ? T.accent : T.border, padding: 3, display: "flex", alignItems: "center", justifyContent: active ? "flex-end" : "flex-start", transition: "all 0.2s" }}>
                               <div style={{ width: 24, height: 24, borderRadius: 12, background: "#fff" }} />
                             </div>
                           )}
@@ -3797,7 +3837,7 @@ function FlyingCard({ card, chartPanelRef, T, onDone }) {
         'padding:10px 14px',
         'display:flex','flex-direction:column','justify-content:center',
       ].join(';');
-      g.innerHTML = `<div style="font-family:'Roboto',sans-serif;font-size:13px;font-weight:500;color:${T.text};opacity:0.5">${card.label}</div>`;
+      g.innerHTML = `<div style="font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;color:${T.text};opacity:0.5">${card.label}</div>`;
       document.body.appendChild(g);
       ghosts.push(g);
       // Fade out after short delay
@@ -3866,8 +3906,8 @@ function FlyingCard({ card, chartPanelRef, T, onDone }) {
         willChange: "transform, opacity",
       }}
     >
-      <div style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, fontWeight: 500, color: T.text }}>{card.label}</div>
-      <div style={{ fontFamily: "'Roboto', sans-serif", fontSize: 10, color: T.textFaint, marginTop: 2 }}>{card.symbol}</div>
+      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: T.text }}>{card.label}</div>
+      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: T.textFaint, marginTop: 2 }}>{card.symbol}</div>
     </div>
   );
 }
@@ -4105,8 +4145,8 @@ function PricingPage({ T, font, mono, currentPlan, onUpgrade, isMobile }) {
           flex: 1, textAlign: "center", padding: isMobile ? 12 : 14, borderRadius: 10, cursor: "pointer",
           ...font, fontSize: isMobile ? 15 : 16,
           fontWeight: pricingTab === "pro" ? 700 : 500,
-          background: pricingTab === "pro" ? "#0a1f4a" : "transparent",
-          color: pricingTab === "pro" ? "#e8f2ff" : T.textMid,
+          background: pricingTab === "pro" ? T.accent : "transparent",
+          color: pricingTab === "pro" ? T.btnText : T.textMid,
           boxShadow: pricingTab === "pro" ? "0 2px 8px rgba(10,31,74,0.3)" : "none",
           transition: "all 0.2s",
         }}>Pro</div>
@@ -4115,28 +4155,28 @@ function PricingPage({ T, font, mono, currentPlan, onUpgrade, isMobile }) {
       {/* Pro card — shown when Pro tab selected */}
       {pricingTab === "pro" && (
         <div>
-          <div style={{ background: "linear-gradient(135deg,#0a1f4a 0%,#1a3a6a 100%)", borderRadius: 20, padding: isMobile ? "32px 24px" : "36px 32px", marginBottom: 16, position: "relative", overflow: "hidden" }}>
+          <div style={{ background: T.accent, borderRadius: 20, padding: isMobile ? "32px 24px" : "36px 32px", marginBottom: 16, position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, background: "rgba(55,138,221,0.15)", borderRadius: "50%" }} />
             <div style={{ position: "absolute", bottom: -30, left: -20, width: 80, height: 80, background: "rgba(55,138,221,0.1)", borderRadius: "50%" }} />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, position: "relative" }}>
               <div>
                 <div style={{ ...mono, fontSize: isMobile ? 11 : 10, letterSpacing: "2px", color: "#378ADD", fontWeight: 600 }}>PRO</div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 4 }}>
-                  <span style={{ ...font, fontSize: isMobile ? 48 : 52, fontWeight: 800, color: "#e8f2ff", lineHeight: 1 }}>$9</span>
+                  <span style={{ ...font, fontSize: isMobile ? 48 : 52, fontWeight: 800, color: T.btnText, lineHeight: 1 }}>$9</span>
                   <span style={{ ...font, fontSize: isMobile ? 18 : 20, color: "rgba(255,255,255,0.4)" }}>/mo</span>
                 </div>
               </div>
-              <div style={{ ...mono, fontSize: isMobile ? 10 : 9, color: "#e8f2ff", background: "rgba(55,138,221,0.2)", padding: "6px 12px", borderRadius: 20, border: "1px solid rgba(55,138,221,0.3)" }}>SAVE 40% yearly</div>
+              <div style={{ ...mono, fontSize: isMobile ? 10 : 9, color: T.btnText, background: "rgba(55,138,221,0.2)", padding: "6px 12px", borderRadius: 20, border: "1px solid rgba(55,138,221,0.3)" }}>SAVE 40% yearly</div>
             </div>
             <div style={{ ...font, fontSize: isMobile ? 15 : 14, color: "rgba(255,255,255,0.6)", marginBottom: 24 }}>For serious traders who need every edge</div>
             {proFeatures.map(f => (
-              <div key={f} style={{ display: "flex", alignItems: "center", padding: "8px 0", ...font, fontSize: isMobile ? 15 : 14, color: "#e8f2ff" }}>
+              <div key={f} style={{ display: "flex", alignItems: "center", padding: "8px 0", ...font, fontSize: isMobile ? 15 : 14, color: T.btnText }}>
                 <span style={{ color: "#378ADD", marginRight: 10, fontSize: 16 }}>✓</span>{f}
               </div>
             ))}
             {isFree ? (
               <button onClick={() => proPriceId && onUpgrade(proPriceId)} style={{
-                marginTop: 24, width: "100%", padding: isMobile ? 16 : 14, background: "#e8f2ff", color: "#0a1f4a",
+                marginTop: 24, width: "100%", padding: isMobile ? 16 : 14, background: T.btnText, color: T.accent,
                 border: "none", borderRadius: 12, ...font, fontSize: isMobile ? 18 : 16, fontWeight: 700, cursor: "pointer",
               }}>Start Pro — $9/mo</button>
             ) : (
