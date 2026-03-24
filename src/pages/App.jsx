@@ -3753,7 +3753,7 @@ export default function AppPage() {
 
     </div>
   );
-} — shown when free user hits 10-alert limit ─────────────────
+}
 
 // ── UpgradeModal — shown when free user hits 10-alert limit ─────────────────
 function UpgradeModal({ T, font, mono, onClose, onUpgrade }) {
