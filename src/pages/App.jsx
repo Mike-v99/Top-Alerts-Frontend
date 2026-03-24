@@ -1831,19 +1831,26 @@ export default function AppPage() {
                     ))}
                   </div>
 
-                  {/* Detail panel below — cobalt style */}
-                  <div style={{ marginTop: isMobile ? 12 : 20, background: T.accent, borderRadius: isMobile ? 10 : 14, padding: isMobile ? "14px 16px" : "22px 28px" }}>
+                  {/* Detail panel below — glass style */}
+                  <div style={{
+                    marginTop: isMobile ? 12 : 20,
+                    backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#ffffff",
+                    backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none",
+                    border: `1px solid ${T.border}`,
+                    borderRadius: isMobile ? 16 : 14, padding: isMobile ? "16px 16px" : "22px 28px",
+                    boxShadow: T.cardShadow,
+                  }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                      <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.35)", letterSpacing: "2px" }}>
+                      <div style={{ ...mono, fontSize: 10, color: T.textFaint, letterSpacing: "2px" }}>
                         EVENTS · {new Date(yr, mo, calSelectedDay).toLocaleDateString("en-US", { month: "long", day: "numeric" }).toUpperCase()}
                       </div>
-                      <div style={{ ...font, fontSize: 16, fontWeight: 500, color: T.btnText }}>
+                      <div style={{ ...font, fontSize: 16, fontWeight: 500, color: T.text }}>
                         {fullDayNames[new Date(yr, mo, calSelectedDay).getDay()]}, {new Date(yr, mo, calSelectedDay).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                       </div>
                     </div>
 
                     {selEvents.length === 0 && (
-                      <div style={{ padding: "24px 0", textAlign: "center", color: "rgba(255,255,255,0.3)", ...font, fontSize: 14 }}>No events on this day — click a day above</div>
+                      <div style={{ padding: "24px 0", textAlign: "center", color: T.textFaint, ...font, fontSize: 14 }}>No events on this day — click a day above</div>
                     )}
 
                     {selEvents.length > 0 && (() => {
@@ -1865,11 +1872,11 @@ export default function AppPage() {
                         const previewItems = items.slice(0, 5);
 
                         return (
-                        <div key={type} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                        <div key={type} style={{ borderBottom: `1px solid ${T.border}` }}>
                           {/* Accordion header */}
                           <div onClick={() => setCalCollapsed(p => ({ ...p, [type]: !p[type] }))} style={{
                             padding: "14px 0", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer",
-                            background: isOpen ? col + "08" : "transparent", margin: "0 -28px", padding: "14px 28px",
+                            background: isOpen ? col + "08" : "transparent", margin: "0 -16px", padding: "14px 16px",
                             transition: "background 0.15s",
                           }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1877,18 +1884,18 @@ export default function AppPage() {
                               <span style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: col }}>{typeLabels[type] || type.toUpperCase()}</span>
                               <span style={{ background: col + "33", color: col, ...mono, fontSize: 10, padding: "2px 8px", borderRadius: 10 }}>{items.length}</span>
                             </div>
-                            <span style={{ ...font, fontSize: 12, color: isOpen ? col : "rgba(255,255,255,0.3)" }}>{isOpen ? "▲ Collapse" : "▼ Expand"}</span>
+                            <span style={{ ...font, fontSize: 12, color: isOpen ? col : T.textFaint }}>{isOpen ? "▲ Collapse" : "▼ Expand"}</span>
                           </div>
 
                           {/* Collapsed preview — ticker pills */}
                           {!isOpen && (
                             <div style={{ display: "flex", gap: 6, padding: "0 0 12px", flexWrap: "wrap" }}>
                               {previewItems.map((e, j) => (
-                                <span key={j} style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.04)", padding: "4px 10px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.06)" }}>
+                                <span key={j} style={{ ...mono, fontSize: 11, color: T.textMid, background: T.accentBg, padding: "4px 10px", borderRadius: 6, border: `1px solid ${T.border}` }}>
                                   {e.symbol || e.label?.split(" ").slice(0, 2).join(" ")}
                                 </span>
                               ))}
-                              {items.length > 5 && <span style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.15)", padding: "4px 0" }}>+{items.length - 5} more…</span>}
+                              {items.length > 5 && <span style={{ ...mono, fontSize: 11, color: T.textFaint, padding: "4px 0" }}>+{items.length - 5} more…</span>}
                             </div>
                           )}
 
@@ -1927,57 +1934,38 @@ export default function AppPage() {
                           )}
 
                           {type === "earnings" && (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                               {items.map((e, i) => (
                                 <div key={i} style={{
-                                  backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#ffffff",
-                                  backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none",
+                                  backgroundColor: themeName === "charcoal" ? "#111" : "#f9f8f5",
                                   border: `1px solid ${T.border}`,
-                                  borderRadius: 16, padding: "16px 18px", position: "relative", overflow: "hidden",
-                                  boxShadow: T.cardShadow,
+                                  borderRadius: 12, padding: "12px 14px", position: "relative", overflow: "hidden",
                                 }}>
                                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${col}25, transparent)` }} />
-                                  {/* Top row: symbol + label + alert */}
-                                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                                    <div style={{ font: "inherit", fontSize: 17, fontWeight: 500, color: T.text }}>{e.symbol}</div>
-                                    <div style={{ font: "inherit", fontSize: 11, fontWeight: 300, color: T.textMid }}>{e.label}</div>
+                                  {/* Top row: symbol + label + beat/miss + alert */}
+                                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                                    <span style={{ ...font, fontSize: 15, fontWeight: 500, color: T.text }}>{e.symbol}</span>
+                                    <span style={{ ...font, fontSize: 11, fontWeight: 300, color: T.textFaint }}>{e.label}</span>
                                     {e.beatMiss === "beat" && <span style={{ ...mono, fontSize: 8, color: T.green, background: `${T.green}15`, border: `1px solid ${T.green}30`, padding: "1px 5px", borderRadius: 3 }}>BEAT</span>}
                                     {e.beatMiss === "miss" && <span style={{ ...mono, fontSize: 8, color: T.red, background: `${T.red}15`, border: `1px solid ${T.red}30`, padding: "1px 5px", borderRadius: 3 }}>MISS</span>}
-                                    <div style={{ marginLeft: "auto", flexShrink: 0 }}>
-                                      <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
-                                        background: themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-                                        border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
-                                        borderRadius: 8, padding: "6px 12px", cursor: "pointer",
-                                        ...font, fontSize: 10, color: T.textMid, display: "flex", alignItems: "center", gap: 4,
-                                      }}>🔔 Alert</button>
-                                    </div>
+                                    <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
+                                      marginLeft: "auto", flexShrink: 0, background: "none",
+                                      border: `1px solid ${T.border}`,
+                                      borderRadius: 6, padding: "4px 10px", cursor: "pointer",
+                                      ...mono, fontSize: 9, color: T.textMid,
+                                    }}>🔔</button>
                                   </div>
-                                  {/* Pill badges row */}
-                                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                                    <div style={{
-                                      background: themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
-                                      border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
-                                      borderRadius: 20, padding: "5px 12px",
-                                      ...mono, fontSize: 10, color: T.textMid,
-                                    }}>{e.time || "—"}</div>
-                                    {e.est && <div style={{
-                                      background: themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
-                                      border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
-                                      borderRadius: 20, padding: "5px 12px",
-                                      ...mono, fontSize: 10, color: T.textMid,
-                                    }}>EPS {e.est}</div>}
-                                    {e.actual && <div style={{
-                                      background: e.beatMiss === "beat" ? `${T.green}12` : e.beatMiss === "miss" ? `${T.red}12` : themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
-                                      border: `1px solid ${e.beatMiss === "beat" ? `${T.green}30` : e.beatMiss === "miss" ? `${T.red}30` : themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
-                                      borderRadius: 20, padding: "5px 12px",
-                                      ...mono, fontSize: 10, color: e.beatMiss === "beat" ? T.green : e.beatMiss === "miss" ? T.red : T.textMid,
-                                    }}>Actual {e.actual}</div>}
-                                    {e.revEst && <div style={{
-                                      background: themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
-                                      border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
-                                      borderRadius: 20, padding: "5px 12px",
-                                      ...mono, fontSize: 10, color: T.textMid,
-                                    }}>Rev {e.revEst}</div>}
+                                  {/* Pill badges */}
+                                  <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                                    <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9, color: T.textMid }}>{e.time || "—"}</span>
+                                    {e.est && <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9, color: T.textMid }}>EPS {e.est}</span>}
+                                    {e.actual && <span style={{
+                                      background: e.beatMiss === "beat" ? `${T.green}12` : e.beatMiss === "miss" ? `${T.red}12` : T.accentBg,
+                                      border: `1px solid ${e.beatMiss === "beat" ? `${T.green}30` : e.beatMiss === "miss" ? `${T.red}30` : T.border}`,
+                                      borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9,
+                                      color: e.beatMiss === "beat" ? T.green : e.beatMiss === "miss" ? T.red : T.textMid,
+                                    }}>Actual {e.actual}</span>}
+                                    {e.revEst && <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9, color: T.textMid }}>Rev {e.revEst}</span>}
                                   </div>
                                 </div>
                               ))}
@@ -1985,45 +1973,30 @@ export default function AppPage() {
                           )}
 
                           {(type === "ipo" || type === "split" || type === "dividend" || type === "holiday") && (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                               {items.map((e, i) => (
                                 <div key={i} style={{
-                                  backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#ffffff",
-                                  backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none",
+                                  backgroundColor: themeName === "charcoal" ? "#111" : "#f9f8f5",
                                   border: `1px solid ${T.border}`,
-                                  borderRadius: 16, padding: "16px 18px", position: "relative", overflow: "hidden",
-                                  boxShadow: T.cardShadow,
+                                  borderRadius: 12, padding: "12px 14px", position: "relative", overflow: "hidden",
                                 }}>
                                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${col}25, transparent)` }} />
-                                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                                    {e.symbol && <div style={{ font: "inherit", fontSize: 17, fontWeight: 500, color: T.text }}>{e.symbol}</div>}
-                                    <div style={{ font: "inherit", fontSize: 11, fontWeight: 300, color: T.textMid }}>{e.label}</div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                                    {e.symbol && <span style={{ ...font, fontSize: 15, fontWeight: 500, color: T.text }}>{e.symbol}</span>}
+                                    <span style={{ ...font, fontSize: 11, fontWeight: 300, color: T.textFaint }}>{e.label}</span>
                                     {type !== "holiday" && e.symbol && (
                                       <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
-                                        marginLeft: "auto", flexShrink: 0,
-                                        background: themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-                                        border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
-                                        borderRadius: 8, padding: "6px 12px", cursor: "pointer",
-                                        ...font, fontSize: 10, color: T.textMid, display: "flex", alignItems: "center", gap: 4,
-                                      }}>🔔 Alert</button>
+                                        marginLeft: "auto", flexShrink: 0, background: "none",
+                                        border: `1px solid ${T.border}`,
+                                        borderRadius: 6, padding: "4px 10px", cursor: "pointer",
+                                        ...mono, fontSize: 9, color: T.textMid,
+                                      }}>🔔</button>
                                     )}
                                   </div>
-                                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                                    {e.time && <div style={{
-                                      background: themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
-                                      border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
-                                      borderRadius: 20, padding: "5px 12px", ...mono, fontSize: 10, color: T.textMid,
-                                    }}>{e.time}</div>}
-                                    {e.price && <div style={{
-                                      background: themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
-                                      border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
-                                      borderRadius: 20, padding: "5px 12px", ...mono, fontSize: 10, color: T.textMid,
-                                    }}>{e.price}</div>}
-                                    {e.impact && <div style={{
-                                      background: impactColor(e.impact) + "12",
-                                      border: `1px solid ${impactColor(e.impact)}30`,
-                                      borderRadius: 20, padding: "5px 12px", ...mono, fontSize: 10, color: impactColor(e.impact),
-                                    }}>{e.impact.toUpperCase()}</div>}
+                                  <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                                    {e.time && <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9, color: T.textMid }}>{e.time}</span>}
+                                    {e.price && <span style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9, color: T.textMid }}>{e.price}</span>}
+                                    {e.impact && <span style={{ background: impactColor(e.impact) + "12", border: `1px solid ${impactColor(e.impact)}30`, borderRadius: 20, padding: "3px 10px", ...mono, fontSize: 9, color: impactColor(e.impact) }}>{e.impact.toUpperCase()}</span>}
                                   </div>
                                 </div>
                               ))}
