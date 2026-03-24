@@ -1221,10 +1221,10 @@ export default function AppPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ minHeight: "100vh", background: T.bg, ...font, color: T.text, position: "relative", overflowX: "hidden", transition: "background 0.3s" }}>
+    <div style={{ minHeight: "100vh", background: T.bg, ...font, color: T.text, transition: "background 0.3s" }}>
       <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
       <style>{`
-        html, body { background: ${T.bg}; margin: 0; }
+        html, body { background: ${T.bg}; margin: 0; overflow-x: hidden; }
         @keyframes slideFromLeft  { from { transform: translateX(-60%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideFromRight { from { transform: translateX(60%);  opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideUpIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
