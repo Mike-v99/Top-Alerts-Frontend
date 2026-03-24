@@ -1260,7 +1260,7 @@ floatingBarRef.current = el;
 const el = floatingBarRef.current;
 const isDark = themeName === “charcoal”;
 el.style.cssText = `position:fixed;bottom:0;left:0;right:0;z-index:9999;padding:12px 16px calc(16px + env(safe-area-inset-bottom, 0px));background:linear-gradient(to top,${T.bg},${T.bg}ee,transparent);pointer-events:none;font-family:'Outfit',sans-serif;`;
-el.innerHTML = `<div style="background:${T.barBg};backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid ${T.barBorder};border-radius:20px;padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:16px;box-shadow:${T.barShadow};pointer-events:auto;"> <div id="ta-bar-edit" style="font-size:12px;font-weight:500;color:${T.textMid};cursor:pointer;">${editMode ? "Done" : "Edit"}</div> <div id="ta-bar-alert" style="background:${T.btnPrimary};${isDark ? `border:1px solid ${T.barBorder};` : ""}border-radius:14px;padding:11px 28px;font-size:13px;font-weight:500;color:${T.btnText};cursor:pointer;${!isDark ? "box-shadow:0 2px 10px rgba(0,0,0,0.15);" : ""}">+ New Alert</div> </div>`;
+el.innerHTML = `<div style="background:${T.barBg};backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid ${T.barBorder};border-radius:20px;padding:14px 24px;display:flex;align-items:center;position:relative;box-shadow:${T.barShadow};pointer-events:auto;"> <div id="ta-bar-edit" style="font-size:12px;font-weight:500;color:${T.textMid};cursor:pointer;position:absolute;left:24px;">${editMode ? "Done" : "Edit"}</div> <div id="ta-bar-alert" style="background:${T.btnPrimary};${isDark ? `border:1px solid ${T.barBorder};` : ""}border-radius:14px;padding:11px 28px;font-size:13px;font-weight:500;color:${T.btnText};cursor:pointer;${!isDark ? "box-shadow:0 2px 10px rgba(0,0,0,0.15);" : ""}margin:0 auto;">+ New Alert</div> </div>`;
 const editBtn = el.querySelector(”#ta-bar-edit”);
 const alertBtn = el.querySelector(”#ta-bar-alert”);
 const handleEdit = () => { setEditMode(p => !p); setMobileExpanded(null); };
@@ -4295,3 +4295,4 @@ return (
 ```
 
 );
+}
