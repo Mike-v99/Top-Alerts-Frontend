@@ -4,7 +4,6 @@
 // useAlerts() replaces all mock state. useAuth() gates Pro features.
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth }   from "../context/AuthContext.jsx";
 import { useAlerts } from "../hooks/useAlerts.js";
@@ -3750,20 +3749,19 @@ export default function AppPage() {
         </div>
       )}
 
-      {/* ── MOBILE FLOATING BOTTOM BAR (portal to body) ──────────── */}
-      {isMobile && createPortal(
+      {/* ── MOBILE FLOATING BOTTOM BAR ──────────────────────────────── */}
+      {isMobile && (
         <div style={{
-          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999,
+          position: "sticky", bottom: 0, left: 0, right: 0, zIndex: 100,
           padding: "12px 16px 20px",
-          background: `linear-gradient(to top, ${T.bg}, ${T.bg}ee, transparent)`,
-          pointerEvents: "none",
+          background: `linear-gradient(to top, ${T.bg}, ${T.bg}ee, ${T.bg}00)`,
+          marginTop: -40,
         }}>
           <div style={{
             background: T.barBg, backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)",
             border: `1px solid ${T.barBorder}`, borderRadius: 20,
             padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "center", gap: 16,
             boxShadow: T.barShadow,
-            pointerEvents: "auto",
           }}>
             <div onClick={() => { setEditMode(p => !p); setMobileExpanded(null); }} style={{ ...font, fontSize: 12, fontWeight: 500, color: T.textMid, cursor: "pointer" }}>
               {editMode ? "Done" : "Edit"}
@@ -3775,8 +3773,7 @@ export default function AppPage() {
               boxShadow: themeName === "paper" ? "0 2px 10px rgba(0,0,0,0.15)" : "none",
             }}>+ New Alert</div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
 
     </div>
