@@ -1913,10 +1913,13 @@ export default function AppPage() {
                                     <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: e.actual != null ? "#3ddc84" : "rgba(255,255,255,0.2)", marginTop: 2 }}>{e.actual ?? "Pending"}</div></div>
                                     <div style={{ flex: 1 }} />
                                     <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
-                                      padding: "8px 16px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-                                      borderRadius: 8, cursor: "pointer", ...font, fontSize: 13, color: T.btnText,
-                                      display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
-                                    }}>🔔 Set Alert</button>
+                                      width: 32, height: 32, borderRadius: 8,
+                                      background: T.accentBg, border: `1px solid ${T.border}`,
+                                      display: "flex", alignItems: "center", justifyContent: "center",
+                                      cursor: "pointer", flexShrink: 0, padding: 0,
+                                    }}>
+                                      <span style={{ fontSize: 18, fontWeight: 300, color: T.textMid, lineHeight: 1 }}>+</span>
+                                    </button>
                                   </div>
                                 </div>
                               ))}
@@ -1924,34 +1927,57 @@ export default function AppPage() {
                           )}
 
                           {type === "earnings" && (
-                            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : items.length === 1 ? "1fr" : "1fr 1fr", gap: 8 }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                               {items.map((e, i) => (
-                                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${col}`, borderRadius: 8, padding: "12px 16px" }}>
-                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                        <span style={{ ...font, fontSize: 16, fontWeight: 600, color: T.btnText }}>{e.symbol}</span>
-                                        {e.beatMiss === "beat" && <span style={{ ...mono, fontSize: 9, color: "#3ddc84", background: "rgba(61,220,132,0.15)", border: "1px solid rgba(61,220,132,0.3)", padding: "1px 6px", borderRadius: 4 }}>▲ BEAT</span>}
-                                        {e.beatMiss === "miss" && <span style={{ ...mono, fontSize: 9, color: T.red, background: "rgba(204,34,34,0.15)", border: "1px solid rgba(204,34,34,0.3)", padding: "1px 6px", borderRadius: 4 }}>▼ MISS</span>}
-                                        {e.beatMiss === "met" && <span style={{ ...mono, fontSize: 9, color: "#f5a623", background: "rgba(245,166,35,0.15)", border: "1px solid rgba(245,166,35,0.3)", padding: "1px 6px", borderRadius: 4 }}>— MET</span>}
-                                      </div>
-                                      {e.companyName && <div style={{ ...font, fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.companyName}</div>}
-                                      <div style={{ ...font, fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{e.label}</div>
-                                    </div>
-                                    <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
-                                      {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.06)", padding: "2px 8px", borderRadius: 4 }}>{e.time}</span>}
+                                <div key={i} style={{
+                                  backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#ffffff",
+                                  backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none",
+                                  border: `1px solid ${T.border}`,
+                                  borderRadius: 16, padding: "16px 18px", position: "relative", overflow: "hidden",
+                                  boxShadow: T.cardShadow,
+                                }}>
+                                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${col}25, transparent)` }} />
+                                  {/* Top row: symbol + label + alert */}
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                                    <div style={{ font: "inherit", fontSize: 17, fontWeight: 500, color: T.text }}>{e.symbol}</div>
+                                    <div style={{ font: "inherit", fontSize: 11, fontWeight: 300, color: T.textMid }}>{e.label}</div>
+                                    {e.beatMiss === "beat" && <span style={{ ...mono, fontSize: 8, color: T.green, background: `${T.green}15`, border: `1px solid ${T.green}30`, padding: "1px 5px", borderRadius: 3 }}>BEAT</span>}
+                                    {e.beatMiss === "miss" && <span style={{ ...mono, fontSize: 8, color: T.red, background: `${T.red}15`, border: `1px solid ${T.red}30`, padding: "1px 5px", borderRadius: 3 }}>MISS</span>}
+                                    <div style={{ marginLeft: "auto", flexShrink: 0 }}>
                                       <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
-                                        padding: "6px 12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-                                        borderRadius: 6, cursor: "pointer", ...font, fontSize: 12, color: T.btnText,
-                                        display: "flex", alignItems: "center", gap: 4,
+                                        background: themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+                                        border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
+                                        borderRadius: 8, padding: "6px 12px", cursor: "pointer",
+                                        ...font, fontSize: 10, color: T.textMid, display: "flex", alignItems: "center", gap: 4,
                                       }}>🔔 Alert</button>
                                     </div>
                                   </div>
-                                  <div style={{ display: "flex", gap: 20, marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap" }}>
-                                    <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>EST EPS</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: T.btnText, marginTop: 2 }}>{e.est || "—"}</div></div>
-                                    {e.actual && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>ACTUAL EPS</span><div style={{ ...font, fontSize: 14, fontWeight: 500, color: e.beatMiss === "beat" ? "#3ddc84" : e.beatMiss === "miss" ? T.red : T.btnText, marginTop: 2 }}>{e.actual}</div></div>}
-                                    {e.revEst && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>REV EST</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: T.btnText, marginTop: 2 }}>{e.revEst}</div></div>}
-                                    {e.revActual && <div><span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>REV ACTUAL</span><div style={{ ...font, fontSize: 13, fontWeight: 500, color: "#3ddc84", marginTop: 2 }}>{e.revActual}</div></div>}
+                                  {/* Pill badges row */}
+                                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                    <div style={{
+                                      background: themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+                                      border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
+                                      borderRadius: 20, padding: "5px 12px",
+                                      ...mono, fontSize: 10, color: T.textMid,
+                                    }}>{e.time || "—"}</div>
+                                    {e.est && <div style={{
+                                      background: themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+                                      border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
+                                      borderRadius: 20, padding: "5px 12px",
+                                      ...mono, fontSize: 10, color: T.textMid,
+                                    }}>EPS {e.est}</div>}
+                                    {e.actual && <div style={{
+                                      background: e.beatMiss === "beat" ? `${T.green}12` : e.beatMiss === "miss" ? `${T.red}12` : themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+                                      border: `1px solid ${e.beatMiss === "beat" ? `${T.green}30` : e.beatMiss === "miss" ? `${T.red}30` : themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
+                                      borderRadius: 20, padding: "5px 12px",
+                                      ...mono, fontSize: 10, color: e.beatMiss === "beat" ? T.green : e.beatMiss === "miss" ? T.red : T.textMid,
+                                    }}>Actual {e.actual}</div>}
+                                    {e.revEst && <div style={{
+                                      background: themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+                                      border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
+                                      borderRadius: 20, padding: "5px 12px",
+                                      ...mono, fontSize: 10, color: T.textMid,
+                                    }}>Rev {e.revEst}</div>}
                                   </div>
                                 </div>
                               ))}
@@ -1959,28 +1985,45 @@ export default function AppPage() {
                           )}
 
                           {(type === "ipo" || type === "split" || type === "dividend" || type === "holiday") && (
-                            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : items.length === 1 ? "1fr" : "1fr 1fr", gap: 8 }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                               {items.map((e, i) => (
-                                <div key={i} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderLeft: `3px solid ${col}`, borderRadius: 8, padding: "12px 16px" }}>
-                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <div>
-                                      {e.symbol && <div style={{ ...font, fontSize: 15, fontWeight: 600, color: T.btnText }}>{e.symbol}</div>}
-                                      <div style={{ ...font, fontSize: 13, color: e.symbol ? "rgba(255,255,255,0.45)" : T.btnText, marginTop: e.symbol ? 2 : 0 }}>{e.label}</div>
-                                    </div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                                        {e.time && <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{e.time}</span>}
-                                        {e.price && <span style={{ ...mono, fontSize: 11, color: T.btnText }}>{e.price}</span>}
-                                        {e.impact && <span style={{ ...mono, fontSize: 9, color: impactColor(e.impact), border: `1px solid ${impactColor(e.impact)}44`, background: impactColor(e.impact) + "22", padding: "2px 6px", borderRadius: 4 }}>{e.impact.toUpperCase()}</span>}
-                                      </div>
-                                      {type !== "holiday" && e.symbol && (
-                                        <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
-                                          padding: "6px 12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-                                          borderRadius: 6, cursor: "pointer", ...font, fontSize: 12, color: T.btnText,
-                                          display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
-                                        }}>🔔</button>
-                                      )}
-                                    </div>
+                                <div key={i} style={{
+                                  backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#ffffff",
+                                  backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none",
+                                  border: `1px solid ${T.border}`,
+                                  borderRadius: 16, padding: "16px 18px", position: "relative", overflow: "hidden",
+                                  boxShadow: T.cardShadow,
+                                }}>
+                                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${col}25, transparent)` }} />
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                                    {e.symbol && <div style={{ font: "inherit", fontSize: 17, fontWeight: 500, color: T.text }}>{e.symbol}</div>}
+                                    <div style={{ font: "inherit", fontSize: 11, fontWeight: 300, color: T.textMid }}>{e.label}</div>
+                                    {type !== "holiday" && e.symbol && (
+                                      <button onClick={(ev) => { ev.stopPropagation(); setCalEventAlert(e); }} style={{
+                                        marginLeft: "auto", flexShrink: 0,
+                                        background: themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+                                        border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
+                                        borderRadius: 8, padding: "6px 12px", cursor: "pointer",
+                                        ...font, fontSize: 10, color: T.textMid, display: "flex", alignItems: "center", gap: 4,
+                                      }}>🔔 Alert</button>
+                                    )}
+                                  </div>
+                                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                    {e.time && <div style={{
+                                      background: themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+                                      border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
+                                      borderRadius: 20, padding: "5px 12px", ...mono, fontSize: 10, color: T.textMid,
+                                    }}>{e.time}</div>}
+                                    {e.price && <div style={{
+                                      background: themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+                                      border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
+                                      borderRadius: 20, padding: "5px 12px", ...mono, fontSize: 10, color: T.textMid,
+                                    }}>{e.price}</div>}
+                                    {e.impact && <div style={{
+                                      background: impactColor(e.impact) + "12",
+                                      border: `1px solid ${impactColor(e.impact)}30`,
+                                      borderRadius: 20, padding: "5px 12px", ...mono, fontSize: 10, color: impactColor(e.impact),
+                                    }}>{e.impact.toUpperCase()}</div>}
                                   </div>
                                 </div>
                               ))}
