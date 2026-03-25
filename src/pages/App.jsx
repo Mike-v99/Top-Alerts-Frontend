@@ -183,10 +183,14 @@ export default function AppPage() {
     try { const saved = JSON.parse(localStorage.getItem("ta-mobile-order")); if (saved && saved.length) return saved; } catch {}
     return MARKET_SYMBOLS.map(m => m.symbol);
   });
-  const [dragItem, setDragItem] = useState(null); // symbol being dragged
+  const [hiddenMobileCards, setHiddenMobileCards] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("ta-mobile-hidden") || "[]"); } catch { return []; }
+  });
+  const [pendingDelete, setPendingDelete] = useState(null); // symbol pending deletion (red state)
+  const [dragItem, setDragItem] = useState(null);
   const dragY = useRef(null);
   const dragStartY = useRef(null);
-  const dragOffsets = useRef({});
+  const dragNodeRects = useRef([]);
   const [desktopEditMode, setDesktopEditMode] = useState(false); // desktop watchlist edit
   const [desktopCardOrder, setDesktopCardOrder] = useState(() => {
     try {
@@ -339,13 +343,35 @@ export default function AppPage() {
   }
   // Swipe offset is now handled via direct DOM manipulation in handleTouchMove
 
-  // ── Edit mode drag reorder ─────────────────────────────────────────
+  // ── Edit mode — delete + reorder ──────────────────────────────────────
+  function editDelete(symbol) {
+    if (pendingDelete === symbol) {
+      // Second tap — actually delete
+      const isMarket = MARKET_SYMBOLS.some(m => m.symbol === symbol);
+      if (isMarket) {
+        const next = [...hiddenMobileCards, symbol];
+        setHiddenMobileCards(next);
+        try { localStorage.setItem("ta-mobile-hidden", JSON.stringify(next)); } catch {}
+      } else {
+        removeFromWatchlist(symbol);
+      }
+      setPendingDelete(null);
+      if (navigator.vibrate) navigator.vibrate(10);
+      showToast(`${symbol} removed`);
+    } else {
+      // First tap — show red confirmation
+      setPendingDelete(symbol);
+      if (navigator.vibrate) navigator.vibrate(5);
+      // Auto-reset after 3 seconds
+      setTimeout(() => setPendingDelete(p => p === symbol ? null : p), 3000);
+    }
+  }
+
   function handleDragStart(symbol, e) {
     const touch = e.touches[0];
     dragStartY.current = touch.clientY;
     dragY.current = touch.clientY;
     setDragItem(symbol);
-    // Haptic feedback
     if (navigator.vibrate) navigator.vibrate(10);
   }
   function handleDragMove(symbol, e) {
@@ -357,43 +383,38 @@ export default function AppPage() {
       const diff = touch.clientY - dragStartY.current;
       el.style.transform = `translateY(${diff}px)`;
       el.style.zIndex = "50";
-      el.style.opacity = "0.9";
-      el.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)";
+      el.style.transition = "none";
     }
-    // Check if we should swap
-    const allSymbols = [...mobileCardOrder, ...watchlist.filter(w => !mobileCardOrder.includes(w.symbol)).map(w => w.symbol)];
-    const currentIdx = allSymbols.indexOf(symbol);
-    const cardHeight = 76; // approximate card height + margin
+    // Check swap
+    const isMarket = MARKET_SYMBOLS.some(m => m.symbol === symbol);
+    const cardHeight = 86;
     const moveBy = Math.round((touch.clientY - dragStartY.current) / cardHeight);
-    const targetIdx = Math.max(0, Math.min(allSymbols.length - 1, currentIdx + moveBy));
-    if (targetIdx !== currentIdx && moveBy !== 0) {
-      // Swap in the order
-      const isMarket = mobileCardOrder.includes(symbol);
-      const isWatchlist = watchlist.some(w => w.symbol === symbol);
-      if (isMarket) {
-        const order = [...mobileCardOrder];
-        const ci = order.indexOf(symbol);
-        const ti = Math.max(0, Math.min(order.length - 1, ci + moveBy));
-        if (ci !== ti) {
-          order.splice(ci, 1);
-          order.splice(ti, 0, symbol);
-          setMobileCardOrder(order);
-          try { localStorage.setItem("ta-mobile-order", JSON.stringify(order)); } catch {}
-          dragStartY.current = touch.clientY; // reset baseline after swap
-          if (navigator.vibrate) navigator.vibrate(5);
-        }
-      } else if (isWatchlist) {
-        const wl = [...watchlist];
-        const ci = wl.findIndex(w => w.symbol === symbol);
-        const ti = Math.max(0, Math.min(wl.length - 1, ci + moveBy));
-        if (ci !== ti && ci >= 0) {
-          const item = wl.splice(ci, 1)[0];
-          wl.splice(ti, 0, item);
-          setWatchlist(wl);
-          try { localStorage.setItem("ta-watchlist", JSON.stringify(wl)); } catch {}
-          dragStartY.current = touch.clientY;
-          if (navigator.vibrate) navigator.vibrate(5);
-        }
+    if (moveBy === 0) return;
+    if (isMarket) {
+      const order = [...mobileCardOrder];
+      const ci = order.indexOf(symbol);
+      if (ci < 0) return;
+      const ti = Math.max(0, Math.min(order.length - 1, ci + moveBy));
+      if (ci !== ti) {
+        order.splice(ci, 1);
+        order.splice(ti, 0, symbol);
+        setMobileCardOrder(order);
+        try { localStorage.setItem("ta-mobile-order", JSON.stringify(order)); } catch {}
+        dragStartY.current = touch.clientY;
+        if (navigator.vibrate) navigator.vibrate(5);
+      }
+    } else {
+      const wl = [...watchlist];
+      const ci = wl.findIndex(w => w.symbol === symbol);
+      if (ci < 0) return;
+      const ti = Math.max(0, Math.min(wl.length - 1, ci + moveBy));
+      if (ci !== ti) {
+        const item = wl.splice(ci, 1)[0];
+        wl.splice(ti, 0, item);
+        setWatchlist(wl);
+        try { localStorage.setItem("ta-watchlist", JSON.stringify(wl)); } catch {}
+        dragStartY.current = touch.clientY;
+        if (navigator.vibrate) navigator.vibrate(5);
       }
     }
   }
@@ -401,12 +422,10 @@ export default function AppPage() {
     setDragItem(null);
     const el = document.getElementById(`edit-row-${symbol}`);
     if (el) {
-      el.style.transition = "transform 0.2s ease, opacity 0.2s, box-shadow 0.2s";
+      el.style.transition = "transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)";
       el.style.transform = "translateY(0)";
       el.style.zIndex = "";
-      el.style.opacity = "1";
-      el.style.boxShadow = "none";
-      setTimeout(() => { el.style.transition = ""; }, 200);
+      setTimeout(() => { if (el) el.style.transition = ""; }, 300);
     }
   }
 
@@ -2117,6 +2136,7 @@ export default function AppPage() {
             {[...mobileCardOrder, ...MARKET_SYMBOLS.filter(m => !mobileCardOrder.includes(m.symbol)).map(m => m.symbol)]
               .map(sym => MARKET_SYMBOLS.find(m => m.symbol === sym))
               .filter(Boolean)
+              .filter(m => !hiddenMobileCards.includes(m.symbol))
               .map(m => {
               const d = marketData[m.id];
               const up = d?.changePct >= 0;
@@ -2161,11 +2181,18 @@ export default function AppPage() {
                       else { setMobileExpanded(m.symbol); openChart(m.symbol, m.label); }
                     } catch (err) { console.error("Mobile expand error:", err); }
                   }} style={{ padding: "16px 14px", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
-                    {/* Edit mode — delete circle on left */}
+                    {/* Edit mode — delete circle on left (silver → red on tap) */}
                     {editMode && (
-                      <div onClick={(ev) => { ev.stopPropagation(); removeFromWatchlist(m.symbol); if (navigator.vibrate) navigator.vibrate(10); }}
-                        style={{ width: 28, height: 28, borderRadius: "50%", border: `2px solid ${T.red}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
-                        <div style={{ width: 12, height: 2, background: T.red, borderRadius: 1 }} />
+                      <div onClick={(ev) => { ev.stopPropagation(); editDelete(m.symbol); }}
+                        style={{
+                          width: 30, height: 30, borderRadius: "50%",
+                          border: `2px solid ${pendingDelete === m.symbol ? T.red : T.textMid}`,
+                          background: pendingDelete === m.symbol ? `${T.red}15` : "transparent",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          flexShrink: 0, cursor: "pointer", marginRight: 4,
+                          transition: "all 0.2s",
+                        }}>
+                        <div style={{ width: 12, height: 2, background: pendingDelete === m.symbol ? T.red : T.textMid, borderRadius: 1, transition: "background 0.2s" }} />
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
@@ -2255,6 +2282,14 @@ export default function AppPage() {
               );
             })}
 
+            {/* Restore hidden cards in edit mode */}
+            {editMode && hiddenMobileCards.length > 0 && (
+              <button onClick={() => { setHiddenMobileCards([]); try { localStorage.removeItem("ta-mobile-hidden"); } catch {} showToast(`${hiddenMobileCards.length} cards restored`); }}
+                style={{ width: "100%", padding: 12, background: "none", border: `1px dashed ${T.border}`, borderRadius: 12, ...font, fontSize: 12, color: T.textMid, cursor: "pointer", marginBottom: 10 }}>
+                Restore {hiddenMobileCards.length} hidden card{hiddenMobileCards.length > 1 ? "s" : ""}
+              </button>
+            )}
+
             {/* User watchlist items */}
             {watchlist.filter(w => !MARKET_SYMBOLS.some(m => m.symbol === w.symbol)).map(w => {
               const wd = watchData[w.symbol];
@@ -2298,11 +2333,18 @@ export default function AppPage() {
                       else { setMobileExpanded(w.symbol); openChart(w.symbol, w.label); }
                     } catch (err) { console.error("Watchlist expand error:", err); }
                   }} style={{ padding: "16px 14px", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
-                    {/* Edit mode — delete circle on left */}
+                    {/* Edit mode — delete circle on left (silver → red on tap) */}
                     {editMode && (
-                      <div onClick={(ev) => { ev.stopPropagation(); removeFromWatchlist(w.symbol); if (navigator.vibrate) navigator.vibrate(10); }}
-                        style={{ width: 28, height: 28, borderRadius: "50%", border: `2px solid ${T.red}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
-                        <div style={{ width: 12, height: 2, background: T.red, borderRadius: 1 }} />
+                      <div onClick={(ev) => { ev.stopPropagation(); editDelete(w.symbol); }}
+                        style={{
+                          width: 30, height: 30, borderRadius: "50%",
+                          border: `2px solid ${pendingDelete === w.symbol ? T.red : T.textMid}`,
+                          background: pendingDelete === w.symbol ? `${T.red}15` : "transparent",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          flexShrink: 0, cursor: "pointer", marginRight: 4,
+                          transition: "all 0.2s",
+                        }}>
+                        <div style={{ width: 12, height: 2, background: pendingDelete === w.symbol ? T.red : T.textMid, borderRadius: 1, transition: "background 0.2s" }} />
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
@@ -3859,7 +3901,7 @@ export default function AppPage() {
             boxShadow: T.barShadow,
             pointerEvents: "auto",
           }}>
-            <div onClick={() => { setEditMode(p => { const next = !p; if (next) showToast("Edit mode — swipe to remove", "success"); return next; }); setMobileExpanded(null); }}
+            <div onClick={() => { setEditMode(p => { const next = !p; if (next) showToast("Edit mode", "success"); setPendingDelete(null); return next; }); setMobileExpanded(null); }}
               style={{ ...font, fontSize: 12, fontWeight: editMode ? 600 : 500, color: editMode ? T.text : T.textMid, cursor: "pointer", justifySelf: "start", padding: "8px 12px", borderRadius: 8, background: editMode ? T.accentBg : "transparent", border: editMode ? `1px solid ${T.border}` : "1px solid transparent" }}>
               {editMode ? "Done" : "Edit"}
             </div>
