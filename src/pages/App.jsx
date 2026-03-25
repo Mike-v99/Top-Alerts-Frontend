@@ -1260,8 +1260,7 @@ export default function AppPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ minHeight: "100vh", background: T.bg, ...font, color: T.text, transition: "background 0.3s", overflowX: "hidden", width: "100%" }}>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <div style={{ minHeight: "100vh", background: T.bg, ...font, color: T.text, transition: "background 0.3s", overflowX: "clip", width: "100%" }}>
       <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
       <style>{`
         html, body { background: ${T.bg}; margin: 0; padding: 0; overflow-x: hidden; width: 100%; max-width: 100vw; }
@@ -1295,7 +1294,7 @@ export default function AppPage() {
         </div>
       )}
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: isMobile ? "16px 12px" : "32px 20px", paddingBottom: isMobile ? 100 : 20, overflowX: "hidden" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: isMobile ? "100vw" : 1200, width: "100%", margin: "0 auto", padding: isMobile ? "16px 12px" : "32px 20px", paddingBottom: isMobile ? 100 : 20, overflowX: "hidden" }}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isMobile ? 16 : 36 }}>
