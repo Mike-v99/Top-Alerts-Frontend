@@ -2377,27 +2377,27 @@ export default function AppPage() {
                       </div>
 
                       {/* Fundamentals grid */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: T.border, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: "rgba(255,255,255,0.04)", borderRadius: 10, overflow: "hidden", marginBottom: 14 }}>
                         {[
-                          ["Prev. Close", snap && snap.prevClose ? `$${Number(snap.prevClose).toFixed(2)}` : "—"],
-                          ["Open", snap && snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"],
-                          ["Volume", snap && snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : `${snap.volume}`) : "—"],
-                          ["Day High", snap && snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"],
-                          ["Day Low", snap && snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"],
-                          ["Change", d && d.changePct != null ? `${d.changePct >= 0 ? "+" : ""}${d.changePct.toFixed(2)}%` : "—"],
-                        ].map(([label, val], idx) => (
-                          <div key={idx} style={{ background: T.bg, padding: 8, textAlign: "center" }}>
-                            <div style={{ ...mono, fontSize: 10, color: T.textMid, fontWeight: 500 }}>{label}</div>
-                            <div style={{ ...mono, fontSize: 14, color: T.text, fontWeight: 600, marginTop: 2 }}>{val}</div>
+                          ["Prev. Close", snap && snap.prevClose ? `$${Number(snap.prevClose).toFixed(2)}` : "—", false],
+                          ["Open", snap && snap.open ? `$${Number(snap.open).toFixed(2)}` : "—", false],
+                          ["Volume", snap && snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : `${snap.volume}`) : "—", false],
+                          ["Day High", snap && snap.high ? `$${Number(snap.high).toFixed(2)}` : "—", false],
+                          ["Day Low", snap && snap.low ? `$${Number(snap.low).toFixed(2)}` : "—", false],
+                          ["Change", d && d.changePct != null ? `${d.changePct >= 0 ? "+" : ""}${d.changePct.toFixed(2)}%` : "—", true],
+                        ].map(([label, val, isChange], idx) => (
+                          <div key={idx} style={{ background: T.bg, padding: 10, textAlign: "center" }}>
+                            <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{label}</div>
+                            <div style={{ ...mono, fontSize: 14, color: isChange ? col : "rgba(255,255,255,0.85)", fontWeight: 600, marginTop: 4 }}>{val}</div>
                           </div>
                         ))}
                       </div>
 
                       {/* Action buttons */}
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={(ev) => { ev.stopPropagation(); openModal(m.symbol, m.label); }} style={{ flex: 1, padding: 11, background: T.accent, color: T.btnText, border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
-                        <button onClick={(ev) => { ev.stopPropagation(); if (d) shareTicker(m.symbol, m.label, d.price, d.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: T.accent, border: `2px solid ${T.accent}`, borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                          <span style={{ fontSize: 16 }}>↗</span> Share
+                        <button onClick={(ev) => { ev.stopPropagation(); openModal(m.symbol, m.label); }} style={{ flex: 1, padding: 14, background: "rgba(255,255,255,0.06)", color: "#fff", border: `1px solid rgba(255,255,255,0.08)`, borderRadius: 12, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                        <button onClick={(ev) => { ev.stopPropagation(); if (d) shareTicker(m.symbol, m.label, d.price, d.changePct); }} style={{ flex: 1, padding: 14, background: "none", color: "rgba(255,255,255,0.6)", border: `1px solid rgba(255,255,255,0.1)`, borderRadius: 12, ...font, fontSize: 15, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                          <span style={{ fontSize: 14 }}>↗</span> Share
                         </button>
                       </div>
                       {/* Swipe hint */}
@@ -2538,27 +2538,27 @@ export default function AppPage() {
                       </div>
 
                       {/* Fundamentals grid */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: T.border, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: "rgba(255,255,255,0.04)", borderRadius: 10, overflow: "hidden", marginBottom: 14 }}>
                         {[
-                          ["Prev. Close", snap && snap.prevClose ? `$${Number(snap.prevClose).toFixed(2)}` : "—"],
-                          ["Open", snap && snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"],
-                          ["Volume", snap && snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : `${snap.volume}`) : "—"],
-                          ["Day High", snap && snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"],
-                          ["Day Low", snap && snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"],
-                          ["Change", wd && wd.changePct != null ? `${wd.changePct >= 0 ? "+" : ""}${wd.changePct.toFixed(2)}%` : "—"],
-                        ].map(([label, val], idx) => (
-                          <div key={idx} style={{ background: T.bg, padding: 8, textAlign: "center" }}>
-                            <div style={{ ...mono, fontSize: 10, color: T.textMid, fontWeight: 500 }}>{label}</div>
-                            <div style={{ ...mono, fontSize: 14, color: T.text, fontWeight: 600, marginTop: 2 }}>{val}</div>
+                          ["Prev. Close", snap && snap.prevClose ? `$${Number(snap.prevClose).toFixed(2)}` : "—", false],
+                          ["Open", snap && snap.open ? `$${Number(snap.open).toFixed(2)}` : "—", false],
+                          ["Volume", snap && snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : `${snap.volume}`) : "—", false],
+                          ["Day High", snap && snap.high ? `$${Number(snap.high).toFixed(2)}` : "—", false],
+                          ["Day Low", snap && snap.low ? `$${Number(snap.low).toFixed(2)}` : "—", false],
+                          ["Change", wd && wd.changePct != null ? `${wd.changePct >= 0 ? "+" : ""}${wd.changePct.toFixed(2)}%` : "—", true],
+                        ].map(([label, val, isChange], idx) => (
+                          <div key={idx} style={{ background: T.bg, padding: 10, textAlign: "center" }}>
+                            <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{label}</div>
+                            <div style={{ ...mono, fontSize: 14, color: isChange ? col : "rgba(255,255,255,0.85)", fontWeight: 600, marginTop: 4 }}>{val}</div>
                           </div>
                         ))}
                       </div>
 
                       {/* Action buttons */}
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={(ev) => { ev.stopPropagation(); openModal(w.symbol, w.label); }} style={{ flex: 1, padding: 11, background: T.accent, color: T.btnText, border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
-                        <button onClick={(ev) => { ev.stopPropagation(); if (wd) shareTicker(w.symbol, w.label, wd.price, wd.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: T.accent, border: `2px solid ${T.accent}`, borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                          <span style={{ fontSize: 16 }}>↗</span> Share
+                        <button onClick={(ev) => { ev.stopPropagation(); openModal(w.symbol, w.label); }} style={{ flex: 1, padding: 14, background: "rgba(255,255,255,0.06)", color: "#fff", border: `1px solid rgba(255,255,255,0.08)`, borderRadius: 12, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                        <button onClick={(ev) => { ev.stopPropagation(); if (wd) shareTicker(w.symbol, w.label, wd.price, wd.changePct); }} style={{ flex: 1, padding: 14, background: "none", color: "rgba(255,255,255,0.6)", border: `1px solid rgba(255,255,255,0.1)`, borderRadius: 12, ...font, fontSize: 15, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                          <span style={{ fontSize: 14 }}>↗</span> Share
                         </button>
                       </div>
                       {/* Swipe hint */}
@@ -2748,9 +2748,9 @@ export default function AppPage() {
 
                         {/* Action buttons */}
                         <div style={{ display: "flex", gap: 8 }}>
-                          <button onClick={(ev) => { ev.stopPropagation(); openModal(t.symbol, t.name); }} style={{ flex: 1, padding: 11, background: T.accent, color: T.btnText, border: "none", borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
-                          <button onClick={(ev) => { ev.stopPropagation(); shareTicker(t.symbol, t.name, t.price, t.changePct); }} style={{ flex: 1, padding: 11, background: "none", color: T.accent, border: `2px solid ${T.accent}`, borderRadius: 8, ...font, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                            <span style={{ fontSize: 16 }}>↗</span> Share
+                          <button onClick={(ev) => { ev.stopPropagation(); openModal(t.symbol, t.name); }} style={{ flex: 1, padding: 14, background: "rgba(255,255,255,0.06)", color: "#fff", border: `1px solid rgba(255,255,255,0.08)`, borderRadius: 12, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                          <button onClick={(ev) => { ev.stopPropagation(); shareTicker(t.symbol, t.name, t.price, t.changePct); }} style={{ flex: 1, padding: 14, background: "none", color: "rgba(255,255,255,0.6)", border: `1px solid rgba(255,255,255,0.1)`, borderRadius: 12, ...font, fontSize: 15, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                            <span style={{ fontSize: 14 }}>↗</span> Share
                           </button>
                         </div>
                       </div>
