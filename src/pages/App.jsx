@@ -166,6 +166,9 @@ export default function AppPage() {
   // Mobile detection
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
   const [mobileExpanded, setMobileExpanded] = useState(null); // symbol of expanded ticker
+  const [detailSymbol, setDetailSymbol] = useState(null); // symbol detail screen
+  const [detailChartType, setDetailChartType] = useState("line"); // "line" or "candle"
+  const [detailEarningsTab, setDetailEarningsTab] = useState("earnings"); // "earnings" or "news"
   const [mobileNewsOpen, setMobileNewsOpen] = useState(false);
   const [expandedAlert, setExpandedAlert] = useState(null); // id of expanded alert card
   const [editMode, setEditMode] = useState(false); // watchlist reorder mode
@@ -1520,7 +1523,7 @@ export default function AppPage() {
         {/* Tabs */}
         <div style={{ display: "flex", flexWrap: isMobile ? "wrap" : "nowrap", gap: isMobile ? 16 : 0, marginBottom: isMobile ? 10 : 28, borderBottom: isMobile ? "none" : `1px solid ${T.border}`, alignItems: "center" }}>
           {(isPro ? ["market","hotlist","alerts","calendar"] : ["market","hotlist","alerts","calendar","pricing"]).map(t => (
-            <button key={t} onClick={() => { setTab(t); if (t === "hotlist") setMarketView("hotlist"); }} style={{
+            <button key={t} onClick={() => { setTab(t); setDetailSymbol(null); if (t === "hotlist") setMarketView("hotlist"); }} style={{
               padding: isMobile ? "8px 0" : "10px 22px",
               marginRight: 0,
               marginLeft: 0,
@@ -2283,8 +2286,15 @@ export default function AppPage() {
                   <div onClick={() => {
                     if (swipedJustNow || editMode) return;
                     try {
-                      if (isExpanded) { setMobileExpanded(null); }
-                      else { setMobileExpanded(m.symbol); openChart(m.symbol, m.label); }
+                      if (isMobile) {
+                        setDetailSymbol({ symbol: m.symbol, label: m.label, id: m.id });
+                        setDetailChartType("line");
+                        setDetailEarningsTab("earnings");
+                        openChart(m.symbol, m.label);
+                      } else {
+                        if (isExpanded) { setMobileExpanded(null); }
+                        else { setMobileExpanded(m.symbol); openChart(m.symbol, m.label); }
+                      }
                     } catch (err) { console.error("Mobile expand error:", err); }
                   }} style={{ padding: "14px 14px", cursor: editMode ? "default" : "pointer" }}>
                     {/* Row 1: Name + Price */}
@@ -2447,8 +2457,15 @@ export default function AppPage() {
                   <div onClick={() => {
                     if (swipedJustNow || editMode) return;
                     try {
-                      if (isExpanded) { setMobileExpanded(null); }
-                      else { setMobileExpanded(w.symbol); openChart(w.symbol, w.label); }
+                      if (isMobile) {
+                        setDetailSymbol({ symbol: w.symbol, label: w.label || w.symbol });
+                        setDetailChartType("line");
+                        setDetailEarningsTab("earnings");
+                        openChart(w.symbol, w.label);
+                      } else {
+                        if (isExpanded) { setMobileExpanded(null); }
+                        else { setMobileExpanded(w.symbol); openChart(w.symbol, w.label); }
+                      }
                     } catch (err) { console.error("Watchlist expand error:", err); }
                   }} style={{ padding: "14px 14px", cursor: editMode ? "default" : "pointer" }}>
                     {/* Row 1: Name + Price */}
@@ -2663,8 +2680,15 @@ export default function AppPage() {
                     {/* Collapsed row — two-row labeled columns */}
                     <div onClick={() => {
                       try {
-                        if (isExpanded) { setExpandedHotlist(null); }
-                        else { setExpandedHotlist(t.symbol); setChartData([]); setChartLoading(true); openChart(t.symbol, t.name); }
+                        if (isMobile) {
+                          setDetailSymbol({ symbol: t.symbol, label: t.name || t.symbol });
+                          setDetailChartType("line");
+                          setDetailEarningsTab("earnings");
+                          openChart(t.symbol, t.name);
+                        } else {
+                          if (isExpanded) { setExpandedHotlist(null); }
+                          else { setExpandedHotlist(t.symbol); setChartData([]); setChartLoading(true); openChart(t.symbol, t.name); }
+                        }
                       } catch (err) { console.error("Hotlist expand error:", err); }
                     }} style={{ padding: "14px 14px", cursor: "pointer" }}>
                       {/* Row 1: Rank + Name + Price */}
@@ -3672,6 +3696,189 @@ export default function AppPage() {
           </div>
         </div>
       )}
+
+      {/* ══════ Symbol Detail Screen (mobile slide-up) ══════ */}
+      {detailSymbol && isMobile && (() => {
+        const sym = detailSymbol.symbol;
+        const label = detailSymbol.label;
+        const d = marketData[detailSymbol.id] || watchData[sym] || [...(hotlistData.gainers||[]), ...(hotlistData.losers||[])].find(h => h.symbol === sym) || {};
+        const up = (d.changePct || 0) >= 0;
+        const col = !d.price ? T.textFaint : up ? T.green : T.red;
+        const arrow = up ? "▲" : "▼";
+        const snap = d || {};
+        // Find earnings for this symbol from calEvents
+        const symbolEarnings = calEvents.filter(e => e.type === "earnings" && e.symbol === sym).sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0));
+        return (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 90, background: T.bg,
+            animation: "detailSlideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+            overflowY: "auto", WebkitOverflowScrolling: "touch",
+          }}>
+            <style>{`@keyframes detailSlideUp{from{transform:translateY(100%);opacity:0.5}to{transform:translateY(0);opacity:1}}@keyframes detailSlideDown{from{transform:translateY(0);opacity:1}to{transform:translateY(100%);opacity:0}}`}</style>
+            <div style={{ padding: "54px 20px 30px" }}>
+              {/* Back button */}
+              <div onClick={() => setDetailSymbol(null)} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                <span style={{ fontSize: 20, color: T.textMid }}>←</span>
+                <span style={{ ...mono, fontSize: 11, color: T.textFaint, letterSpacing: "2px" }}>WATCHLIST</span>
+              </div>
+
+              {/* Header: Name + Price */}
+              <div style={{ marginTop: 20, display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ ...font, fontSize: 28, fontWeight: 400, color: T.text }}>{label}</div>
+                  <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 4, letterSpacing: "3px" }}>{sym}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ ...font, fontSize: 28, fontWeight: 400, color: col }}>{d.price ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                  <div style={{ ...mono, fontSize: 12, color: col, marginTop: 4 }}>{d.change != null ? `${d.change >= 0 ? "+" : ""}$${Math.abs(Number(d.change)).toFixed(2)} (${arrow} ${Math.abs(d.changePct).toFixed(2)}%)` : ""}</div>
+                </div>
+              </div>
+
+              {/* Chart */}
+              <div style={{ margin: "20px -20px 0", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, padding: 4 }}>
+                {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: T.textMid }}>Loading chart...</div>}
+                {!chartLoading && chartData && chartData.length > 0 && (
+                  <div style={{ overflowX: "auto" }}>
+                    <CandlestickChart data={chartData} T={T} range={chartRange} />
+                  </div>
+                )}
+                {!chartLoading && (!chartData || chartData.length === 0) && (
+                  <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: T.textMid }}>No chart data</div>
+                )}
+              </div>
+
+              {/* Time range + Chart type toggle */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([rv, lbl]) => (
+                    <span key={rv} onClick={() => changeChartRange(rv)} style={{
+                      padding: "6px 14px", borderRadius: 6, ...mono, fontSize: 11, cursor: "pointer",
+                      background: chartRange === rv ? T.accent : "transparent",
+                      color: chartRange === rv ? T.btnText : T.textMid,
+                    }}>{lbl}</span>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <div onClick={() => setDetailChartType("line")} style={{
+                    width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                    background: detailChartType === "line" ? "rgba(255,255,255,0.08)" : "transparent",
+                    border: `1px solid ${detailChartType === "line" ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)"}`,
+                  }}>
+                    <svg width="16" height="12" viewBox="0 0 16 12"><polyline points="0,10 4,6 8,8 12,3 16,1" fill="none" stroke={detailChartType === "line" ? "#fff" : "rgba(255,255,255,0.3)"} strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  </div>
+                  <div onClick={() => setDetailChartType("candle")} style={{
+                    width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                    background: detailChartType === "candle" ? "rgba(255,255,255,0.08)" : "transparent",
+                    border: `1px solid ${detailChartType === "candle" ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)"}`,
+                  }}>
+                    <svg width="16" height="14" viewBox="0 0 16 14">
+                      <line x1="4" y1="1" x2="4" y2="13" stroke={detailChartType === "candle" ? T.green : "rgba(255,255,255,0.3)"} strokeWidth="1"/>
+                      <rect x="2" y="4" width="4" height="5" fill={detailChartType === "candle" ? T.green : "rgba(255,255,255,0.3)"} rx="0.5"/>
+                      <line x1="12" y1="2" x2="12" y2="12" stroke={detailChartType === "candle" ? T.red : "rgba(255,255,255,0.3)"} strokeWidth="1"/>
+                      <rect x="10" y="5" width="4" height="4" fill={detailChartType === "candle" ? T.red : "rgba(255,255,255,0.3)"} rx="0.5"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* KEY STATS card */}
+              <div style={{ ...(() => ({ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#ffffff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}` }))(), borderRadius: 14, padding: 16, marginTop: 16 }}>
+                <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textMid, marginBottom: 12 }}>KEY STATS</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 16px" }}>
+                  {[
+                    ["Open", snap.open ? `$${Number(snap.open).toFixed(2)}` : "—"],
+                    ["High", snap.high ? `$${Number(snap.high).toFixed(2)}` : "—"],
+                    ["Low", snap.low ? `$${Number(snap.low).toFixed(2)}` : "—"],
+                    ["Volume", snap.volume ? (snap.volume >= 1e9 ? `${(snap.volume/1e9).toFixed(1)}B` : snap.volume >= 1e6 ? `${(snap.volume/1e6).toFixed(1)}M` : snap.volume >= 1e3 ? `${(snap.volume/1e3).toFixed(0)}K` : `${snap.volume}`) : "—"],
+                    ["Prev Close", snap.prevClose ? `$${Number(snap.prevClose).toFixed(2)}` : "—"],
+                    ["Change", d.changePct != null ? `${d.changePct >= 0 ? "+" : ""}${d.changePct.toFixed(2)}%` : "—"],
+                  ].map(([l, v], idx) => (
+                    <div key={idx} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
+                      <span style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{l}</span>
+                      <span style={{ ...mono, fontSize: 11, color: l === "Change" ? col : "rgba(255,255,255,0.7)" }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* EARNINGS / NEWS card with segmented toggle */}
+              <div style={{ ...(() => ({ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#ffffff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}` }))(), borderRadius: 14, padding: 16, marginTop: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                  <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textMid }}>{sym}</div>
+                  <div style={{ display: "flex", gap: 0, border: `1px solid rgba(255,255,255,0.06)`, borderRadius: 6, overflow: "hidden" }}>
+                    <div onClick={() => setDetailEarningsTab("earnings")} style={{
+                      padding: "5px 12px", ...mono, fontSize: 9, letterSpacing: "1px", cursor: "pointer",
+                      background: detailEarningsTab === "earnings" ? "rgba(255,255,255,0.06)" : "transparent",
+                      color: detailEarningsTab === "earnings" ? "#fff" : "rgba(255,255,255,0.3)",
+                    }}>EARNINGS</div>
+                    <div onClick={() => setDetailEarningsTab("news")} style={{
+                      padding: "5px 12px", ...mono, fontSize: 9, letterSpacing: "1px", cursor: "pointer",
+                      borderLeft: "1px solid rgba(255,255,255,0.06)",
+                      background: detailEarningsTab === "news" ? "rgba(255,255,255,0.06)" : "transparent",
+                      color: detailEarningsTab === "news" ? "#fff" : "rgba(255,255,255,0.3)",
+                    }}>NEWS</div>
+                  </div>
+                </div>
+
+                {detailEarningsTab === "earnings" ? (
+                  <div>
+                    {symbolEarnings.length > 0 ? symbolEarnings.slice(0, 5).map((e, idx) => {
+                      const isBeat = e.beatMiss === "beat";
+                      const isMiss = e.beatMiss === "miss";
+                      const isFuture = !e.actual;
+                      const eCol = isFuture ? "#c9a84c" : isBeat ? T.green : T.red;
+                      const badge = isFuture ? "UPCOMING" : isBeat ? "BEAT" : "MISS";
+                      return (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 0", borderBottom: idx < Math.min(symbolEarnings.length, 5) - 1 ? `1px solid rgba(255,255,255,0.04)` : "none" }}>
+                          <div>
+                            <div style={{ ...font, fontSize: 13, color: isFuture ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.7)" }}>{e.label || e.symbol}</div>
+                            <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.2)", marginTop: 2 }}>{e.date || "—"}</div>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            {isFuture ? (
+                              <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{e.est ? `Est ${e.est}` : ""}</span>
+                            ) : (
+                              <div style={{ textAlign: "right" }}>
+                                <div style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.2)" }}>{e.est ? `Est ${e.est}` : ""}</div>
+                                <div style={{ ...mono, fontSize: 12, color: eCol, marginTop: 1 }}>{e.actual || "—"}</div>
+                              </div>
+                            )}
+                            <span style={{ ...mono, fontSize: 8, color: eCol, background: `${eCol}15`, border: `1px solid ${eCol}30`, padding: "2px 6px", borderRadius: 3 }}>{badge}</span>
+                          </div>
+                        </div>
+                      );
+                    }) : (
+                      <div style={{ textAlign: "center", padding: 20, ...mono, fontSize: 11, color: T.textFaint }}>No earnings data available</div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center", padding: 20 }}>
+                    <div style={{ ...mono, fontSize: 11, color: T.textFaint }}>News coming soon</div>
+                    <div style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.15)", marginTop: 6 }}>We're working on integrating live news feeds</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action buttons */}
+              <div style={{ display: "flex", gap: 8, padding: "16px 0" }}>
+                <button onClick={() => { openModal(sym, label); }} style={{ flex: 1, padding: 14, background: "rgba(255,255,255,0.06)", color: "#fff", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
+                <button onClick={() => { if (d.price) shareTicker(sym, label, d.price, d.changePct); }} style={{ flex: 1, padding: 14, background: "none", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, ...font, fontSize: 15, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                  <span style={{ fontSize: 14 }}>↗</span> Share
+                </button>
+              </div>
+
+              {/* Add to watchlist (if not already) */}
+              {!watchlist.some(ww => ww.symbol === sym) && !MARKET_SYMBOLS.some(ms => ms.symbol === sym) && (
+                <button onClick={() => {
+                  const newItem = { symbol: sym, label: label };
+                  setWatchlist(prev => { const next = [...prev, newItem]; localStorage.setItem("ta-watchlist", JSON.stringify(next)); return next; });
+                  showToast(`${sym} added to watchlist`);
+                }} style={{ width: "100%", padding: 14, background: "none", color: T.green, border: `1px solid ${T.green}30`, borderRadius: 12, ...font, fontSize: 15, fontWeight: 500, cursor: "pointer", marginBottom: 16 }}>+ Add to Watchlist</button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {showModal && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "8px 0 0" : 20 }}
