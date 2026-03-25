@@ -1557,7 +1557,7 @@ export default function AppPage() {
               style={{
                 width: "100%", padding: isMobile ? "14px 18px" : "12px 16px", boxSizing: "border-box",
                 background: T.bgCard, border: `1px solid ${search ? T.accent : T.border}`,
-                borderRadius: 14, color: T.text, ...font, fontSize: isMobile ? 14 : 18,
+                borderRadius: 14, color: T.text, ...font, fontSize: 16,
                 outline: "none", transition: "border 0.2s",
                 boxShadow: T.searchShadow,
               }}
