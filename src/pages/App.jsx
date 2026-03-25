@@ -2639,7 +2639,7 @@ export default function AppPage() {
                     borderRadius: 12, ...font, fontSize: 13, fontWeight: 500, cursor: "pointer",
                     color: themeName === "charcoal" ? "#fff" : T.btnText,
                     boxShadow: themeName === "charcoal" ? "0 0 12px rgba(255,255,255,0.08)" : "0 2px 10px rgba(0,0,0,0.15)",
-                  }}>Unlock Pro — $9/mo</button>
+                  }}>Unlock Pro — $<span style={{ color: T.green }}>9</span>/mo</button>
                 )}
               </div>
             )}
