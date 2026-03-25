@@ -1294,7 +1294,7 @@ export default function AppPage() {
         </div>
       )}
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: isMobile ? "100vw" : 1200, width: "100%", margin: "0 auto", padding: isMobile ? "16px 12px" : "32px 20px", paddingBottom: isMobile ? 100 : 20, overflowX: "hidden" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: isMobile ? "100%" : 1200, width: "100%", margin: "0 auto", padding: isMobile ? "16px 16px" : "32px 20px", paddingBottom: isMobile ? 100 : 20, overflowX: "hidden" }}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isMobile ? 16 : 36 }}>
@@ -1363,7 +1363,7 @@ export default function AppPage() {
           {(isPro ? ["market","hotlist","alerts","calendar"] : ["market","hotlist","alerts","calendar","pricing"]).map(t => (
             <button key={t} onClick={() => { setTab(t); if (t === "hotlist") setMarketView("hotlist"); }} style={{
               padding: isMobile ? "8px 0" : "10px 22px",
-              marginRight: t === "pricing" ? (isMobile ? 90 : 0) : (isMobile ? 16 : 0),
+              marginRight: t === "pricing" ? 0 : (isMobile ? 16 : 0),
               marginLeft: t === "pricing" ? "auto" : 0,
               background: "none", border: "none", cursor: "pointer",
               ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px",
