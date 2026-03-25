@@ -1535,7 +1535,7 @@ export default function AppPage() {
               marginRight: 0,
               marginLeft: 0,
               background: "none", border: "none", cursor: "pointer",
-              ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px",
+              ...font, fontSize: isMobile ? 15 : 20, letterSpacing: isMobile ? "0.5px" : "1px",
               fontWeight: tab === t ? 600 : 400,
               color: t === "pricing" ? "#c9a84c" : (tab === t ? T.text : T.tabInactive),
               borderBottom: !isMobile && tab === t ? `2px solid ${t === "pricing" ? "#c9a84c" : T.text}` : "2px solid transparent",
