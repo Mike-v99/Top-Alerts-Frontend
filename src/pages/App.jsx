@@ -2670,21 +2670,33 @@ export default function AppPage() {
                   }}>
                     {/* Colored bottom accent line */}
                     <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: up ? T.cardBottomGreen : T.cardBottomRed }} />
-                    {/* Collapsed row */}
+                    {/* Collapsed row — two-row labeled columns */}
                     <div onClick={() => {
                       try {
                         if (isExpanded) { setExpandedHotlist(null); }
                         else { setExpandedHotlist(t.symbol); setChartData([]); setChartLoading(true); openChart(t.symbol, t.name); }
                       } catch (err) { console.error("Hotlist expand error:", err); }
-                    }} style={{ padding: "16px 14px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 8, background: `${col}12`, border: `1px solid ${col}25`, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: col, fontWeight: 500, flexShrink: 0 }}>{i + 1}</div>
-                      <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
-                        <div style={{ ...font, fontSize: 17, fontWeight: 400, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.symbol}</div>
-                        <div style={{ ...font, fontSize: 10, fontWeight: 300, color: T.textFaint, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name !== t.symbol ? t.name : ""}</div>
+                    }} style={{ padding: "14px 14px", cursor: "pointer" }}>
+                      {/* Row 1: Rank + Name + Price */}
+                      <div style={{ display: "flex", alignItems: "center", marginBottom: 8, gap: 10 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: 8, background: `${col}12`, border: `1px solid ${col}25`, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: col, fontWeight: 500, flexShrink: 0 }}>{i + 1}</div>
+                        <div style={{ flex: 1, ...font, fontSize: 18, fontWeight: 400, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name !== t.symbol ? t.name : t.symbol}</div>
+                        <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text, flexShrink: 0 }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       </div>
-                      <div style={{ textAlign: "right", flexShrink: 0, paddingLeft: 10 }}>
-                        <div style={{ ...font, fontSize: 18, fontWeight: 400, color: T.text }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400, marginTop: 3 }}>{arrow} {Math.abs(t.changePct).toFixed(2)}%</div>
+                      {/* Row 2: Change | Volume | Range */}
+                      <div style={{ display: "grid", gridTemplateColumns: "auto auto 1fr", gap: 12, alignItems: "center" }}>
+                        <div>
+                          <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.7)", letterSpacing: "1px" }}>CHANGE</div>
+                          <div style={{ ...mono, fontSize: 12, color: col, marginTop: 1 }}>{t.change != null ? `${t.change >= 0 ? "+" : ""}$${Math.abs(Number(t.change)).toFixed(2)} (${arrow} ${Math.abs(t.changePct).toFixed(2)}%)` : `${arrow} ${Math.abs(t.changePct).toFixed(2)}%`}</div>
+                        </div>
+                        <div>
+                          <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.7)", letterSpacing: "1px" }}>VOLUME</div>
+                          <div style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 1 }}>{t.volume ? (t.volume >= 1e9 ? `${(t.volume/1e9).toFixed(1)}B` : t.volume >= 1e6 ? `${(t.volume/1e6).toFixed(1)}M` : t.volume >= 1e3 ? `${(t.volume/1e3).toFixed(0)}K` : `${t.volume}`) : "—"}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.7)", letterSpacing: "1px" }}>RANGE</div>
+                          <div style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>{t.low && t.high ? `$${Number(t.low).toFixed(2)} - $${Number(t.high).toFixed(2)}` : "—"}</div>
+                        </div>
                       </div>
                     </div>
 
