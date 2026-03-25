@@ -186,7 +186,7 @@ export default function AppPage() {
   const [hiddenMobileCards, setHiddenMobileCards] = useState(() => {
     try { return JSON.parse(localStorage.getItem("ta-mobile-hidden") || "[]"); } catch { return []; }
   });
-  const [pendingDelete, setPendingDelete] = useState(null); // symbol pending deletion (red state)
+  const [pendingDelete, setPendingDelete] = useState([]); // array of selected symbols for deletion
   const [dragItem, setDragItem] = useState(null);
   const dragY = useRef(null);
   const dragStartY = useRef(null);
@@ -343,90 +343,133 @@ export default function AppPage() {
   }
   // Swipe offset is now handled via direct DOM manipulation in handleTouchMove
 
-  // ── Edit mode — delete + reorder ──────────────────────────────────────
-  function editDelete(symbol) {
-    if (pendingDelete === symbol) {
-      // Second tap — actually delete
+  // ── Edit mode — select to delete + smooth reorder ──────────────────
+  function editToggleSelect(symbol) {
+    setPendingDelete(prev => {
+      if (!prev) prev = [];
+      return prev.includes(symbol) ? prev.filter(s => s !== symbol) : [...prev, symbol];
+    });
+    if (navigator.vibrate) navigator.vibrate(5);
+  }
+
+  function editDeleteSelected() {
+    if (!pendingDelete || pendingDelete.length === 0) return;
+    pendingDelete.forEach(symbol => {
       const isMarket = MARKET_SYMBOLS.some(m => m.symbol === symbol);
       if (isMarket) {
-        const next = [...hiddenMobileCards, symbol];
-        setHiddenMobileCards(next);
-        try { localStorage.setItem("ta-mobile-hidden", JSON.stringify(next)); } catch {}
+        setHiddenMobileCards(prev => {
+          const next = [...prev, symbol];
+          try { localStorage.setItem("ta-mobile-hidden", JSON.stringify(next)); } catch {}
+          return next;
+        });
       } else {
         removeFromWatchlist(symbol);
       }
-      setPendingDelete(null);
-      if (navigator.vibrate) navigator.vibrate(10);
-      showToast(`${symbol} removed`);
-    } else {
-      // First tap — show red confirmation
-      setPendingDelete(symbol);
-      if (navigator.vibrate) navigator.vibrate(5);
-      // Auto-reset after 3 seconds
-      setTimeout(() => setPendingDelete(p => p === symbol ? null : p), 3000);
-    }
+    });
+    if (navigator.vibrate) navigator.vibrate(10);
+    showToast(`${pendingDelete.length} removed`);
+    setPendingDelete([]);
   }
 
-  function handleDragStart(symbol, e) {
-    const touch = e.touches[0];
-    dragStartY.current = touch.clientY;
-    dragY.current = touch.clientY;
-    setDragItem(symbol);
-    if (navigator.vibrate) navigator.vibrate(10);
-  }
-  function handleDragMove(symbol, e) {
-    if (dragItem !== symbol) return;
-    const touch = e.touches[0];
-    dragY.current = touch.clientY;
-    const el = document.getElementById(`edit-row-${symbol}`);
-    if (el) {
-      const diff = touch.clientY - dragStartY.current;
-      el.style.transform = `translateY(${diff}px)`;
-      el.style.zIndex = "50";
-      el.style.transition = "none";
-    }
-    // Check swap
+  // Reorder: move a symbol up or down by one position
+  function editMoveCard(symbol, direction) {
     const isMarket = MARKET_SYMBOLS.some(m => m.symbol === symbol);
-    const cardHeight = 86;
-    const moveBy = Math.round((touch.clientY - dragStartY.current) / cardHeight);
-    if (moveBy === 0) return;
     if (isMarket) {
       const order = [...mobileCardOrder];
-      const ci = order.indexOf(symbol);
+      const visibleOrder = order.filter(s => !hiddenMobileCards.includes(s));
+      const ci = visibleOrder.indexOf(symbol);
       if (ci < 0) return;
-      const ti = Math.max(0, Math.min(order.length - 1, ci + moveBy));
-      if (ci !== ti) {
-        order.splice(ci, 1);
-        order.splice(ti, 0, symbol);
-        setMobileCardOrder(order);
-        try { localStorage.setItem("ta-mobile-order", JSON.stringify(order)); } catch {}
-        dragStartY.current = touch.clientY;
-        if (navigator.vibrate) navigator.vibrate(5);
-      }
+      const ti = ci + direction;
+      if (ti < 0 || ti >= visibleOrder.length) return;
+      // Swap in the full order
+      const ciF = order.indexOf(visibleOrder[ci]);
+      const tiF = order.indexOf(visibleOrder[ti]);
+      [order[ciF], order[tiF]] = [order[tiF], order[ciF]];
+      setMobileCardOrder(order);
+      try { localStorage.setItem("ta-mobile-order", JSON.stringify(order)); } catch {}
+      if (navigator.vibrate) navigator.vibrate(3);
     } else {
       const wl = [...watchlist];
       const ci = wl.findIndex(w => w.symbol === symbol);
       if (ci < 0) return;
-      const ti = Math.max(0, Math.min(wl.length - 1, ci + moveBy));
-      if (ci !== ti) {
-        const item = wl.splice(ci, 1)[0];
-        wl.splice(ti, 0, item);
-        setWatchlist(wl);
-        try { localStorage.setItem("ta-watchlist", JSON.stringify(wl)); } catch {}
-        dragStartY.current = touch.clientY;
-        if (navigator.vibrate) navigator.vibrate(5);
-      }
+      const ti = ci + direction;
+      if (ti < 0 || ti >= wl.length) return;
+      [wl[ci], wl[ti]] = [wl[ti], wl[ci]];
+      setWatchlist(wl);
+      try { localStorage.setItem("ta-watchlist", JSON.stringify(wl)); } catch {}
+      if (navigator.vibrate) navigator.vibrate(3);
     }
   }
-  function handleDragEnd(symbol) {
-    setDragItem(null);
-    const el = document.getElementById(`edit-row-${symbol}`);
-    if (el) {
-      el.style.transition = "transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)";
-      el.style.transform = "translateY(0)";
-      el.style.zIndex = "";
-      setTimeout(() => { if (el) el.style.transition = ""; }, 300);
+
+  // Long-press drag state
+  const dragRef = useRef({ active: false, symbol: null, startY: 0, currentY: 0, el: null });
+  const longPressTimer = useRef(null);
+
+  function handleGripTouchStart(symbol, e) {
+    const touch = e.touches[0];
+    dragRef.current = { active: false, symbol, startY: touch.clientY, currentY: touch.clientY, el: document.getElementById(`edit-row-${symbol}`) };
+    // Start drag immediately on grip touch
+    longPressTimer.current = setTimeout(() => {
+      dragRef.current.active = true;
+      if (navigator.vibrate) navigator.vibrate(15);
+      const el = dragRef.current.el;
+      if (el) {
+        el.style.zIndex = "50";
+        el.style.transition = "none";
+        el.style.willChange = "transform";
+      }
+    }, 100);
+  }
+
+  function handleGripTouchMove(symbol, e) {
+    if (!dragRef.current.active && dragRef.current.symbol === symbol) {
+      // Activate drag after small movement
+      const touch = e.touches[0];
+      if (Math.abs(touch.clientY - dragRef.current.startY) > 5) {
+        clearTimeout(longPressTimer.current);
+        dragRef.current.active = true;
+        if (navigator.vibrate) navigator.vibrate(15);
+        const el = dragRef.current.el;
+        if (el) {
+          el.style.zIndex = "50";
+          el.style.transition = "none";
+          el.style.willChange = "transform";
+        }
+      }
     }
+    if (!dragRef.current.active || dragRef.current.symbol !== symbol) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    dragRef.current.currentY = touch.clientY;
+    const diff = touch.clientY - dragRef.current.startY;
+    const el = dragRef.current.el;
+    if (el) {
+      el.style.transform = `translateY(${diff}px) scale(1.02)`;
+      el.style.boxShadow = "0 12px 40px rgba(0,0,0,0.4)";
+    }
+    // Check swap threshold
+    const cardH = 86;
+    const moveBy = Math.round(diff / cardH);
+    if (moveBy !== 0) {
+      editMoveCard(symbol, moveBy > 0 ? 1 : -1);
+      dragRef.current.startY = touch.clientY;
+    }
+  }
+
+  function handleGripTouchEnd(symbol) {
+    clearTimeout(longPressTimer.current);
+    if (dragRef.current.symbol !== symbol) return;
+    const el = dragRef.current.el;
+    if (el) {
+      el.style.transition = "transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease";
+      el.style.transform = "translateY(0) scale(1)";
+      el.style.boxShadow = "none";
+      el.style.willChange = "";
+      setTimeout(() => {
+        if (el) { el.style.zIndex = ""; el.style.transition = ""; }
+      }, 350);
+    }
+    dragRef.current = { active: false, symbol: null, startY: 0, currentY: 0, el: null };
   }
 
   // ── Edit mode reorder — simple move up/down ─────────────────────────
@@ -2132,7 +2175,13 @@ export default function AppPage() {
         {isMobile && tab === "market" && (
           <div>
             {/* ── WATCHLIST VIEW ─────────────────── */}
-            {/* Edit mode uses its own card layout below */}
+            {/* Edit mode — delete bar when items selected */}
+            {editMode && pendingDelete.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: `${T.red}15`, border: `1px solid ${T.red}30`, borderRadius: 12, padding: "10px 16px", marginBottom: 12 }}>
+                <div style={{ ...font, fontSize: 13, color: T.red, fontWeight: 500 }}>{pendingDelete.length} selected</div>
+                <button onClick={editDeleteSelected} style={{ background: T.red, color: "#fff", border: "none", borderRadius: 8, padding: "8px 20px", ...font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Delete</button>
+              </div>
+            )}
             {[...mobileCardOrder, ...MARKET_SYMBOLS.filter(m => !mobileCardOrder.includes(m.symbol)).map(m => m.symbol)]
               .map(sym => MARKET_SYMBOLS.find(m => m.symbol === sym))
               .filter(Boolean)
@@ -2181,18 +2230,18 @@ export default function AppPage() {
                       else { setMobileExpanded(m.symbol); openChart(m.symbol, m.label); }
                     } catch (err) { console.error("Mobile expand error:", err); }
                   }} style={{ padding: "16px 14px", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
-                    {/* Edit mode — delete circle on left (silver → red on tap) */}
+                    {/* Edit mode — select circle on left */}
                     {editMode && (
-                      <div onClick={(ev) => { ev.stopPropagation(); editDelete(m.symbol); }}
+                      <div onClick={(ev) => { ev.stopPropagation(); editToggleSelect(m.symbol); }}
                         style={{
-                          width: 30, height: 30, borderRadius: "50%",
-                          border: `2px solid ${pendingDelete === m.symbol ? T.red : T.textMid}`,
-                          background: pendingDelete === m.symbol ? `${T.red}15` : "transparent",
+                          width: 28, height: 28, borderRadius: "50%",
+                          border: `2px solid ${pendingDelete.includes(m.symbol) ? T.red : T.textMid}`,
+                          background: pendingDelete.includes(m.symbol) ? T.red : "transparent",
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          flexShrink: 0, cursor: "pointer", marginRight: 4,
+                          flexShrink: 0, cursor: "pointer", marginRight: 6,
                           transition: "all 0.2s",
                         }}>
-                        <div style={{ width: 12, height: 2, background: pendingDelete === m.symbol ? T.red : T.textMid, borderRadius: 1, transition: "background 0.2s" }} />
+                        {pendingDelete.includes(m.symbol) && <div style={{ width: 10, height: 2, background: "#fff", borderRadius: 1 }} />}
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
@@ -2203,16 +2252,16 @@ export default function AppPage() {
                       <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
                       <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400, marginTop: 4 }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
                     </div>
-                    {/* Edit mode — drag handle on right */}
+                    {/* Edit mode — drag grip on right */}
                     {editMode && (
                       <div
-                        onTouchStart={(ev) => { ev.stopPropagation(); handleDragStart(m.symbol, ev); }}
-                        onTouchMove={(ev) => { ev.stopPropagation(); ev.preventDefault(); handleDragMove(m.symbol, ev); }}
-                        onTouchEnd={(ev) => { ev.stopPropagation(); handleDragEnd(m.symbol); }}
-                        style={{ display: "flex", flexDirection: "column", gap: 3, padding: "10px 4px", flexShrink: 0, cursor: "grab", touchAction: "none" }}>
-                        <div style={{ width: 20, height: 2, background: T.textMid, borderRadius: 1 }} />
-                        <div style={{ width: 20, height: 2, background: T.textMid, borderRadius: 1 }} />
-                        <div style={{ width: 20, height: 2, background: T.textMid, borderRadius: 1 }} />
+                        onTouchStart={(ev) => { ev.stopPropagation(); handleGripTouchStart(m.symbol, ev); }}
+                        onTouchMove={(ev) => { ev.stopPropagation(); handleGripTouchMove(m.symbol, ev); }}
+                        onTouchEnd={(ev) => { ev.stopPropagation(); handleGripTouchEnd(m.symbol); }}
+                        style={{ display: "flex", flexDirection: "column", gap: 4, padding: "12px 6px", flexShrink: 0, cursor: "grab", touchAction: "none", marginLeft: 6 }}>
+                        <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
+                        <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
+                        <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
                       </div>
                     )}
                   </div>
@@ -2333,18 +2382,18 @@ export default function AppPage() {
                       else { setMobileExpanded(w.symbol); openChart(w.symbol, w.label); }
                     } catch (err) { console.error("Watchlist expand error:", err); }
                   }} style={{ padding: "16px 14px", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
-                    {/* Edit mode — delete circle on left (silver → red on tap) */}
+                    {/* Edit mode — select circle on left */}
                     {editMode && (
-                      <div onClick={(ev) => { ev.stopPropagation(); editDelete(w.symbol); }}
+                      <div onClick={(ev) => { ev.stopPropagation(); editToggleSelect(w.symbol); }}
                         style={{
-                          width: 30, height: 30, borderRadius: "50%",
-                          border: `2px solid ${pendingDelete === w.symbol ? T.red : T.textMid}`,
-                          background: pendingDelete === w.symbol ? `${T.red}15` : "transparent",
+                          width: 28, height: 28, borderRadius: "50%",
+                          border: `2px solid ${pendingDelete.includes(w.symbol) ? T.red : T.textMid}`,
+                          background: pendingDelete.includes(w.symbol) ? T.red : "transparent",
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          flexShrink: 0, cursor: "pointer", marginRight: 4,
+                          flexShrink: 0, cursor: "pointer", marginRight: 6,
                           transition: "all 0.2s",
                         }}>
-                        <div style={{ width: 12, height: 2, background: pendingDelete === w.symbol ? T.red : T.textMid, borderRadius: 1, transition: "background 0.2s" }} />
+                        {pendingDelete.includes(w.symbol) && <div style={{ width: 10, height: 2, background: "#fff", borderRadius: 1 }} />}
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
@@ -2355,16 +2404,16 @@ export default function AppPage() {
                       <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
                       <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400, marginTop: 4 }}>{wd ? `${arrow} ${Math.abs(wd.changePct).toFixed(2)}%` : ""}</div>
                     </div>
-                    {/* Edit mode — drag handle on right */}
+                    {/* Edit mode — drag grip on right */}
                     {editMode && (
                       <div
-                        onTouchStart={(ev) => { ev.stopPropagation(); handleDragStart(w.symbol, ev); }}
-                        onTouchMove={(ev) => { ev.stopPropagation(); ev.preventDefault(); handleDragMove(w.symbol, ev); }}
-                        onTouchEnd={(ev) => { ev.stopPropagation(); handleDragEnd(w.symbol); }}
-                        style={{ display: "flex", flexDirection: "column", gap: 3, padding: "10px 4px", flexShrink: 0, cursor: "grab", touchAction: "none" }}>
-                        <div style={{ width: 20, height: 2, background: T.textMid, borderRadius: 1 }} />
-                        <div style={{ width: 20, height: 2, background: T.textMid, borderRadius: 1 }} />
-                        <div style={{ width: 20, height: 2, background: T.textMid, borderRadius: 1 }} />
+                        onTouchStart={(ev) => { ev.stopPropagation(); handleGripTouchStart(w.symbol, ev); }}
+                        onTouchMove={(ev) => { ev.stopPropagation(); handleGripTouchMove(w.symbol, ev); }}
+                        onTouchEnd={(ev) => { ev.stopPropagation(); handleGripTouchEnd(w.symbol); }}
+                        style={{ display: "flex", flexDirection: "column", gap: 4, padding: "12px 6px", flexShrink: 0, cursor: "grab", touchAction: "none", marginLeft: 6 }}>
+                        <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
+                        <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
+                        <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
                       </div>
                     )}
                   </div>
@@ -3901,7 +3950,7 @@ export default function AppPage() {
             boxShadow: T.barShadow,
             pointerEvents: "auto",
           }}>
-            <div onClick={() => { setEditMode(p => { const next = !p; if (next) showToast("Edit mode", "success"); setPendingDelete(null); return next; }); setMobileExpanded(null); }}
+            <div onClick={() => { setEditMode(p => { const next = !p; if (next) showToast("Edit mode", "success"); setPendingDelete([]); return next; }); setMobileExpanded(null); }}
               style={{ ...font, fontSize: 12, fontWeight: editMode ? 600 : 500, color: editMode ? T.text : T.textMid, cursor: "pointer", justifySelf: "start", padding: "8px 12px", borderRadius: 8, background: editMode ? T.accentBg : "transparent", border: editMode ? `1px solid ${T.border}` : "1px solid transparent" }}>
               {editMode ? "Done" : "Edit"}
             </div>
