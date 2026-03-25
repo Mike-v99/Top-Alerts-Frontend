@@ -2331,16 +2331,16 @@ export default function AppPage() {
                     {/* Row 2: Change | Volume | Range */}
                     <div style={{ display: "grid", gridTemplateColumns: "auto auto 1fr", gap: 12, alignItems: "center" }}>
                       <div>
-                        <div style={{ ...mono, fontSize: 8, color: T.textFaint, letterSpacing: "1px" }}>CHANGE</div>
-                        <div style={{ ...mono, fontSize: 11, color: col, marginTop: 1 }}>{d ? `${d.change >= 0 ? "+" : ""}$${Math.abs(Number(d.change)).toFixed(2)} (${arrow} ${Math.abs(d.changePct).toFixed(2)}%)` : "—"}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, letterSpacing: "1px" }}>CHANGE</div>
+                        <div style={{ ...mono, fontSize: 12, color: col, marginTop: 1 }}>{d ? `${d.change >= 0 ? "+" : ""}$${Math.abs(Number(d.change)).toFixed(2)} (${arrow} ${Math.abs(d.changePct).toFixed(2)}%)` : "—"}</div>
                       </div>
                       <div>
-                        <div style={{ ...mono, fontSize: 8, color: T.textFaint, letterSpacing: "1px" }}>VOLUME</div>
-                        <div style={{ ...mono, fontSize: 11, color: T.textMid, marginTop: 1 }}>{d && d.volume ? (d.volume >= 1e9 ? `${(d.volume/1e9).toFixed(1)}B` : d.volume >= 1e6 ? `${(d.volume/1e6).toFixed(1)}M` : d.volume >= 1e3 ? `${(d.volume/1e3).toFixed(0)}K` : `${d.volume}`) : "—"}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, letterSpacing: "1px" }}>VOLUME</div>
+                        <div style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 1 }}>{d && d.volume ? (d.volume >= 1e9 ? `${(d.volume/1e9).toFixed(1)}B` : d.volume >= 1e6 ? `${(d.volume/1e6).toFixed(1)}M` : d.volume >= 1e3 ? `${(d.volume/1e3).toFixed(0)}K` : `${d.volume}`) : "—"}</div>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ ...mono, fontSize: 8, color: T.textFaint, letterSpacing: "1px" }}>RANGE</div>
-                        <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 1 }}>{d && d.low && d.high ? `$${Number(d.low).toFixed(2)} - $${Number(d.high).toFixed(2)}` : "—"}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, letterSpacing: "1px" }}>RANGE</div>
+                        <div style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>{d && d.low && d.high ? `$${Number(d.low).toFixed(2)} - $${Number(d.high).toFixed(2)}` : "—"}</div>
                       </div>
                     </div>
                   </div>
@@ -2493,16 +2493,16 @@ export default function AppPage() {
                     {/* Row 2: Change | Volume | Range */}
                     <div style={{ display: "grid", gridTemplateColumns: "auto auto 1fr", gap: 12, alignItems: "center" }}>
                       <div>
-                        <div style={{ ...mono, fontSize: 8, color: T.textFaint, letterSpacing: "1px" }}>CHANGE</div>
-                        <div style={{ ...mono, fontSize: 11, color: col, marginTop: 1 }}>{wd ? `${wd.change >= 0 ? "+" : ""}$${Math.abs(Number(wd.change)).toFixed(2)} (${arrow} ${Math.abs(wd.changePct).toFixed(2)}%)` : "—"}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, letterSpacing: "1px" }}>CHANGE</div>
+                        <div style={{ ...mono, fontSize: 12, color: col, marginTop: 1 }}>{wd ? `${wd.change >= 0 ? "+" : ""}$${Math.abs(Number(wd.change)).toFixed(2)} (${arrow} ${Math.abs(wd.changePct).toFixed(2)}%)` : "—"}</div>
                       </div>
                       <div>
-                        <div style={{ ...mono, fontSize: 8, color: T.textFaint, letterSpacing: "1px" }}>VOLUME</div>
-                        <div style={{ ...mono, fontSize: 11, color: T.textMid, marginTop: 1 }}>{wd && wd.volume ? (wd.volume >= 1e9 ? `${(wd.volume/1e9).toFixed(1)}B` : wd.volume >= 1e6 ? `${(wd.volume/1e6).toFixed(1)}M` : wd.volume >= 1e3 ? `${(wd.volume/1e3).toFixed(0)}K` : `${wd.volume}`) : "—"}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, letterSpacing: "1px" }}>VOLUME</div>
+                        <div style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 1 }}>{wd && wd.volume ? (wd.volume >= 1e9 ? `${(wd.volume/1e9).toFixed(1)}B` : wd.volume >= 1e6 ? `${(wd.volume/1e6).toFixed(1)}M` : wd.volume >= 1e3 ? `${(wd.volume/1e3).toFixed(0)}K` : `${wd.volume}`) : "—"}</div>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ ...mono, fontSize: 8, color: T.textFaint, letterSpacing: "1px" }}>RANGE</div>
-                        <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 1 }}>{wd && wd.low && wd.high ? `$${Number(wd.low).toFixed(2)} - $${Number(wd.high).toFixed(2)}` : "—"}</div>
+                        <div style={{ ...mono, fontSize: 10, color: T.textFaint, letterSpacing: "1px" }}>RANGE</div>
+                        <div style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>{wd && wd.low && wd.high ? `$${Number(wd.low).toFixed(2)} - $${Number(wd.high).toFixed(2)}` : "—"}</div>
                       </div>
                     </div>
                   </div>
