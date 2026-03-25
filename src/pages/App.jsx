@@ -3814,7 +3814,7 @@ export default function AppPage() {
                 {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: T.textMid }}>Loading chart...</div>}
                 {!chartLoading && chartData && chartData.length > 0 && (
                   <div style={{ overflowX: "auto" }}>
-                    <CandlestickChart data={chartData} T={T} range={chartRange} />
+                    <CandlestickChart data={chartData} T={T} range={chartRange} chartType={detailChartType} />
                   </div>
                 )}
                 {!chartLoading && (!chartData || chartData.length === 0) && (
@@ -3858,14 +3858,17 @@ export default function AppPage() {
 
               {/* Action buttons — three equal glass cards */}
               <div style={{ display: "grid", gridTemplateColumns: watchlist.some(ww => ww.symbol === sym) || MARKET_SYMBOLS.some(ms => ms.symbol === sym) ? "1fr 1fr" : "1fr 1fr 1fr", gap: 8, marginTop: 16 }}>
-                <div onClick={() => openModal(sym, label)} style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 0", textAlign: "center", ...font, fontSize: 15, color: T.green, cursor: "pointer" }}>+ Alert</div>
-                <div onClick={() => { if (d.price) shareTicker(sym, label, d.price, d.changePct); }} style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 0", textAlign: "center", ...font, fontSize: 15, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>↗ Share</div>
+                <div onClick={() => openModal(sym, label)} style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 0", textAlign: "center", ...font, fontSize: 16, color: T.green, cursor: "pointer" }}>+ Alert</div>
+                <div onClick={() => { if (d.price) shareTicker(sym, label, d.price, d.changePct); }} style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 0", textAlign: "center", ...font, fontSize: 16, color: "rgba(255,255,255,0.5)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" style={{ display: "inline-block", verticalAlign: "middle" }}><path d="M4 10L10 4M10 4H5M10 4V9" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>
+                  Share
+                </div>
                 {!watchlist.some(ww => ww.symbol === sym) && !MARKET_SYMBOLS.some(ms => ms.symbol === sym) && (
                   <div onClick={() => {
                     const newItem = { symbol: sym, label: label };
                     setWatchlist(prev => { const next = [...prev, newItem]; localStorage.setItem("ta-watchlist", JSON.stringify(next)); return next; });
                     showToast(`${sym} added to watchlist`);
-                  }} style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 0", textAlign: "center", ...font, fontSize: 15, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>+ Watch</div>
+                  }} style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 0", textAlign: "center", ...font, fontSize: 16, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>+ Watch</div>
                 )}
               </div>
 
@@ -4403,7 +4406,7 @@ function FlyingCard({ card, chartPanelRef, T, onDone }) {
 }
 
 // ── Candlestick Chart ────────────────────────────────────────────────────────
-function CandlestickChart({ data, T, range }) {
+function CandlestickChart({ data, T, range, chartType = "candle" }) {
   const [hover, setHover] = useState(null); // { x, y, candle, svgX, svgY }
   const svgRef = useRef(null);
 
@@ -4516,8 +4519,29 @@ function CandlestickChart({ data, T, range }) {
           );
         })}
 
-        {/* Candles */}
-        {data.map((d, i) => {
+        {/* Candles or Line */}
+        {chartType === "line" ? (
+          <g>
+            <defs>
+              <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={data[data.length-1].c >= data[0].o ? T.green : T.red} stopOpacity="0.15"/>
+                <stop offset="100%" stopColor={data[data.length-1].c >= data[0].o ? T.green : T.red} stopOpacity="0"/>
+              </linearGradient>
+            </defs>
+            <polygon
+              points={data.map((d, i) => `${PAD.left + i * spacing + spacing / 2},${PAD.top + scaleY(d.c)}`).join(" ") + ` ${PAD.left + (data.length - 1) * spacing + spacing / 2},${H - PAD.bottom} ${PAD.left + spacing / 2},${H - PAD.bottom}`}
+              fill="url(#lineGrad)"
+            />
+            <polyline
+              points={data.map((d, i) => `${PAD.left + i * spacing + spacing / 2},${PAD.top + scaleY(d.c)}`).join(" ")}
+              fill="none"
+              stroke={data[data.length-1].c >= data[0].o ? T.green : T.red}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </g>
+        ) : data.map((d, i) => {
           const x     = PAD.left + i * spacing + spacing / 2;
           const up    = d.c >= d.o;
           const col   = up ? T.green : T.red;
