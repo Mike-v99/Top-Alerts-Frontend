@@ -1541,7 +1541,7 @@ export default function AppPage() {
               borderBottom: !isMobile && tab === t ? `2px solid ${t === "pricing" ? "#c9a84c" : T.text}` : "2px solid transparent",
               marginBottom: -1, transition: "all 0.2s", flexShrink: 0,
             }}>
-              {t === "hotlist" ? (isMobile ? "Hot" : "HOT") : t === "calendar" ? (isMobile ? "Calendar" : "CALENDAR") : t === "market" ? (isMobile ? "Market" : "MARKET") : t === "alerts" ? (isMobile ? "Alerts" : "ALERTS") : "PRO"}
+              {t === "hotlist" ? (isMobile ? "Hot" : "HOT") : t === "calendar" ? (isMobile ? "Calendar" : "CALENDAR") : t === "market" ? (isMobile ? "Watchlist" : "WATCHLIST") : t === "alerts" ? (isMobile ? "Alerts" : "ALERTS") : "PRO"}
             </button>
           ))}
         </div>
@@ -2289,48 +2289,60 @@ export default function AppPage() {
                   >
                   {/* Colored bottom accent line */}
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: up ? 2 : 2, background: up ? T.cardBottomGreen : T.cardBottomRed }} />
-                  {/* Collapsed row */}
+                  {/* Collapsed row — two-row labeled columns */}
                   <div onClick={() => {
                     if (swipedJustNow || editMode) return;
                     try {
                       if (isExpanded) { setMobileExpanded(null); }
                       else { setMobileExpanded(m.symbol); openChart(m.symbol, m.label); }
                     } catch (err) { console.error("Mobile expand error:", err); }
-                  }} style={{ padding: "16px 14px", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
-                    {/* Edit mode — select circle on left */}
-                    {editMode && (
-                      <div onClick={(ev) => { ev.stopPropagation(); editToggleSelect(m.symbol); }}
-                        style={{
-                          width: 28, height: 28, borderRadius: "50%",
-                          border: `2px solid ${pendingDelete.includes(m.symbol) ? T.red : T.textMid}`,
-                          background: pendingDelete.includes(m.symbol) ? T.red : "transparent",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          flexShrink: 0, cursor: "pointer", marginRight: 6,
-                          transition: "all 0.2s",
-                        }}>
-                        {pendingDelete.includes(m.symbol) && <div style={{ width: 10, height: 2, background: "#fff", borderRadius: 1 }} />}
-                      </div>
-                    )}
-                    <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
-                      <div style={{ ...font, fontSize: 18, fontWeight: 400, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.label}</div>
-                      <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 6, letterSpacing: "3px" }}>{m.symbol}</div>
+                  }} style={{ padding: "14px 14px", cursor: editMode ? "default" : "pointer" }}>
+                    {/* Row 1: Name + Price */}
+                    <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+                      {/* Edit mode — select circle on left */}
+                      {editMode && (
+                        <div onClick={(ev) => { ev.stopPropagation(); editToggleSelect(m.symbol); }}
+                          style={{
+                            width: 28, height: 28, borderRadius: "50%",
+                            border: `2px solid ${pendingDelete.includes(m.symbol) ? T.red : T.textMid}`,
+                            background: pendingDelete.includes(m.symbol) ? T.red : "transparent",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            flexShrink: 0, cursor: "pointer", marginRight: 10,
+                            transition: "all 0.2s",
+                          }}>
+                          {pendingDelete.includes(m.symbol) && <div style={{ width: 10, height: 2, background: "#fff", borderRadius: 1 }} />}
+                        </div>
+                      )}
+                      <div style={{ flex: 1, ...font, fontSize: 18, fontWeight: 400, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.label}</div>
+                      <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text, flexShrink: 0 }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      {/* Edit mode — drag grip */}
+                      {editMode && (
+                        <div
+                          onTouchStart={(ev) => { ev.stopPropagation(); handleGripTouchStart(m.symbol, ev); }}
+                          onTouchMove={(ev) => { ev.stopPropagation(); handleGripTouchMove(m.symbol, ev); }}
+                          onTouchEnd={(ev) => { ev.stopPropagation(); handleGripTouchEnd(m.symbol); }}
+                          style={{ display: "flex", flexDirection: "column", gap: 4, padding: "12px 6px", flexShrink: 0, cursor: "grab", touchAction: "none", marginLeft: 8 }}>
+                          <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
+                          <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
+                          <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
+                        </div>
+                      )}
                     </div>
-                    <div style={{ textAlign: "right", flexShrink: 0, paddingLeft: 10 }}>
-                      <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
-                      <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400, marginTop: 4 }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
-                    </div>
-                    {/* Edit mode — drag grip on right */}
-                    {editMode && (
-                      <div
-                        onTouchStart={(ev) => { ev.stopPropagation(); handleGripTouchStart(m.symbol, ev); }}
-                        onTouchMove={(ev) => { ev.stopPropagation(); handleGripTouchMove(m.symbol, ev); }}
-                        onTouchEnd={(ev) => { ev.stopPropagation(); handleGripTouchEnd(m.symbol); }}
-                        style={{ display: "flex", flexDirection: "column", gap: 4, padding: "12px 6px", flexShrink: 0, cursor: "grab", touchAction: "none", marginLeft: 6 }}>
-                        <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
-                        <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
-                        <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
+                    {/* Row 2: Change | Volume | Range */}
+                    <div style={{ display: "grid", gridTemplateColumns: "auto auto 1fr", gap: 12, alignItems: "center" }}>
+                      <div>
+                        <div style={{ ...mono, fontSize: 8, color: T.textFaint, letterSpacing: "1px" }}>CHANGE</div>
+                        <div style={{ ...mono, fontSize: 11, color: col, marginTop: 1 }}>{d ? `${d.change >= 0 ? "+" : ""}$${Math.abs(Number(d.change)).toFixed(2)} (${arrow} ${Math.abs(d.changePct).toFixed(2)}%)` : "—"}</div>
                       </div>
-                    )}
+                      <div>
+                        <div style={{ ...mono, fontSize: 8, color: T.textFaint, letterSpacing: "1px" }}>VOLUME</div>
+                        <div style={{ ...mono, fontSize: 11, color: T.textMid, marginTop: 1 }}>{d && d.volume ? (d.volume >= 1e9 ? `${(d.volume/1e9).toFixed(1)}B` : d.volume >= 1e6 ? `${(d.volume/1e6).toFixed(1)}M` : d.volume >= 1e3 ? `${(d.volume/1e3).toFixed(0)}K` : `${d.volume}`) : "—"}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ ...mono, fontSize: 8, color: T.textFaint, letterSpacing: "1px" }}>RANGE</div>
+                        <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 1 }}>{d && d.low && d.high ? `$${Number(d.low).toFixed(2)} - $${Number(d.high).toFixed(2)}` : "—"}</div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Expanded card */}
@@ -2448,41 +2460,51 @@ export default function AppPage() {
                       if (isExpanded) { setMobileExpanded(null); }
                       else { setMobileExpanded(w.symbol); openChart(w.symbol, w.label); }
                     } catch (err) { console.error("Watchlist expand error:", err); }
-                  }} style={{ padding: "16px 14px", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
-                    {/* Edit mode — select circle on left */}
-                    {editMode && (
-                      <div onClick={(ev) => { ev.stopPropagation(); editToggleSelect(w.symbol); }}
-                        style={{
-                          width: 28, height: 28, borderRadius: "50%",
-                          border: `2px solid ${pendingDelete.includes(w.symbol) ? T.red : T.textMid}`,
-                          background: pendingDelete.includes(w.symbol) ? T.red : "transparent",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          flexShrink: 0, cursor: "pointer", marginRight: 6,
-                          transition: "all 0.2s",
-                        }}>
-                        {pendingDelete.includes(w.symbol) && <div style={{ width: 10, height: 2, background: "#fff", borderRadius: 1 }} />}
-                      </div>
-                    )}
-                    <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
-                      <div style={{ ...font, fontSize: 18, fontWeight: 400, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.label || w.symbol}</div>
-                      <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 6, letterSpacing: "3px" }}>{w.symbol}</div>
+                  }} style={{ padding: "14px 14px", cursor: editMode ? "default" : "pointer" }}>
+                    {/* Row 1: Name + Price */}
+                    <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+                      {editMode && (
+                        <div onClick={(ev) => { ev.stopPropagation(); editToggleSelect(w.symbol); }}
+                          style={{
+                            width: 28, height: 28, borderRadius: "50%",
+                            border: `2px solid ${pendingDelete.includes(w.symbol) ? T.red : T.textMid}`,
+                            background: pendingDelete.includes(w.symbol) ? T.red : "transparent",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            flexShrink: 0, cursor: "pointer", marginRight: 10,
+                            transition: "all 0.2s",
+                          }}>
+                          {pendingDelete.includes(w.symbol) && <div style={{ width: 10, height: 2, background: "#fff", borderRadius: 1 }} />}
+                        </div>
+                      )}
+                      <div style={{ flex: 1, ...font, fontSize: 18, fontWeight: 400, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.label || w.symbol}</div>
+                      <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text, flexShrink: 0 }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      {editMode && (
+                        <div
+                          onTouchStart={(ev) => { ev.stopPropagation(); handleGripTouchStart(w.symbol, ev); }}
+                          onTouchMove={(ev) => { ev.stopPropagation(); handleGripTouchMove(w.symbol, ev); }}
+                          onTouchEnd={(ev) => { ev.stopPropagation(); handleGripTouchEnd(w.symbol); }}
+                          style={{ display: "flex", flexDirection: "column", gap: 4, padding: "12px 6px", flexShrink: 0, cursor: "grab", touchAction: "none", marginLeft: 8 }}>
+                          <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
+                          <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
+                          <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
+                        </div>
+                      )}
                     </div>
-                    <div style={{ textAlign: "right", flexShrink: 0, paddingLeft: 10 }}>
-                      <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
-                      <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400, marginTop: 4 }}>{wd ? `${arrow} ${Math.abs(wd.changePct).toFixed(2)}%` : ""}</div>
-                    </div>
-                    {/* Edit mode — drag grip on right */}
-                    {editMode && (
-                      <div
-                        onTouchStart={(ev) => { ev.stopPropagation(); handleGripTouchStart(w.symbol, ev); }}
-                        onTouchMove={(ev) => { ev.stopPropagation(); handleGripTouchMove(w.symbol, ev); }}
-                        onTouchEnd={(ev) => { ev.stopPropagation(); handleGripTouchEnd(w.symbol); }}
-                        style={{ display: "flex", flexDirection: "column", gap: 4, padding: "12px 6px", flexShrink: 0, cursor: "grab", touchAction: "none", marginLeft: 6 }}>
-                        <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
-                        <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
-                        <div style={{ width: 22, height: 2.5, background: T.textMid, borderRadius: 2 }} />
+                    {/* Row 2: Change | Volume | Range */}
+                    <div style={{ display: "grid", gridTemplateColumns: "auto auto 1fr", gap: 12, alignItems: "center" }}>
+                      <div>
+                        <div style={{ ...mono, fontSize: 8, color: T.textFaint, letterSpacing: "1px" }}>CHANGE</div>
+                        <div style={{ ...mono, fontSize: 11, color: col, marginTop: 1 }}>{wd ? `${wd.change >= 0 ? "+" : ""}$${Math.abs(Number(wd.change)).toFixed(2)} (${arrow} ${Math.abs(wd.changePct).toFixed(2)}%)` : "—"}</div>
                       </div>
-                    )}
+                      <div>
+                        <div style={{ ...mono, fontSize: 8, color: T.textFaint, letterSpacing: "1px" }}>VOLUME</div>
+                        <div style={{ ...mono, fontSize: 11, color: T.textMid, marginTop: 1 }}>{wd && wd.volume ? (wd.volume >= 1e9 ? `${(wd.volume/1e9).toFixed(1)}B` : wd.volume >= 1e6 ? `${(wd.volume/1e6).toFixed(1)}M` : wd.volume >= 1e3 ? `${(wd.volume/1e3).toFixed(0)}K` : `${wd.volume}`) : "—"}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ ...mono, fontSize: 8, color: T.textFaint, letterSpacing: "1px" }}>RANGE</div>
+                        <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 1 }}>{wd && wd.low && wd.high ? `$${Number(wd.low).toFixed(2)} - $${Number(wd.high).toFixed(2)}` : "—"}</div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Expanded card */}
