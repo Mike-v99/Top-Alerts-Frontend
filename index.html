@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Top-Alerts — Intelligent Price Alerts</title>
     <meta name="description" content="Set smart price alerts for stocks and crypto. Free & Pro plans. RSI, MACD, Moving Average crossovers and more." />
     <!-- PWA -->
@@ -29,12 +29,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      html { overflow: hidden; height: 100%; }
-      body { overflow-x: hidden; overflow-y: scroll; height: 100%; width: 100%; background: #0a0a0a; -webkit-overflow-scrolling: touch; }
-      #safari-clip { position: relative; width: 100%; overflow-x: clip; overflow-x: hidden; }
-      #root { width: 100%; max-width: 100%; }
+      body { background: #0a0a0a; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+      #safari-clip { width: 100%; overflow-x: hidden; }
       input, select, button, textarea { font-family: inherit; }
-      body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
     </style>
   </head>
   <body>
@@ -43,7 +40,6 @@
     </div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Register service worker
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("/sw.js")
