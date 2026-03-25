@@ -1456,7 +1456,7 @@ export default function AppPage() {
         </div>
       )}
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: isMobile ? "100%" : 1200, width: "100%", margin: "0 auto", padding: isMobile ? "16px 20px" : "32px 20px", paddingBottom: isMobile ? 30 : 20, overflowX: "hidden" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: isMobile ? "100%" : 1200, width: "100%", margin: "0 auto", padding: isMobile ? "16px 20px" : "32px 20px", paddingBottom: isMobile ? 100 : 20, overflowX: "hidden" }}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isMobile ? 16 : 36 }}>
@@ -4098,6 +4098,34 @@ export default function AppPage() {
               </div>
             )}
             </div>{/* end scrollable body */}
+          </div>
+        </div>
+      )}
+
+      {/* ── MOBILE FLOATING BOTTOM BAR — gradient fade + green accent ── */}
+      {isMobile && !detailSymbol && (
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, pointerEvents: "none", zIndex: 50,
+        }}>
+          <div style={{ height: 30, background: "linear-gradient(transparent, rgba(10,10,10,0.9))" }} />
+          <div style={{ padding: "0 20px 30px", background: "rgba(10,10,10,0.9)" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              background: "rgba(255,255,255,0.04)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)",
+              border: "1px solid rgba(255,255,255,0.06)", borderRadius: 18, padding: "12px 16px",
+              pointerEvents: "auto",
+            }}>
+              <div onClick={() => { setEditMode(p => { const next = !p; if (next) showToast("Edit mode", "success"); setPendingDelete([]); return next; }); setMobileExpanded(null); }}
+                style={{ ...font, fontSize: 12, fontWeight: editMode ? 600 : 400, color: editMode ? T.text : "rgba(255,255,255,0.4)", cursor: "pointer", padding: "8px 14px", borderRadius: 10, background: editMode ? "rgba(255,255,255,0.06)" : "transparent" }}>
+                {editMode ? "Done" : "Edit"}
+              </div>
+              <div style={{ flex: 1 }} />
+              <div onClick={() => openModal()} style={{
+                background: `${T.green}15`, border: `1px solid ${T.green}30`,
+                borderRadius: 12, padding: "10px 24px",
+                ...font, fontSize: 13, fontWeight: 500, color: T.green, cursor: "pointer",
+              }}>+ New Alert</div>
+            </div>
           </div>
         </div>
       )}
