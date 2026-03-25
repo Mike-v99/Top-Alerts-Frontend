@@ -29,15 +29,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      body { background: #0a0a0a; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
-      #safari-clip { width: 100%; overflow-x: hidden; }
-      input, select, button, textarea { font-family: inherit; }
+      body { background: #0a0a0a; }
+      input, select, button, textarea { font-family: inherit; font-size: 16px; }
+      body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
     </style>
   </head>
   <body>
-    <div id="safari-clip">
-      <div id="root"></div>
-    </div>
+    <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
       if ("serviceWorker" in navigator) {
