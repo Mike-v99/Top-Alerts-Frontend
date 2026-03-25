@@ -3792,12 +3792,9 @@ export default function AppPage() {
           }}>
             <style>{`@keyframes detailSlideUp{from{transform:translateY(100%);opacity:0.5}to{transform:translateY(0);opacity:1}}@keyframes detailSlideDown{from{transform:translateY(0);opacity:1}to{transform:translateY(100%);opacity:0}}`}</style>
             <div style={{ padding: "16px 20px 30px" }}>
-              {/* Header row: back */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div onClick={() => setDetailSymbol(null)} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                  <span style={{ fontSize: 20, color: T.textMid }}>←</span>
-                  <span style={{ ...mono, fontSize: 11, color: T.textFaint, letterSpacing: "2px" }}>WATCHLIST</span>
-                </div>
+              {/* Header row: × close */}
+              <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+                <span onClick={() => setDetailSymbol(null)} style={{ fontSize: 22, color: T.text, cursor: "pointer" }}>×</span>
               </div>
 
               {/* Name + Price */}
@@ -3859,19 +3856,17 @@ export default function AppPage() {
                 </div>
               </div>
 
-              {/* Action text links */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginTop: 14, padding: "8px 0" }}>
-                <span onClick={() => openModal(sym, label)} style={{ ...mono, fontSize: 11, color: T.green, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>+ Set Alert</span>
-                <span style={{ width: 1, height: 14, background: "rgba(255,255,255,0.06)" }} />
-                <span onClick={() => { if (d.price) shareTicker(sym, label, d.price, d.changePct); }} style={{ ...mono, fontSize: 11, color: T.textFaint, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>↗ Share</span>
-                {!watchlist.some(ww => ww.symbol === sym) && !MARKET_SYMBOLS.some(ms => ms.symbol === sym) && (<>
-                  <span style={{ width: 1, height: 14, background: "rgba(255,255,255,0.06)" }} />
-                  <span onClick={() => {
+              {/* Action buttons — three equal glass cards */}
+              <div style={{ display: "grid", gridTemplateColumns: watchlist.some(ww => ww.symbol === sym) || MARKET_SYMBOLS.some(ms => ms.symbol === sym) ? "1fr 1fr" : "1fr 1fr 1fr", gap: 8, marginTop: 16 }}>
+                <div onClick={() => openModal(sym, label)} style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 0", textAlign: "center", ...font, fontSize: 15, color: T.green, cursor: "pointer" }}>+ Alert</div>
+                <div onClick={() => { if (d.price) shareTicker(sym, label, d.price, d.changePct); }} style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 0", textAlign: "center", ...font, fontSize: 15, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>↗ Share</div>
+                {!watchlist.some(ww => ww.symbol === sym) && !MARKET_SYMBOLS.some(ms => ms.symbol === sym) && (
+                  <div onClick={() => {
                     const newItem = { symbol: sym, label: label };
                     setWatchlist(prev => { const next = [...prev, newItem]; localStorage.setItem("ta-watchlist", JSON.stringify(next)); return next; });
                     showToast(`${sym} added to watchlist`);
-                  }} style={{ ...mono, fontSize: 11, color: T.textFaint, cursor: "pointer" }}>+ Watchlist</span>
-                </>)}
+                  }} style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 0", textAlign: "center", ...font, fontSize: 15, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>+ Watch</div>
+                )}
               </div>
 
               {/* KEY STATS card */}
@@ -3887,8 +3882,8 @@ export default function AppPage() {
                     ["Change", d.changePct != null ? `${d.changePct >= 0 ? "+" : ""}${d.changePct.toFixed(2)}%` : "—"],
                   ].map(([l, v], idx) => (
                     <div key={idx} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0" }}>
-                      <span style={{ ...mono, fontSize: 13, color: "rgba(255,255,255,0.3)" }}>{l}</span>
-                      <span style={{ ...mono, fontSize: 15, color: l === "Change" ? col : "rgba(255,255,255,0.85)" }}>{v}</span>
+                      <span style={{ ...mono, fontSize: 15, color: "rgba(255,255,255,0.5)" }}>{l}</span>
+                      <span style={{ ...mono, fontSize: 15, color: l === "Change" ? col : "#fff" }}>{v}</span>
                     </div>
                   ))}
                 </div>
