@@ -150,43 +150,26 @@ export default function AppPage() {
   const [step,      setStep]      = useState(1);
   const [toast,     setToast]     = useState(null);
 
-  // Lock body scroll when modal is open
+  // Lock body scroll when modal is open — prevent touchmove on document
   const scrollYRef = useRef(0);
   useEffect(() => {
-    const root = document.getElementById("root");
-    if (showModal) {
-      scrollYRef.current = window.scrollY;
-      document.documentElement.style.overflow = "hidden";
-      document.documentElement.style.height = "100%";
-      document.body.style.overflow = "hidden";
-      document.body.style.height = "100%";
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollYRef.current}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
-      if (root) root.style.overflow = "hidden";
-    } else {
-      document.documentElement.style.overflow = "";
-      document.documentElement.style.height = "";
-      document.body.style.overflow = "";
-      document.body.style.height = "";
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      if (root) root.style.overflow = "";
-      window.scrollTo(0, scrollYRef.current);
-    }
+    if (!showModal) return;
+    scrollYRef.current = window.scrollY;
+    const prevent = (e) => {
+      // Allow scrolling inside the modal content
+      let el = e.target;
+      while (el && el !== document.body) {
+        if (el.scrollHeight > el.clientHeight && el.closest("[data-modal-scroll]")) return;
+        el = el.parentElement;
+      }
+      e.preventDefault();
+    };
+    document.addEventListener("touchmove", prevent, { passive: false });
+    document.body.style.overflow = "hidden";
     return () => {
-      document.documentElement.style.overflow = "";
-      document.documentElement.style.height = "";
+      document.removeEventListener("touchmove", prevent);
       document.body.style.overflow = "";
-      document.body.style.height = "";
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      if (root) root.style.overflow = "";
+      window.scrollTo(0, scrollYRef.current);
     };
   }, [showModal]);
 
@@ -3701,11 +3684,9 @@ export default function AppPage() {
       )}
 
       {showModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "8px 0 0" : 20, touchAction: "none", overscrollBehavior: "contain" }}
-          onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}
-          onTouchMove={e => e.preventDefault()}>
-          <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? "14px 14px 0 0" : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: isMobile ? "100%" : "90vh", height: isMobile ? "calc(100vh - 8px)" : "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column", overflow: "hidden" }}
-            onTouchMove={e => e.stopPropagation()}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "8px 0 0" : 20, overscrollBehavior: "none" }}
+          onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
+          <div data-modal-scroll="true" style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? "14px 14px 0 0" : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: isMobile ? "100%" : "90vh", height: isMobile ? "calc(100vh - 8px)" : "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column", overflow: "hidden", overscrollBehavior: "contain" }}>
 
             {/* Modal header — cobalt blue, fixed outside scroll */}
             <div style={{ background: T.accent, borderRadius: isMobile ? "14px 14px 0 0" : "18px 18px 0 0", flexShrink: 0 }}>
