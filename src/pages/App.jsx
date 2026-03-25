@@ -151,25 +151,20 @@ export default function AppPage() {
   const [toast,     setToast]     = useState(null);
 
   // Lock body scroll when modal is open
+  const scrollYRef = useRef(0);
   useEffect(() => {
     if (showModal) {
+      scrollYRef.current = window.scrollY;
+      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-      document.body.style.top = `-${window.scrollY}px`;
     } else {
-      const scrollY = document.body.style.top;
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-      window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      window.scrollTo(0, scrollYRef.current);
     }
     return () => {
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
     };
   }, [showModal]);
 
