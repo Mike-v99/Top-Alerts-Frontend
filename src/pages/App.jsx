@@ -3898,14 +3898,14 @@ export default function AppPage() {
               <div style={{ ...(() => ({ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#ffffff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}` }))(), borderRadius: 14, padding: 16, marginTop: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                   <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textMid }}>{sym}</div>
-                  <div style={{ display: "flex", gap: 0, border: `1px solid rgba(255,255,255,0.06)`, borderRadius: 6, overflow: "hidden" }}>
+                  <div style={{ display: "flex", gap: 0, border: `1px solid rgba(255,255,255,0.06)`, borderRadius: 8, overflow: "hidden" }}>
                     <div onClick={() => setDetailEarningsTab("earnings")} style={{
-                      padding: "5px 12px", ...mono, fontSize: 9, letterSpacing: "1px", cursor: "pointer",
+                      padding: "7px 16px", ...mono, fontSize: 15, letterSpacing: "1px", cursor: "pointer",
                       background: detailEarningsTab === "earnings" ? "rgba(255,255,255,0.06)" : "transparent",
                       color: detailEarningsTab === "earnings" ? "#fff" : "rgba(255,255,255,0.3)",
                     }}>EARNINGS</div>
                     <div onClick={() => setDetailEarningsTab("news")} style={{
-                      padding: "5px 12px", ...mono, fontSize: 9, letterSpacing: "1px", cursor: "pointer",
+                      padding: "7px 16px", ...mono, fontSize: 15, letterSpacing: "1px", cursor: "pointer",
                       borderLeft: "1px solid rgba(255,255,255,0.06)",
                       background: detailEarningsTab === "news" ? "rgba(255,255,255,0.06)" : "transparent",
                       color: detailEarningsTab === "news" ? "#fff" : "rgba(255,255,255,0.3)",
