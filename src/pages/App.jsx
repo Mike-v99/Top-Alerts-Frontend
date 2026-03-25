@@ -150,26 +150,16 @@ export default function AppPage() {
   const [step,      setStep]      = useState(1);
   const [toast,     setToast]     = useState(null);
 
-  // Lock body scroll when modal is open — prevent touchmove on document
+  // Lock body scroll when modal is open
   const scrollYRef = useRef(0);
   useEffect(() => {
     if (!showModal) return;
     scrollYRef.current = window.scrollY;
-    const prevent = (e) => {
-      // Allow scrolling inside the modal content
-      let el = e.target;
-      while (el && el !== document.body) {
-        if (el.scrollHeight > el.clientHeight && el.closest("[data-modal-scroll]")) return;
-        el = el.parentElement;
-      }
-      e.preventDefault();
-    };
-    document.addEventListener("touchmove", prevent, { passive: false });
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("touchmove", prevent);
       document.body.style.overflow = "";
-      window.scrollTo(0, scrollYRef.current);
+      document.documentElement.style.overflow = "";
     };
   }, [showModal]);
 
@@ -1432,9 +1422,9 @@ export default function AppPage() {
     <div style={{ minHeight: "100vh", background: T.bg, ...font, color: T.text, transition: "background 0.3s", overflowX: "clip", width: "100%" }}>
       <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
       <style>{`
-        html, body { background: ${T.bg}; margin: 0; padding: 0; overflow-x: hidden; width: 100%; max-width: 100vw; }
+        html, body { background: ${T.bg}; margin: 0; padding: 0; overflow-x: hidden; width: 100%; max-width: 100vw; touch-action: manipulation; }
         *, *::before, *::after { box-sizing: border-box; }
-        #root { overflow-x: hidden; max-width: 100vw; }
+        #root { overflow-x: hidden; max-width: 100vw; width: 100%; }
         @keyframes slideFromLeft  { from { transform: translateX(-60%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideFromRight { from { transform: translateX(60%);  opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideUpIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -3505,7 +3495,7 @@ export default function AppPage() {
       {calEventAlert && (
         <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
           onTouchMove={e => e.preventDefault()}>
-          <div onClick={() => { setCalEventAlert(null); setCalAlertTiming("1day"); }} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />
+          <div onClick={() => { setCalEventAlert(null); setCalAlertTiming("1day"); }} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)",  }} />
           <div style={{ position: "relative", width: isMobile ? "95vw" : 480, maxHeight: "90vh", overflowY: "auto", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", touchAction: "pan-y", overscrollBehavior: "contain" }}
             onTouchMove={e => e.stopPropagation()}>
             {/* Header */}
@@ -3684,9 +3674,9 @@ export default function AppPage() {
       )}
 
       {showModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "8px 0 0" : 20, overscrollBehavior: "none" }}
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "8px 0 0" : 20 }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div data-modal-scroll="true" style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? "14px 14px 0 0" : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: isMobile ? "100%" : "90vh", height: isMobile ? "calc(100vh - 8px)" : "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column", overflow: "hidden", overscrollBehavior: "contain" }}>
+          <div data-modal-scroll="true" style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? "14px 14px 0 0" : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: isMobile ? "100%" : "90vh", height: isMobile ? "calc(100vh - 8px)" : "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
             {/* Modal header — cobalt blue, fixed outside scroll */}
             <div style={{ background: T.accent, borderRadius: isMobile ? "14px 14px 0 0" : "18px 18px 0 0", flexShrink: 0 }}>
@@ -4083,7 +4073,7 @@ function UpgradeModal({ T, font, mono, onClose, onUpgrade }) {
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ background: T.bgModal, border: `1px solid ${T.border}`, borderRadius: 18, width: "100%", maxWidth: 480, boxShadow: "0 40px 80px rgba(0,0,0,0.3)", overflow: "hidden" }}>
 
         {/* Header */}
