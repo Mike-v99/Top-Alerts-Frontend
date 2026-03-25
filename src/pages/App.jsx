@@ -1456,7 +1456,7 @@ export default function AppPage() {
         </div>
       )}
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: isMobile ? "100%" : 1200, width: "100%", margin: "0 auto", padding: isMobile ? "16px 20px" : "32px 20px", paddingBottom: isMobile ? 100 : 20, overflowX: "hidden" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: isMobile ? "100%" : 1200, width: "100%", margin: "0 auto", padding: isMobile ? "16px 20px" : "32px 20px", paddingBottom: isMobile ? 30 : 20, overflowX: "hidden" }}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isMobile ? 16 : 36 }}>
@@ -3715,14 +3715,20 @@ export default function AppPage() {
             overflowY: "auto", WebkitOverflowScrolling: "touch",
           }}>
             <style>{`@keyframes detailSlideUp{from{transform:translateY(100%);opacity:0.5}to{transform:translateY(0);opacity:1}}@keyframes detailSlideDown{from{transform:translateY(0);opacity:1}to{transform:translateY(100%);opacity:0}}`}</style>
-            <div style={{ padding: "54px 20px 30px" }}>
-              {/* Back button */}
-              <div onClick={() => setDetailSymbol(null)} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                <span style={{ fontSize: 20, color: T.textMid }}>←</span>
-                <span style={{ ...mono, fontSize: 11, color: T.textFaint, letterSpacing: "2px" }}>WATCHLIST</span>
+            <div style={{ padding: "16px 20px 30px" }}>
+              {/* Header row: back + alert + share */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div onClick={() => setDetailSymbol(null)} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                  <span style={{ fontSize: 20, color: T.textMid }}>←</span>
+                  <span style={{ ...mono, fontSize: 11, color: T.textFaint, letterSpacing: "2px" }}>WATCHLIST</span>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <div onClick={() => openModal(sym, label)} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${T.green}40`, color: T.green, ...mono, fontSize: 10, cursor: "pointer", fontWeight: 500 }}>+ Alert</div>
+                  <div onClick={() => { if (d.price) shareTicker(sym, label, d.price, d.changePct); }} style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 14, color: T.textMid }}>↗</div>
+                </div>
               </div>
 
-              {/* Header: Name + Price */}
+              {/* Name + Price */}
               <div style={{ marginTop: 20, display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ ...font, fontSize: 28, fontWeight: 400, color: T.text }}>{label}</div>
@@ -3859,21 +3865,13 @@ export default function AppPage() {
                 )}
               </div>
 
-              {/* Action buttons */}
-              <div style={{ display: "flex", gap: 8, padding: "16px 0" }}>
-                <button onClick={() => { openModal(sym, label); }} style={{ flex: 1, padding: 14, background: "rgba(255,255,255,0.06)", color: "#fff", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, ...font, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>+ Set Alert</button>
-                <button onClick={() => { if (d.price) shareTicker(sym, label, d.price, d.changePct); }} style={{ flex: 1, padding: 14, background: "none", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, ...font, fontSize: 15, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                  <span style={{ fontSize: 14 }}>↗</span> Share
-                </button>
-              </div>
-
               {/* Add to watchlist (if not already) */}
               {!watchlist.some(ww => ww.symbol === sym) && !MARKET_SYMBOLS.some(ms => ms.symbol === sym) && (
                 <button onClick={() => {
                   const newItem = { symbol: sym, label: label };
                   setWatchlist(prev => { const next = [...prev, newItem]; localStorage.setItem("ta-watchlist", JSON.stringify(next)); return next; });
                   showToast(`${sym} added to watchlist`);
-                }} style={{ width: "100%", padding: 14, background: "none", color: T.green, border: `1px solid ${T.green}30`, borderRadius: 12, ...font, fontSize: 15, fontWeight: 500, cursor: "pointer", marginBottom: 16 }}>+ Add to Watchlist</button>
+                }} style={{ width: "100%", padding: 14, background: "none", color: T.green, border: `1px solid ${T.green}30`, borderRadius: 12, ...font, fontSize: 15, fontWeight: 500, cursor: "pointer", marginTop: 16 }}>+ Add to Watchlist</button>
               )}
             </div>
           </div>
@@ -4226,37 +4224,6 @@ export default function AppPage() {
               </div>
             )}
             </div>{/* end scrollable body */}
-          </div>
-        </div>
-      )}
-
-      {/* ── MOBILE FLOATING BOTTOM BAR ──────────────────────────────── */}
-      {isMobile && (
-        <div style={{
-          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999,
-          padding: "12px 20px calc(16px + env(safe-area-inset-bottom, 0px))",
-          background: `linear-gradient(to top, ${T.bg}, ${T.bg}ee, transparent)`,
-          pointerEvents: "none",
-        }}>
-          <div style={{
-            background: T.barBg, backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)",
-            border: `1px solid ${T.barBorder}`, borderRadius: 20,
-            padding: "14px 20px",
-            display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center",
-            boxShadow: T.barShadow,
-            pointerEvents: "auto",
-          }}>
-            <div onClick={() => { setEditMode(p => { const next = !p; if (next) showToast("Edit mode", "success"); setPendingDelete([]); return next; }); setMobileExpanded(null); }}
-              style={{ ...font, fontSize: 12, fontWeight: editMode ? 600 : 500, color: editMode ? T.text : T.textMid, cursor: "pointer", justifySelf: "start", padding: "8px 12px", borderRadius: 8, background: editMode ? T.accentBg : "transparent", border: editMode ? `1px solid ${T.border}` : "1px solid transparent" }}>
-              {editMode ? "Done" : "Edit"}
-            </div>
-            <div onClick={() => openModal()} style={{
-              background: T.btnPrimary, border: themeName === "charcoal" ? `1px solid ${T.barBorder}` : "none",
-              borderRadius: 14, padding: "11px 28px",
-              ...font, fontSize: 13, fontWeight: 500, color: T.btnText, cursor: "pointer",
-              boxShadow: themeName === "paper" ? "0 2px 10px rgba(0,0,0,0.15)" : "none",
-            }}>+ New Alert</div>
-            <div />
           </div>
         </div>
       )}
