@@ -3879,241 +3879,115 @@ export default function AppPage() {
       })()}
 
       {showModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "8px 0 0" : 20 }}
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "0" : 20 }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div data-modal-scroll="true" style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? "14px 14px 0 0" : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: isMobile ? "100%" : "90vh", height: isMobile ? "calc(100vh - 8px)" : "auto", boxShadow: "0 40px 80px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-
-            {/* Modal header — cobalt blue, fixed outside scroll */}
-            <div style={{ background: T.accent, borderRadius: isMobile ? "14px 14px 0 0" : "18px 18px 0 0", flexShrink: 0 }}>
-              {/* Top row: step + title + close */}
-              <div style={{ padding: "18px 24px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: "50%", border: "2px solid #378ADD", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: T.btnText, flexShrink: 0 }}>
-                    {step}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: isMobile ? 26 : 20, color: T.btnText }}>{step === 1 ? "Set Alert" : "Delivery"}</div>
-                    <div style={{ display: "flex", gap: 4, marginTop: 5 }}>
-                      {[1,3].map(s => <div key={s} style={{ width: s <= step ? 20 : 6, height: 3, borderRadius: 2, background: s <= step ? "#378ADD" : "rgba(255,255,255,0.15)", transition: "all 0.3s" }} />)}
-                    </div>
-                  </div>
-                </div>
-                <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: isMobile ? 26 : 22 }}>×</button>
-              </div>
-
-              {/* Asset search / display row — always in header */}
-              <div style={{ padding: "14px 24px 18px" }}>
-                {!form.asset ? (
-                  /* Search input */
-                  <div style={{ position: "relative" }}>
-                    <input
-                      type="text"
-                      placeholder="Search symbol — AAPL, TSLA, BTC-USD..."
-                      value={modalSymbolSearch}
-                      onChange={e => { setModalSymbolSearch(e.target.value); searchModalSymbols(e.target.value); }}
-                      autoFocus
-                      style={{ width: "100%", padding: "11px 14px", boxSizing: "border-box", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, color: T.btnText, ...font, fontSize: 15, outline: "none", caretColor: "#378ADD" }}
-                    />
-                    {modalSymbolSearch && (
-                      <button onClick={() => { setModalSymbolSearch(""); setModalSearchResults([]); }} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 18 }}>×</button>
-                    )}
-                  </div>
-                ) : (
-                  /* Selected asset card */
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 14px" }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(55,138,221,0.25)", border: "1px solid rgba(55,138,221,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <span style={{ ...mono, fontSize: 10, color: "#378ADD", fontWeight: 700 }}>{form.asset?.slice(0,3)}</span>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ ...font, fontSize: isMobile ? 20 : 15, fontWeight: isMobile ? 600 : 500, color: T.btnText }}>{form.asset}</div>
-                      <div style={{ ...mono, fontSize: isMobile ? 13 : 10, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ ...font, fontSize: isMobile ? 22 : 15, fontWeight: isMobile ? 600 : 500, color: T.btnText }}>
-                        {modalPrice ? `$${Number(modalPrice.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
-                      </div>
-                      {modalPrice && (
-                        <div style={{ ...mono, fontSize: isMobile ? 12 : 8, color: modalPrice.marketOpen ? (modalPrice.changePct >= 0 ? "#3ddc84" : "#ff5a5a") : "rgba(255,255,255,0.3)", marginTop: 2 }}>
-                          {modalPrice.marketOpen ? `${modalPrice.changePct >= 0 ? "▲" : "▼"} ${Math.abs(modalPrice.changePct).toFixed(2)}%` : "CLOSED"}
-                        </div>
-                      )}
-                    </div>
-                    <button onClick={() => { setForm(f => ({ ...f, asset: "" })); setModalAssetLabel(""); setModalSymbolSearch(""); setModalSearchResults([]); setModalPrice(null); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 16, marginLeft: 4, flexShrink: 0 }}>×</button>
-                  </div>
-                )}
-                {/* Search results dropdown — inside header */}
-                {!form.asset && (modalSearchResults.length > 0 || modalSearchLoading) && (
-                  <div style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 9, overflow: "hidden", marginTop: 6 }}>
-                    {modalSearchLoading && <div style={{ padding: "10px 14px", ...mono, fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Searching...</div>}
-                    {modalSearchResults.map(r => (
-                      <div key={r.symbol} onClick={() => { setForm(f => ({ ...f, asset: r.symbol })); setModalAssetLabel(r.name); setModalSymbolSearch(r.symbol); setModalSearchResults([]); fetchModalPrice(r.symbol); }}
-                        style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-                        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
-                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                        <div style={{ ...mono, fontSize: 11, color: "#378ADD", minWidth: 52, fontWeight: 500 }}>{r.symbol}</div>
-                        <div style={{ ...font, fontSize: 14, color: T.btnText, flex: 1 }}>{(r.name || "").slice(0, 32)}</div>
-                        <div style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.3)" }}>{r.type}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+          <div data-modal-scroll="true" style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: isMobile ? 0 : 18, width: "100%", maxWidth: isMobile ? "100%" : 540, maxHeight: isMobile ? "100%" : "90vh", height: isMobile ? "100%" : "auto", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
             {/* Scrollable body */}
             <div style={{ flex: 1, overflowY: "auto", touchAction: "pan-y", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}>
 
-            {/* Step 1 — Triggers */}
+            {/* Step 1 — Grid choice trigger selection */}
             {step === 1 && (
-              <div>
-                <div style={{ padding: "20px 24px" }}>
-
-                  {/* Single-screen trigger + input — both mobile and desktop */}
-                    <div>
-                      {/* Selected trigger with inline input */}
-                      {FREE_TRIGGERS.map(t => {
-                        const isSelected = form.trigger?.id === t.id;
-                        const iconBg = t.id === "price_above" ? "rgba(26,138,68,0.12)" : t.id === "price_below" ? "rgba(204,34,34,0.12)" : "rgba(138,106,0,0.12)";
-                        const iconCol = t.id === "price_above" ? T.green : t.id === "price_below" ? T.red : T.accent;
-                        const disabled = !form.asset;
-                        return (
-                          <div key={t.id} style={{
-                            background: T.bgCard, border: isSelected ? `2px solid ${T.accent}` : `1px solid ${T.border}`,
-                            borderRadius: 12, padding: 16, marginBottom: 8, cursor: disabled ? "not-allowed" : "pointer",
-                            opacity: disabled ? 0.4 : 1,
-                          }} onClick={() => { if (!disabled) setForm(f => ({ ...f, trigger: t })); }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                              <div style={{ width: 44, height: 44, borderRadius: 8, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: iconCol, flexShrink: 0 }}>{t.icon}</div>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ ...font, fontSize: 20, fontWeight: isSelected ? 600 : 500, color: T.text }}>{t.label}</div>
-                                <div style={{ ...mono, fontSize: 13, color: "#3a3a3a", marginTop: 3 }}>{t.desc}</div>
-                              </div>
-                              {isSelected && <span style={{ ...mono, fontSize: 13, color: T.accent, fontWeight: 600 }}>✓</span>}
-                              {!isSelected && <span style={{ fontSize: 18, color: T.textFaint }}>→</span>}
-                            </div>
-                            {/* Inline input when selected */}
-                            {isSelected && t.input === "price" && (
-                              <div style={{ marginTop: 14 }} onClick={(ev) => ev.stopPropagation()}>
-                                <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: "#3a3a3a", marginBottom: 6 }}>TARGET PRICE (USD)</div>
-                                <input type="number" placeholder="0.00" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
-                                  style={{ width: "100%", padding: "14px 14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, ...font, fontSize: 24, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
-                              </div>
-                            )}
-                            {isSelected && t.input === "percent" && (
-                              <div style={{ marginTop: 14 }} onClick={(ev) => ev.stopPropagation()}>
-                                <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: "#3a3a3a", marginBottom: 6 }}>% CHANGE THRESHOLD</div>
-                                <input type="number" placeholder="5" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
-                                  style={{ width: "100%", padding: "14px 14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, ...font, fontSize: 24, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-
-                      {/* Pro triggers — collapsible, cobalt blue promotional */}
-                      <div style={{ background: T.accent, borderRadius: 12, overflow: "hidden", marginTop: 10, marginBottom: 20 }}>
-                        <div onClick={() => setMobileProTriggersOpen(p => !p)} style={{
-                          padding: "16px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
-                          cursor: "pointer",
-                        }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontSize: 14 }}>⚡</span>
-                            <span style={{ ...mono, fontSize: 13, letterSpacing: "1.5px", color: T.btnText, fontWeight: 700 }}>PRO TRIGGERS</span>
-                            <span style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.4)" }}>({PRO_TRIGGERS.length})</span>
-                          </div>
-                          <span style={{ ...font, fontSize: 14, color: mobileProTriggersOpen ? T.btnText : "rgba(255,255,255,0.5)" }}>{mobileProTriggersOpen ? "▲ Hide" : "▼ Show"}</span>
-                        </div>
-                        {!mobileProTriggersOpen && (
-                          <div style={{ padding: "0 16px 14px" }}>
-                            <div style={{ ...font, fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 10 }}>Unlock advanced triggers like MA crossovers, RSI, Bollinger Bands & more</div>
-                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                              {PRO_TRIGGERS.slice(0, 4).map(t => (
-                                <span key={t.id} style={{ ...mono, fontSize: 11, color: T.btnText, background: "rgba(255,255,255,0.1)", padding: "5px 10px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.15)" }}>{t.label.split(" ").slice(0, 2).join(" ")}</span>
-                              ))}
-                              <span style={{ ...mono, fontSize: 11, color: "rgba(255,255,255,0.4)", padding: "5px 0" }}>+{PRO_TRIGGERS.length - 4} more</span>
-                            </div>
-                          </div>
-                        )}
-                        {mobileProTriggersOpen && (
-                          <div style={{ padding: "6px 14px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
-                            {PRO_TRIGGERS.map(t => {
-                              const isSelected = form.trigger?.id === t.id;
-                              const iconBg = T.bgDeep;
-                              return (
-                              <div key={t.id}>
-                              <button onClick={() => {
-                                if (!form.asset) return;
-                                if (!isPro) { setShowModal(false); setTab("pricing"); showToast("Pro plan required", "warn"); return; }
-                                setForm(f => ({ ...f, trigger: t }));
-                              }} style={{
-                                width: "100%", padding: 16, borderRadius: 12,
-                                border: isSelected ? `2px solid ${T.accent}` : `1px solid ${T.border}`,
-                                background: T.bgCard, cursor: !form.asset ? "not-allowed" : "pointer", ...font,
-                                textAlign: "left", display: "flex", gap: 12, alignItems: "center",
-                                opacity: !form.asset ? 0.4 : isPro ? 1 : 0.45,
-                              }}>
-                                <div style={{ width: isMobile ? 44 : 38, height: isMobile ? 44 : 38, borderRadius: 8, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: isMobile ? 20 : 18, color: T.textFaint }}>{t.icon}</div>
-                                <div style={{ flex: 1 }}>
-                                  <div style={{ fontSize: isMobile ? 20 : 16, color: T.text, fontWeight: isSelected ? 600 : 500 }}>{t.label}</div>
-                                  <div style={{ ...mono, fontSize: isMobile ? 13 : 11, color: T.textMid, marginTop: 3 }}>{t.desc}</div>
-                                </div>
-                                {!isPro && <span style={{ ...mono, fontSize: 10, color: T.textFaint, border: `1px solid ${T.border}`, padding: "2px 6px", borderRadius: 3 }}>PRO</span>}
-                                {isSelected && <span style={{ ...mono, fontSize: 13, color: T.accent, fontWeight: 600 }}>✓</span>}
-                                {!isSelected && isPro && <span style={{ fontSize: isMobile ? 18 : 14, color: T.textFaint }}>→</span>}
-                              </button>
-                              {/* Inline input for selected Pro trigger */}
-                              {isSelected && t.input === "ma" && (
-                                <div style={{ padding: "12px 14px" }} onClick={(ev) => ev.stopPropagation()}>
-                                  <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>MOVING AVERAGE PERIOD</div>
-                                  <div style={{ display: "flex", gap: 8 }}>
-                                    {MA_OPTIONS.map(mv => <button key={mv} onClick={() => setForm(f => ({ ...f, ma: mv }))} style={{ ...chipBtn(form.ma === mv), flex: 1, padding: "10px 0", textAlign: "center" }}>{mv}D</button>)}
-                                  </div>
-                                </div>
-                              )}
-                              {isSelected && t.input === "bb" && (
-                                <div style={{ padding: "12px 14px" }} onClick={(ev) => ev.stopPropagation()}>
-                                  <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>BAND</div>
-                                  <div style={{ display: "flex", gap: 8 }}>
-                                    {BB_OPTIONS.map(bv => <button key={bv} onClick={() => setForm(f => ({ ...f, bb: bv }))} style={{ ...chipBtn(form.bb === bv), flex: 1, padding: "10px 0", textAlign: "center" }}>{bv}</button>)}
-                                  </div>
-                                </div>
-                              )}
-                              {isSelected && t.input === "volume" && (
-                                <div style={{ padding: "12px 14px" }} onClick={(ev) => ev.stopPropagation()}>
-                                  <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 8 }}>SURGE MULTIPLIER</div>
-                                  <div style={{ display: "flex", gap: 8 }}>
-                                    {["2","3","5","10"].map(vv => <button key={vv} onClick={() => setForm(f => ({ ...f, volume: vv }))} style={{ ...chipBtn(form.volume === vv), flex: 1, padding: "10px 0", textAlign: "center" }}>{vv}×</button>)}
-                                  </div>
-                                </div>
-                              )}
-                              {isSelected && t.input === null && (
-                                <div style={{ padding: "10px 14px", ...mono, fontSize: 11, color: T.textMid, background: T.bgDeep, borderRadius: 8, margin: "6px 0", textAlign: "center" }}>
-                                  This trigger fires automatically — no configuration needed.
-                                </div>
-                              )}
-                              </div>
-                              );
-                            })}
-                            {!isPro && (
-                              <button onClick={() => { setShowModal(false); setTab("pricing"); }} style={{
-                                marginTop: 6, width: "100%", padding: 12, background: T.btnText, color: T.accent,
-                                border: "none", borderRadius: 8, ...font, fontSize: 15, fontWeight: 700, cursor: "pointer",
-                              }}>Upgrade to Pro →</button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Continue button — goes to step 3 (delivery) */}
-                      <button onClick={() => { if (form.trigger) setStep(3); }} style={{
-                        width: "100%", padding: 16, background: form.trigger ? T.accent : T.border, color: form.trigger ? T.btnText : T.textFaint,
-                        border: "none", borderRadius: 10, ...font, fontSize: 20, fontWeight: 600, cursor: form.trigger ? "pointer" : "not-allowed",
-                      }}>CONTINUE →</button>
-                    </div>
+              <div style={{ padding: isMobile ? "16px 20px 30px" : "22px 28px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                  <span style={{ ...font, fontSize: 22, fontWeight: 400, color: T.text }}>Set Alert</span>
+                  <span onClick={() => setShowModal(false)} style={{ fontSize: 22, color: T.textFaint, cursor: "pointer" }}>×</span>
                 </div>
+
+                {!form.asset ? (
+                  <div style={{ position: "relative", marginBottom: 20 }}>
+                    <input type="text" placeholder="Search symbol — AAPL, TSLA, BTC-USD..." value={modalSymbolSearch}
+                      onChange={e => { setModalSymbolSearch(e.target.value); searchModalSymbols(e.target.value); }} autoFocus
+                      style={{ width: "100%", padding: "14px 16px", boxSizing: "border-box", background: "rgba(255,255,255,0.03)", border: `1px solid ${T.border}`, borderRadius: 12, color: T.text, ...font, fontSize: 16, outline: "none" }} />
+                    {modalSymbolSearch && <button onClick={() => { setModalSymbolSearch(""); setModalSearchResults([]); }} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: T.textFaint, cursor: "pointer", fontSize: 18 }}>×</button>}
+                    {modalSearchResults.length > 0 && (
+                      <div style={{ marginTop: 6, background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, maxHeight: 200, overflowY: "auto" }}>
+                        {modalSearchResults.map(rr => (
+                          <div key={rr.symbol} onClick={() => { setForm(f => ({ ...f, asset: rr.symbol })); setModalAssetLabel(rr.name || rr.symbol); setModalSymbolSearch(""); setModalSearchResults([]); }}
+                            style={{ padding: "12px 16px", cursor: "pointer", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div><div style={{ ...font, fontSize: 14, color: T.text }}>{rr.symbol}</div><div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 2 }}>{rr.name}</div></div>
+                            <div style={{ ...mono, fontSize: 9, color: T.textFaint }}>{rr.type}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ ...font, fontSize: 16, color: T.text }}>{form.asset}</span>
+                      <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ ...font, fontSize: 18, color: T.green }}>{(() => { const md = marketData[MARKET_SYMBOLS.find(ms => ms.symbol === form.asset)?.id] || watchData[form.asset]; return md ? `$${Number(md.price).toFixed(2)}` : ""; })()}</span>
+                      <span onClick={() => setForm(f => ({ ...f, asset: "", trigger: null, value: "" }))} style={{ fontSize: 14, color: T.textFaint, cursor: "pointer" }}>×</span>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textFaint, marginBottom: 12 }}>WHEN PRICE...</div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                  {FREE_TRIGGERS.filter(t => t.input === "price").map(t => {
+                    const isSelected = form.trigger?.id === t.id;
+                    const iconCol = t.id === "price_above" ? T.green : T.red;
+                    const disabled = !form.asset;
+                    return (
+                      <div key={t.id} onClick={() => { if (!disabled) setForm(f => ({ ...f, trigger: t })); }}
+                        style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: isSelected ? `2px solid ${iconCol}40` : `1px solid ${T.border}`, borderRadius: 14, padding: "20px 16px", textAlign: "center", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.4 : 1 }}>
+                        <div style={{ fontSize: 28, color: iconCol, marginBottom: 8 }}>{t.icon}</div>
+                        <div style={{ ...font, fontSize: 14, color: T.text }}>{t.label}</div>
+                        <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 4 }}>{t.desc}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {FREE_TRIGGERS.filter(t => t.input === "percent").map(t => {
+                  const isSelected = form.trigger?.id === t.id;
+                  const disabled = !form.asset;
+                  return (
+                    <div key={t.id} onClick={() => { if (!disabled) setForm(f => ({ ...f, trigger: t })); }}
+                      style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: isSelected ? `2px solid ${T.accent}40` : `1px solid ${T.border}`, borderRadius: 14, padding: 16, textAlign: "center", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.4 : 1, marginBottom: 8 }}>
+                      <div style={{ fontSize: 20, color: "#c9a84c", marginBottom: 6 }}>{t.icon}</div>
+                      <div style={{ ...font, fontSize: 14, color: T.text }}>{t.label}</div>
+                      <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 4 }}>{t.desc}</div>
+                    </div>
+                  );
+                })}
+
+                {form.trigger && form.trigger.input === "price" && (
+                  <div style={{ marginTop: 8, marginBottom: 12 }} onClick={(ev) => ev.stopPropagation()}>
+                    <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textFaint, marginBottom: 6 }}>TARGET PRICE (USD)</div>
+                    <input type="number" placeholder="0.00" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
+                      style={{ width: "100%", padding: "14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, color: T.text, ...font, fontSize: 24, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
+                  </div>
+                )}
+                {form.trigger && form.trigger.input === "percent" && (
+                  <div style={{ marginTop: 8, marginBottom: 12 }} onClick={(ev) => ev.stopPropagation()}>
+                    <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textFaint, marginBottom: 6 }}>% CHANGE THRESHOLD</div>
+                    <input type="number" placeholder="5" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
+                      style={{ width: "100%", padding: "14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, color: T.text, ...font, fontSize: 24, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
+                  </div>
+                )}
+
+                <div style={{ border: "1px dashed rgba(201,168,76,0.25)", borderRadius: 14, padding: 14, marginTop: 8, background: "rgba(201,168,76,0.03)" }}>
+                  <div style={{ ...mono, fontSize: 9, color: "#c9a84c", letterSpacing: "1px", marginBottom: 4, textAlign: "center" }}>{"\u26A1"} {PRO_TRIGGERS.length} PRO TRIGGERS AVAILABLE</div>
+                  <div style={{ ...mono, fontSize: 9, color: T.textFaint, textAlign: "center" }}>RSI, MACD, Bollinger, Golden Cross & more</div>
+                  {!isPro && (
+                    <div onClick={() => { setShowModal(false); setTab("pricing"); }} style={{ marginTop: 8, padding: 10, background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 8, textAlign: "center", ...mono, fontSize: 11, color: "#c9a84c", cursor: "pointer" }}>
+                      Upgrade to Pro {"\u2014"} $<span style={{ color: T.green }}>9</span>/mo
+                    </div>
+                  )}
+                </div>
+
+                <button onClick={() => { if (form.trigger) setStep(3); }} style={{
+                  width: "100%", padding: 16, marginTop: 16,
+                  background: form.trigger ? T.accent : T.border, color: form.trigger ? T.btnText : T.textFaint,
+                  border: "none", borderRadius: 12, ...font, fontSize: 16, fontWeight: 600, cursor: form.trigger ? "pointer" : "not-allowed",
+                }}>Continue →</button>
               </div>
             )}
-
             {/* Step 3 — Delivery */}
             {step === 3 && (
               <div style={{ padding: isMobile ? "20px" : "22px 28px" }}>
