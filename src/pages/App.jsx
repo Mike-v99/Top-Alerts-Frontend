@@ -132,6 +132,8 @@ export default function AppPage() {
   const [tab,       setTab]       = useState("market");
   const [showModal, setShowModal] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [signInMode, setSignInMode] = useState("signin"); // "signin" or "signup"
   const [showProBanner, setShowProBanner] = useState(false);
   const [proBannerExiting, setProBannerExiting] = useState(false);
 
@@ -1489,7 +1491,7 @@ export default function AppPage() {
                 {isMobile && <span>Mike</span>}
               </button>
             ) : (
-              <button onClick={() => navigate("/login")} style={{
+              <button onClick={() => { setShowSignIn(true); setSignInMode("signin"); }} style={{
                 ...font, fontSize: 12, background: T.pillBg,
                 border: themeName === "charcoal" ? `1px solid ${T.barBorder}` : "none",
                 borderRadius: 12, padding: "8px 16px", cursor: "pointer",
@@ -3692,6 +3694,80 @@ export default function AppPage() {
                 border: `1px solid ${T.red}`, borderRadius: 10,
                 ...font, fontSize: 15, fontWeight: 600, cursor: "pointer",
               }}>Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════ Sign In / Sign Up Overlay ══════ */}
+      {showSignIn && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 95, background: "rgba(5,5,5,0.95)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowSignIn(false); }}>
+          <div style={{
+            width: "100%", maxWidth: 345,
+            backgroundColor: "#0b0b0b",
+            backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.005))",
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 22, padding: "28px 24px",
+            boxShadow: "0 24px 48px rgba(0,0,0,0.5)",
+          }}>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 }}>
+              <div>
+                <div style={{ ...font, fontSize: 22, fontWeight: 300, color: T.text }}>{signInMode === "signin" ? "Welcome" : "Create Account"}</div>
+                <div style={{ ...mono, fontSize: 10, color: T.textFaint, marginTop: 4 }}>{signInMode === "signin" ? "Sign in to continue" : "Get started with Top-Alerts"}</div>
+              </div>
+              <span onClick={() => setShowSignIn(false)} style={{ fontSize: 20, color: "rgba(255,255,255,0.25)", cursor: "pointer" }}>×</span>
+            </div>
+
+            {/* Social buttons */}
+            <div onClick={() => { setShowSignIn(false); navigate("/login?method=google"); }}
+              style={{ padding: 15, border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, cursor: "pointer", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "rgba(255,255,255,0.02)" }}>
+              <span style={{ fontSize: 16 }}>G</span>
+              <span style={{ ...font, fontSize: 14, color: "rgba(255,255,255,0.7)" }}>Continue with Google</span>
+            </div>
+            <div onClick={() => { setShowSignIn(false); navigate("/login?method=apple"); }}
+              style={{ padding: 15, border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, cursor: "pointer", marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "rgba(255,255,255,0.02)" }}>
+              <span style={{ fontSize: 16 }}></span>
+              <span style={{ ...font, fontSize: 14, color: "rgba(255,255,255,0.7)" }}>Continue with Apple</span>
+            </div>
+
+            {/* OR divider */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "14px 0" }}>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.04)" }} />
+              <span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.12)", letterSpacing: "2px" }}>OR</span>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.04)" }} />
+            </div>
+
+            {/* Email / Password */}
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              setShowSignIn(false);
+              navigate(signInMode === "signup" ? "/login?mode=signup" : "/login");
+            }}>
+              {signInMode === "signup" && (
+                <input name="name" type="text" placeholder="Full name"
+                  style={{ width: "100%", padding: "13px 16px", boxSizing: "border-box", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, color: "#fff", ...font, fontSize: 16, outline: "none", marginBottom: 10 }} />
+              )}
+              <input name="email" type="email" placeholder="Email"
+                style={{ width: "100%", padding: "13px 16px", boxSizing: "border-box", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, color: "#fff", ...font, fontSize: 16, outline: "none", marginBottom: 10 }} />
+              <input name="password" type="password" placeholder="Password"
+                style={{ width: "100%", padding: "13px 16px", boxSizing: "border-box", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, color: "#fff", ...font, fontSize: 16, outline: "none", marginBottom: 10 }} />
+              <button type="submit" style={{
+                width: "100%", padding: 14,
+                background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.09)",
+                borderRadius: 12, ...font, fontSize: 14, fontWeight: 500, color: "#fff", cursor: "pointer", marginBottom: 8,
+              }}>{signInMode === "signin" ? "Sign In with Email" : "Create Account"}</button>
+            </form>
+
+            {/* Footer links */}
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
+              {signInMode === "signin" && <span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.2)", cursor: "pointer" }}>Forgot password?</span>}
+              {signInMode === "signin" ? (
+                <span onClick={() => setSignInMode("signup")} style={{ ...mono, fontSize: 9, color: T.green, cursor: "pointer" }}>Create account</span>
+              ) : (
+                <span onClick={() => setSignInMode("signin")} style={{ ...mono, fontSize: 9, color: T.green, cursor: "pointer" }}>Already have an account? Sign in</span>
+              )}
             </div>
           </div>
         </div>
