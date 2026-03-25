@@ -401,75 +401,127 @@ export default function AppPage() {
     }
   }
 
-  // Long-press drag state
-  const dragRef = useRef({ active: false, symbol: null, startY: 0, currentY: 0, el: null });
+  // Long-press drag state — purely visual during drag, reorder on drop
+  const dragRef = useRef({ active: false, symbol: null, startY: 0, currentY: 0, el: null, startIdx: -1 });
   const longPressTimer = useRef(null);
 
   function handleGripTouchStart(symbol, e) {
     const touch = e.touches[0];
-    dragRef.current = { active: false, symbol, startY: touch.clientY, currentY: touch.clientY, el: document.getElementById(`edit-row-${symbol}`) };
-    // Start drag immediately on grip touch
-    longPressTimer.current = setTimeout(() => {
+    const el = document.getElementById(`edit-row-${symbol}`);
+    // Calculate start index
+    const isMarket = MARKET_SYMBOLS.some(m => m.symbol === symbol);
+    let startIdx = -1;
+    if (isMarket) {
+      const visible = mobileCardOrder.filter(s => !hiddenMobileCards.includes(s));
+      startIdx = visible.indexOf(symbol);
+    } else {
+      startIdx = watchlist.findIndex(w => w.symbol === symbol);
+    }
+    dragRef.current = { active: false, symbol, startY: touch.clientY, currentY: touch.clientY, el, startIdx, isMarket };
+    // Activate immediately
+    setTimeout(() => {
+      if (dragRef.current.symbol === symbol) {
+        dragRef.current.active = true;
+        if (navigator.vibrate) navigator.vibrate(15);
+        if (el) {
+          el.style.zIndex = "50";
+          el.style.transition = "box-shadow 0.15s ease";
+          el.style.boxShadow = "0 12px 40px rgba(0,0,0,0.5)";
+          el.style.position = "relative";
+        }
+      }
+    }, 80);
+  }
+
+  function handleGripTouchMove(symbol, e) {
+    if (dragRef.current.symbol !== symbol) return;
+    const touch = e.touches[0];
+    
+    // Activate on small movement if not already
+    if (!dragRef.current.active && Math.abs(touch.clientY - dragRef.current.startY) > 3) {
       dragRef.current.active = true;
       if (navigator.vibrate) navigator.vibrate(15);
       const el = dragRef.current.el;
       if (el) {
         el.style.zIndex = "50";
-        el.style.transition = "none";
-        el.style.willChange = "transform";
-      }
-    }, 100);
-  }
-
-  function handleGripTouchMove(symbol, e) {
-    if (!dragRef.current.active && dragRef.current.symbol === symbol) {
-      // Activate drag after small movement
-      const touch = e.touches[0];
-      if (Math.abs(touch.clientY - dragRef.current.startY) > 5) {
-        clearTimeout(longPressTimer.current);
-        dragRef.current.active = true;
-        if (navigator.vibrate) navigator.vibrate(15);
-        const el = dragRef.current.el;
-        if (el) {
-          el.style.zIndex = "50";
-          el.style.transition = "none";
-          el.style.willChange = "transform";
-        }
+        el.style.boxShadow = "0 12px 40px rgba(0,0,0,0.5)";
+        el.style.position = "relative";
       }
     }
-    if (!dragRef.current.active || dragRef.current.symbol !== symbol) return;
+    
+    if (!dragRef.current.active) return;
     e.preventDefault();
-    const touch = e.touches[0];
     dragRef.current.currentY = touch.clientY;
     const diff = touch.clientY - dragRef.current.startY;
     const el = dragRef.current.el;
     if (el) {
-      el.style.transform = `translateY(${diff}px) scale(1.02)`;
-      el.style.boxShadow = "0 12px 40px rgba(0,0,0,0.4)";
-    }
-    // Check swap threshold
-    const cardH = 86;
-    const moveBy = Math.round(diff / cardH);
-    if (moveBy !== 0) {
-      editMoveCard(symbol, moveBy > 0 ? 1 : -1);
-      dragRef.current.startY = touch.clientY;
+      // Use requestAnimationFrame for 60fps smooth movement
+      requestAnimationFrame(() => {
+        if (el && dragRef.current.active) {
+          el.style.transition = "none";
+          el.style.transform = `translateY(${diff}px) scale(1.02)`;
+        }
+      });
     }
   }
 
   function handleGripTouchEnd(symbol) {
     clearTimeout(longPressTimer.current);
     if (dragRef.current.symbol !== symbol) return;
+    const { active, startY, currentY, startIdx, isMarket } = dragRef.current;
     const el = dragRef.current.el;
-    if (el) {
+    
+    if (active && el) {
+      const diff = currentY - startY;
+      const cardH = 86;
+      const moveBy = Math.round(diff / cardH);
+      
+      // Commit reorder
+      if (moveBy !== 0) {
+        if (isMarket) {
+          const order = [...mobileCardOrder];
+          const visible = order.filter(s => !hiddenMobileCards.includes(s));
+          const ci = visible.indexOf(symbol);
+          if (ci >= 0) {
+            const ti = Math.max(0, Math.min(visible.length - 1, ci + moveBy));
+            if (ci !== ti) {
+              // Remove from current position and insert at target
+              const ciF = order.indexOf(symbol);
+              order.splice(ciF, 1);
+              const targetSym = visible[ti];
+              const tiF = order.indexOf(targetSym);
+              order.splice(ti > ci ? tiF + 1 : tiF, 0, symbol);
+              setMobileCardOrder(order);
+              try { localStorage.setItem("ta-mobile-order", JSON.stringify(order)); } catch {}
+              if (navigator.vibrate) navigator.vibrate(8);
+            }
+          }
+        } else {
+          const wl = [...watchlist];
+          const ci = wl.findIndex(w => w.symbol === symbol);
+          if (ci >= 0) {
+            const ti = Math.max(0, Math.min(wl.length - 1, ci + moveBy));
+            if (ci !== ti) {
+              const item = wl.splice(ci, 1)[0];
+              wl.splice(ti, 0, item);
+              setWatchlist(wl);
+              try { localStorage.setItem("ta-watchlist", JSON.stringify(wl)); } catch {}
+              if (navigator.vibrate) navigator.vibrate(8);
+            }
+          }
+        }
+      }
+      
+      // Animate back
       el.style.transition = "transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease";
       el.style.transform = "translateY(0) scale(1)";
       el.style.boxShadow = "none";
-      el.style.willChange = "";
       setTimeout(() => {
-        if (el) { el.style.zIndex = ""; el.style.transition = ""; }
+        if (el) { el.style.zIndex = ""; el.style.transition = ""; el.style.position = ""; el.style.willChange = ""; }
       }, 350);
     }
-    dragRef.current = { active: false, symbol: null, startY: 0, currentY: 0, el: null };
+    
+    dragRef.current = { active: false, symbol: null, startY: 0, currentY: 0, el: null, startIdx: -1 };
   }
 
   // ── Edit mode reorder — simple move up/down ─────────────────────────
