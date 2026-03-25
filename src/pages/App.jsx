@@ -4004,7 +4004,7 @@ export default function AppPage() {
                   </div>
                 )}
 
-                <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textFaint, marginBottom: 12 }}>WHEN PRICE...</div>
+                <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 12 }}>WHEN PRICE...</div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                   {FREE_TRIGGERS.filter(t => t.input === "price").map(t => {
@@ -4013,10 +4013,9 @@ export default function AppPage() {
                     const disabled = !form.asset;
                     return (
                       <div key={t.id} onClick={() => { if (!disabled) setForm(f => ({ ...f, trigger: t })); }}
-                        style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: isSelected ? `2px solid ${iconCol}40` : `1px solid ${T.border}`, borderRadius: 14, padding: "20px 16px", textAlign: "center", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.4 : 1 }}>
-                        <div style={{ fontSize: 28, color: iconCol, marginBottom: 8 }}>{t.icon}</div>
-                        <div style={{ ...font, fontSize: 14, color: T.text }}>{t.label}</div>
-                        <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 4 }}>{t.desc}</div>
+                        style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: isSelected ? `2px solid ${iconCol}40` : `1px solid ${T.border}`, borderRadius: 14, padding: "24px 16px", textAlign: "center", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.4 : 1 }}>
+                        <div style={{ fontSize: 28, color: iconCol, marginBottom: 10 }}>{t.icon}</div>
+                        <div style={{ ...font, fontSize: 15, color: T.text }}>{t.label}</div>
                       </div>
                     );
                   })}
@@ -4027,43 +4026,57 @@ export default function AppPage() {
                   const disabled = !form.asset;
                   return (
                     <div key={t.id} onClick={() => { if (!disabled) setForm(f => ({ ...f, trigger: t })); }}
-                      style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: isSelected ? `2px solid ${T.accent}40` : `1px solid ${T.border}`, borderRadius: 14, padding: 16, textAlign: "center", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.4 : 1, marginBottom: 8 }}>
-                      <div style={{ fontSize: 20, color: "#c9a84c", marginBottom: 6 }}>{t.icon}</div>
-                      <div style={{ ...font, fontSize: 14, color: T.text }}>{t.label}</div>
-                      <div style={{ ...mono, fontSize: 9, color: T.textFaint, marginTop: 4 }}>{t.desc}</div>
+                      style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: isSelected ? `2px solid ${T.accent}40` : `1px solid ${T.border}`, borderRadius: 14, padding: "18px 16px", textAlign: "center", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.4 : 1, marginBottom: 16 }}>
+                      <div style={{ fontSize: 20, color: "#c9a84c", marginBottom: 8 }}>{t.icon}</div>
+                      <div style={{ ...font, fontSize: 15, color: T.text }}>{t.label}</div>
                     </div>
                   );
                 })}
 
                 {form.trigger && form.trigger.input === "price" && (
                   <div style={{ marginTop: 8, marginBottom: 12 }} onClick={(ev) => ev.stopPropagation()}>
-                    <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textFaint, marginBottom: 6 }}>TARGET PRICE (USD)</div>
+                    <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 6 }}>TARGET PRICE (USD)</div>
                     <input type="number" placeholder="0.00" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
                       style={{ width: "100%", padding: "14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, color: T.text, ...font, fontSize: 24, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
                   </div>
                 )}
                 {form.trigger && form.trigger.input === "percent" && (
                   <div style={{ marginTop: 8, marginBottom: 12 }} onClick={(ev) => ev.stopPropagation()}>
-                    <div style={{ ...mono, fontSize: 10, letterSpacing: "2px", color: T.textFaint, marginBottom: 6 }}>% CHANGE THRESHOLD</div>
+                    <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 6 }}>% CHANGE THRESHOLD</div>
                     <input type="number" placeholder="5" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
                       style={{ width: "100%", padding: "14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, color: T.text, ...font, fontSize: 24, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
                   </div>
                 )}
 
-                <div style={{ border: "1px dashed rgba(201,168,76,0.25)", borderRadius: 14, padding: 14, marginTop: 8, background: "rgba(201,168,76,0.03)" }}>
-                  <div style={{ ...mono, fontSize: 9, color: "#c9a84c", letterSpacing: "1px", marginBottom: 4, textAlign: "center" }}>{"\u26A1"} {PRO_TRIGGERS.length} PRO TRIGGERS AVAILABLE</div>
-                  <div style={{ ...mono, fontSize: 9, color: T.textFaint, textAlign: "center" }}>RSI, MACD, Bollinger, Golden Cross & more</div>
+                {/* Pro triggers — hotlist-style glass panel with grid */}
+                <div style={{ background: "rgba(255,255,255,0.02)", border: `1px solid rgba(255,255,255,0.06)`, borderRadius: 16, padding: 16, marginBottom: 16, boxShadow: "0 0 20px rgba(255,255,255,0.02)" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
+                    {PRO_TRIGGERS.map(t => (
+                      <div key={t.id} onClick={() => {
+                        if (!form.asset) return;
+                        if (!isPro) { showToast("Pro plan required", "warn"); return; }
+                        setForm(f => ({ ...f, trigger: t }));
+                      }} style={{
+                        padding: "14px 0", background: "rgba(255,255,255,0.04)", border: form.trigger?.id === t.id ? `2px solid ${T.accent}` : "1px solid rgba(255,255,255,0.08)",
+                        borderRadius: 10, textAlign: "center", ...font, fontSize: 15, color: form.trigger?.id === t.id ? "#fff" : "rgba(255,255,255,0.5)",
+                        cursor: !form.asset ? "not-allowed" : "pointer", opacity: !form.asset ? 0.4 : 1,
+                        boxShadow: "0 0 8px rgba(255,255,255,0.04)",
+                      }}>{t.label.split(" ").slice(0, 2).join(" ")}</div>
+                    ))}
+                  </div>
                   {!isPro && (
-                    <div onClick={() => { setShowModal(false); setTab("pricing"); }} style={{ marginTop: 8, padding: 10, background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 8, textAlign: "center", ...mono, fontSize: 11, color: "#c9a84c", cursor: "pointer" }}>
-                      Upgrade to Pro {"\u2014"} $<span style={{ color: T.green }}>9</span>/mo
-                    </div>
+                    <div onClick={() => { setShowModal(false); setTab("pricing"); }} style={{
+                      padding: 14, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)",
+                      borderRadius: 12, textAlign: "center", ...font, fontSize: 15, fontWeight: 500, color: "#fff", cursor: "pointer",
+                      boxShadow: "0 0 12px rgba(255,255,255,0.08)",
+                    }}>Unlock Pro — $<span style={{ color: T.green }}>9</span>/mo</div>
                   )}
                 </div>
 
                 <button onClick={() => { if (form.trigger) setStep(3); }} style={{
-                  width: "100%", padding: 16, marginTop: 16,
+                  width: "100%", padding: 16,
                   background: form.trigger ? T.accent : T.border, color: form.trigger ? T.btnText : T.textFaint,
-                  border: "none", borderRadius: 12, ...font, fontSize: 16, fontWeight: 600, cursor: form.trigger ? "pointer" : "not-allowed",
+                  border: "none", borderRadius: 12, ...font, fontSize: 15, fontWeight: 600, cursor: form.trigger ? "pointer" : "not-allowed",
                 }}>Continue →</button>
               </div>
             )}
