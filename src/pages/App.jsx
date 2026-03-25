@@ -1236,10 +1236,11 @@ export default function AppPage() {
     }
     const el = floatingBarRef.current;
     const isDark = themeName === "charcoal";
-    el.style.cssText = `position:fixed;bottom:0;left:0;right:0;z-index:9999;padding:12px 16px calc(16px + env(safe-area-inset-bottom, 0px));background:linear-gradient(to top,${T.bg},${T.bg}ee,transparent);pointer-events:none;font-family:'Outfit',sans-serif;`;
-    el.innerHTML = `<div style="background:${T.barBg};backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid ${T.barBorder};border-radius:20px;padding:14px 24px;display:flex;align-items:center;position:relative;box-shadow:${T.barShadow};pointer-events:auto;">
-      <div id="ta-bar-edit" style="font-size:12px;font-weight:500;color:${T.textMid};cursor:pointer;position:absolute;left:24px;">${editMode ? "Done" : "Edit"}</div>
-      <div id="ta-bar-alert" style="background:${T.btnPrimary};${isDark ? `border:1px solid ${T.barBorder};` : ""}border-radius:14px;padding:11px 28px;font-size:13px;font-weight:500;color:${T.btnText};cursor:pointer;${!isDark ? "box-shadow:0 2px 10px rgba(0,0,0,0.15);" : ""}margin:0 auto;">+ New Alert</div>
+    el.style.cssText = `position:fixed;bottom:0;left:0;right:0;z-index:9999;padding:12px 20px calc(16px + env(safe-area-inset-bottom, 0px));background:linear-gradient(to top,${T.bg},${T.bg}ee,transparent);pointer-events:none;font-family:'Outfit',sans-serif;`;
+    el.innerHTML = `<div style="background:${T.barBg};backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid ${T.barBorder};border-radius:20px;padding:14px 20px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;box-shadow:${T.barShadow};pointer-events:auto;">
+      <div id="ta-bar-edit" style="font-size:12px;font-weight:500;color:${T.textMid};cursor:pointer;justify-self:start;padding:4px 8px;">${editMode ? "Done" : "Edit"}</div>
+      <div id="ta-bar-alert" style="background:${T.btnPrimary};${isDark ? `border:1px solid ${T.barBorder};` : ""}border-radius:14px;padding:11px 28px;font-size:13px;font-weight:500;color:${T.btnText};cursor:pointer;${!isDark ? "box-shadow:0 2px 10px rgba(0,0,0,0.15);" : ""}">+ New Alert</div>
+      <div></div>
     </div>`;
     const editBtn = el.querySelector("#ta-bar-edit");
     const alertBtn = el.querySelector("#ta-bar-alert");
@@ -1294,7 +1295,7 @@ export default function AppPage() {
         </div>
       )}
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: isMobile ? "100%" : 1200, width: "100%", margin: "0 auto", padding: isMobile ? "16px 16px" : "32px 20px", paddingBottom: isMobile ? 100 : 20, overflowX: "hidden" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: isMobile ? "100%" : 1200, width: "100%", margin: "0 auto", padding: isMobile ? "16px 20px" : "32px 20px", paddingBottom: isMobile ? 100 : 20, overflowX: "hidden" }}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isMobile ? 16 : 36 }}>
@@ -1359,12 +1360,12 @@ export default function AppPage() {
         )}
 
         {/* Tabs */}
-        <div style={{ display: "flex", flexWrap: isMobile ? "wrap" : "nowrap", gap: 0, marginBottom: isMobile ? 10 : 28, borderBottom: isMobile ? "none" : `1px solid ${T.border}`, alignItems: "center" }}>
+        <div style={{ display: "flex", flexWrap: isMobile ? "wrap" : "nowrap", gap: isMobile ? 16 : 0, marginBottom: isMobile ? 10 : 28, borderBottom: isMobile ? "none" : `1px solid ${T.border}`, alignItems: "center" }}>
           {(isPro ? ["market","hotlist","alerts","calendar"] : ["market","hotlist","alerts","calendar","pricing"]).map(t => (
             <button key={t} onClick={() => { setTab(t); if (t === "hotlist") setMarketView("hotlist"); }} style={{
               padding: isMobile ? "8px 0" : "10px 22px",
-              marginRight: t === "pricing" ? 0 : (isMobile ? 16 : 0),
-              marginLeft: t === "pricing" ? "auto" : 0,
+              marginRight: 0,
+              marginLeft: 0,
               background: "none", border: "none", cursor: "pointer",
               ...font, fontSize: isMobile ? 13 : 20, letterSpacing: isMobile ? "0.5px" : "1px",
               fontWeight: tab === t ? 600 : 400,
