@@ -2589,7 +2589,7 @@ export default function AppPage() {
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <div onClick={() => { setHotlistFilter("gainers"); setHotlistProOpen(false); }} style={{
                 flex: 1, padding: 12, textAlign: "center", cursor: "pointer", borderRadius: 12,
-                ...font, fontSize: 13, fontWeight: 500,
+                ...font, fontSize: 16, fontWeight: 500,
                 background: hotlistFilter === "gainers" ? T.green : "transparent",
                 color: hotlistFilter === "gainers" ? "#000" : T.green,
                 border: hotlistFilter === "gainers" ? "none" : `1px solid ${T.border}`,
@@ -2597,7 +2597,7 @@ export default function AppPage() {
               }}>Gainers</div>
               <div onClick={() => { setHotlistFilter("losers"); setHotlistProOpen(false); }} style={{
                 flex: 1, padding: 12, textAlign: "center", cursor: "pointer", borderRadius: 12,
-                ...font, fontSize: 13, fontWeight: 500,
+                ...font, fontSize: 16, fontWeight: 500,
                 background: hotlistFilter === "losers" ? T.red : "transparent",
                 color: hotlistFilter === "losers" ? "#fff" : T.red,
                 border: hotlistFilter === "losers" ? "none" : `1px solid ${T.border}`,
@@ -2605,14 +2605,14 @@ export default function AppPage() {
               }}>Losers</div>
               <div onClick={() => setHotlistProOpen(p => !p)} style={{
                 flex: 1, padding: 12, textAlign: "center", cursor: "pointer", borderRadius: 12,
-                ...font, fontSize: 13, fontWeight: 500,
+                ...font, fontSize: 16, fontWeight: 500,
                 background: themeName === "charcoal" ? "rgba(255,255,255,0.08)" : T.accent,
                 color: themeName === "charcoal" ? "#fff" : T.btnText,
                 border: themeName === "charcoal" ? `1px solid rgba(255,255,255,0.15)` : "none",
                 boxShadow: themeName === "charcoal" ? "0 0 12px rgba(255,255,255,0.08)" : "0 2px 8px rgba(0,0,0,0.15)",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
               }}>
-                <span style={{ ...mono, fontSize: 7, background: "rgba(255,255,255,0.15)", padding: "2px 6px", borderRadius: 3, color: themeName === "charcoal" ? "#fff" : T.btnText }}>PRO</span>
+                <span style={{ ...mono, fontSize: 9, background: "rgba(255,255,255,0.15)", padding: "2px 6px", borderRadius: 3, color: themeName === "charcoal" ? "#fff" : T.btnText }}>PRO</span>
                 More
               </div>
             </div>
@@ -2631,21 +2631,21 @@ export default function AppPage() {
                       if (isPro) { setHotlistFilter(fl.toLowerCase().replace(/\s+/g, '_')); setHotlistProOpen(false); }
                       else { showToast("Pro plan required", "warn"); }
                     }} style={{
-                      ...font, fontSize: 12, fontWeight: 400, cursor: "pointer",
+                      ...font, fontSize: 15, fontWeight: 400, cursor: "pointer",
                       color: T.textMid,
                       background: themeName === "charcoal" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
                       border: `1px solid ${themeName === "charcoal" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}`,
-                      borderRadius: 10, padding: "12px 0", textAlign: "center",
+                      borderRadius: 10, padding: "14px 0", textAlign: "center",
                       boxShadow: themeName === "charcoal" ? "0 0 8px rgba(255,255,255,0.04)" : "none",
                     }}>{fl}</button>
                   ))}
                 </div>
                 {!isPro && (
                   <button onClick={() => { setHotlistProOpen(false); setTab("pricing"); }} style={{
-                    width: "100%", padding: 12,
+                    width: "100%", padding: 14,
                     background: themeName === "charcoal" ? "rgba(255,255,255,0.1)" : T.accent,
                     border: themeName === "charcoal" ? `1px solid rgba(255,255,255,0.15)` : "none",
-                    borderRadius: 12, ...font, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                    borderRadius: 12, ...font, fontSize: 15, fontWeight: 500, cursor: "pointer",
                     color: themeName === "charcoal" ? "#fff" : T.btnText,
                     boxShadow: themeName === "charcoal" ? "0 0 12px rgba(255,255,255,0.08)" : "0 2px 10px rgba(0,0,0,0.15)",
                   }}>Unlock Pro — $<span style={{ color: T.green }}>9</span>/mo</button>
