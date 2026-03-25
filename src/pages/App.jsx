@@ -179,6 +179,14 @@ export default function AppPage() {
   const [mobileNewsOpen, setMobileNewsOpen] = useState(false);
   const [expandedAlert, setExpandedAlert] = useState(null); // id of expanded alert card
   const [editMode, setEditMode] = useState(false); // watchlist reorder mode
+  const [mobileCardOrder, setMobileCardOrder] = useState(() => {
+    try { const saved = JSON.parse(localStorage.getItem("ta-mobile-order")); if (saved && saved.length) return saved; } catch {}
+    return MARKET_SYMBOLS.map(m => m.symbol);
+  });
+  const [dragItem, setDragItem] = useState(null); // symbol being dragged
+  const dragY = useRef(null);
+  const dragStartY = useRef(null);
+  const dragOffsets = useRef({});
   const [desktopEditMode, setDesktopEditMode] = useState(false); // desktop watchlist edit
   const [desktopCardOrder, setDesktopCardOrder] = useState(() => {
     try {
@@ -330,6 +338,77 @@ export default function AppPage() {
     delete swipeRefs.current[symbol];
   }
   // Swipe offset is now handled via direct DOM manipulation in handleTouchMove
+
+  // ── Edit mode drag reorder ─────────────────────────────────────────
+  function handleDragStart(symbol, e) {
+    const touch = e.touches[0];
+    dragStartY.current = touch.clientY;
+    dragY.current = touch.clientY;
+    setDragItem(symbol);
+    // Haptic feedback
+    if (navigator.vibrate) navigator.vibrate(10);
+  }
+  function handleDragMove(symbol, e) {
+    if (dragItem !== symbol) return;
+    const touch = e.touches[0];
+    dragY.current = touch.clientY;
+    const el = document.getElementById(`edit-row-${symbol}`);
+    if (el) {
+      const diff = touch.clientY - dragStartY.current;
+      el.style.transform = `translateY(${diff}px)`;
+      el.style.zIndex = "50";
+      el.style.opacity = "0.9";
+      el.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)";
+    }
+    // Check if we should swap
+    const allSymbols = [...mobileCardOrder, ...watchlist.filter(w => !mobileCardOrder.includes(w.symbol)).map(w => w.symbol)];
+    const currentIdx = allSymbols.indexOf(symbol);
+    const cardHeight = 76; // approximate card height + margin
+    const moveBy = Math.round((touch.clientY - dragStartY.current) / cardHeight);
+    const targetIdx = Math.max(0, Math.min(allSymbols.length - 1, currentIdx + moveBy));
+    if (targetIdx !== currentIdx && moveBy !== 0) {
+      // Swap in the order
+      const isMarket = mobileCardOrder.includes(symbol);
+      const isWatchlist = watchlist.some(w => w.symbol === symbol);
+      if (isMarket) {
+        const order = [...mobileCardOrder];
+        const ci = order.indexOf(symbol);
+        const ti = Math.max(0, Math.min(order.length - 1, ci + moveBy));
+        if (ci !== ti) {
+          order.splice(ci, 1);
+          order.splice(ti, 0, symbol);
+          setMobileCardOrder(order);
+          try { localStorage.setItem("ta-mobile-order", JSON.stringify(order)); } catch {}
+          dragStartY.current = touch.clientY; // reset baseline after swap
+          if (navigator.vibrate) navigator.vibrate(5);
+        }
+      } else if (isWatchlist) {
+        const wl = [...watchlist];
+        const ci = wl.findIndex(w => w.symbol === symbol);
+        const ti = Math.max(0, Math.min(wl.length - 1, ci + moveBy));
+        if (ci !== ti && ci >= 0) {
+          const item = wl.splice(ci, 1)[0];
+          wl.splice(ti, 0, item);
+          setWatchlist(wl);
+          try { localStorage.setItem("ta-watchlist", JSON.stringify(wl)); } catch {}
+          dragStartY.current = touch.clientY;
+          if (navigator.vibrate) navigator.vibrate(5);
+        }
+      }
+    }
+  }
+  function handleDragEnd(symbol) {
+    setDragItem(null);
+    const el = document.getElementById(`edit-row-${symbol}`);
+    if (el) {
+      el.style.transition = "transform 0.2s ease, opacity 0.2s, box-shadow 0.2s";
+      el.style.transform = "translateY(0)";
+      el.style.zIndex = "";
+      el.style.opacity = "1";
+      el.style.boxShadow = "none";
+      setTimeout(() => { el.style.transition = ""; }, 200);
+    }
+  }
 
   // ── Edit mode reorder — simple move up/down ─────────────────────────
   // Edit mode — reorder disabled (static list)
@@ -2034,12 +2113,11 @@ export default function AppPage() {
         {isMobile && tab === "market" && (
           <div>
             {/* ── WATCHLIST VIEW ─────────────────── */}
-            {editMode && (
-              <div style={{ background: T.accentBg, border: `1px solid ${T.border}`, borderRadius: 10, padding: "8px 14px", marginBottom: 12, textAlign: "center", ...mono, fontSize: 11, color: T.textMid, fontWeight: 500 }}>
-                Tap arrows to reorder · Swipe left to remove
-              </div>
-            )}
-            {MARKET_SYMBOLS.map(m => {
+            {/* Edit mode uses its own card layout below */}
+            {[...mobileCardOrder, ...MARKET_SYMBOLS.filter(m => !mobileCardOrder.includes(m.symbol)).map(m => m.symbol)]
+              .map(sym => MARKET_SYMBOLS.find(m => m.symbol === sym))
+              .filter(Boolean)
+              .map(m => {
               const d = marketData[m.id];
               const up = d?.changePct >= 0;
               const col = !d ? T.textFaint : up ? T.green : T.red;
@@ -2048,7 +2126,8 @@ export default function AppPage() {
               const snap = d || {};
 
               return (
-                <div key={m.id} id={`swipe-wrapper-${m.symbol}`} style={{ position: "relative", overflow: "hidden", marginBottom: 10, borderRadius: 16 }}>
+                <div key={m.id} id={`edit-row-${m.symbol}`} style={{ position: "relative" }}>
+                <div id={`swipe-wrapper-${m.symbol}`} style={{ position: "relative", overflow: "hidden", marginBottom: 10, borderRadius: 16 }}>
                   {/* Delete button revealed by swipe */}
                   <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: T.red, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0 16px 16px 0" }}
                     onClick={() => removeFromWatchlist(m.symbol)}>
@@ -2082,12 +2161,11 @@ export default function AppPage() {
                       else { setMobileExpanded(m.symbol); openChart(m.symbol, m.label); }
                     } catch (err) { console.error("Mobile expand error:", err); }
                   }} style={{ padding: "16px 14px", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
-                    {/* Edit mode indicator */}
+                    {/* Edit mode — delete circle on left */}
                     {editMode && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "8px 4px", flexShrink: 0 }}>
-                        <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
-                        <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
-                        <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
+                      <div onClick={(ev) => { ev.stopPropagation(); removeFromWatchlist(m.symbol); if (navigator.vibrate) navigator.vibrate(10); }}
+                        style={{ width: 28, height: 28, borderRadius: "50%", border: `2px solid ${T.red}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
+                        <div style={{ width: 12, height: 2, background: T.red, borderRadius: 1 }} />
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
@@ -2098,6 +2176,18 @@ export default function AppPage() {
                       <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
                       <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400, marginTop: 4 }}>{d ? `${arrow} ${Math.abs(d.changePct).toFixed(2)}%` : ""}</div>
                     </div>
+                    {/* Edit mode — drag handle on right */}
+                    {editMode && (
+                      <div
+                        onTouchStart={(ev) => { ev.stopPropagation(); handleDragStart(m.symbol, ev); }}
+                        onTouchMove={(ev) => { ev.stopPropagation(); ev.preventDefault(); handleDragMove(m.symbol, ev); }}
+                        onTouchEnd={(ev) => { ev.stopPropagation(); handleDragEnd(m.symbol); }}
+                        style={{ display: "flex", flexDirection: "column", gap: 3, padding: "10px 4px", flexShrink: 0, cursor: "grab", touchAction: "none" }}>
+                        <div style={{ width: 20, height: 2, background: T.textMid, borderRadius: 1 }} />
+                        <div style={{ width: 20, height: 2, background: T.textMid, borderRadius: 1 }} />
+                        <div style={{ width: 20, height: 2, background: T.textMid, borderRadius: 1 }} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Expanded card */}
@@ -2161,6 +2251,7 @@ export default function AppPage() {
                   )}
                   </div>
                 </div>
+                </div>
               );
             })}
 
@@ -2173,7 +2264,8 @@ export default function AppPage() {
               const isExpanded = mobileExpanded === w.symbol;
               const snap = wd || {};
               return (
-                <div key={w.symbol} id={`swipe-wrapper-${w.symbol}`} style={{ position: "relative", overflow: "hidden", marginBottom: 10, borderRadius: 16 }}>
+                <div key={w.symbol} id={`edit-row-${w.symbol}`} style={{ position: "relative" }}>
+                <div id={`swipe-wrapper-${w.symbol}`} style={{ position: "relative", overflow: "hidden", marginBottom: 10, borderRadius: 16 }}>
                   {/* Delete button revealed by swipe */}
                   <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 90, background: T.red, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0 16px 16px 0" }}
                     onClick={() => removeFromWatchlist(w.symbol)}>
@@ -2206,12 +2298,11 @@ export default function AppPage() {
                       else { setMobileExpanded(w.symbol); openChart(w.symbol, w.label); }
                     } catch (err) { console.error("Watchlist expand error:", err); }
                   }} style={{ padding: "16px 14px", display: "flex", alignItems: "center", gap: 10, cursor: editMode ? "default" : "pointer" }}>
-                    {/* Move buttons — only in edit mode */}
+                    {/* Edit mode — delete circle on left */}
                     {editMode && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "8px 4px", flexShrink: 0 }}>
-                        <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
-                        <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
-                        <div style={{ width: 18, height: 2, background: T.textFaint, borderRadius: 1 }} />
+                      <div onClick={(ev) => { ev.stopPropagation(); removeFromWatchlist(w.symbol); if (navigator.vibrate) navigator.vibrate(10); }}
+                        style={{ width: 28, height: 28, borderRadius: "50%", border: `2px solid ${T.red}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
+                        <div style={{ width: 12, height: 2, background: T.red, borderRadius: 1 }} />
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
@@ -2222,6 +2313,18 @@ export default function AppPage() {
                       <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
                       <div style={{ ...mono, fontSize: 11, color: col, fontWeight: 400, marginTop: 4 }}>{wd ? `${arrow} ${Math.abs(wd.changePct).toFixed(2)}%` : ""}</div>
                     </div>
+                    {/* Edit mode — drag handle on right */}
+                    {editMode && (
+                      <div
+                        onTouchStart={(ev) => { ev.stopPropagation(); handleDragStart(w.symbol, ev); }}
+                        onTouchMove={(ev) => { ev.stopPropagation(); ev.preventDefault(); handleDragMove(w.symbol, ev); }}
+                        onTouchEnd={(ev) => { ev.stopPropagation(); handleDragEnd(w.symbol); }}
+                        style={{ display: "flex", flexDirection: "column", gap: 3, padding: "10px 4px", flexShrink: 0, cursor: "grab", touchAction: "none" }}>
+                        <div style={{ width: 20, height: 2, background: T.textMid, borderRadius: 1 }} />
+                        <div style={{ width: 20, height: 2, background: T.textMid, borderRadius: 1 }} />
+                        <div style={{ width: 20, height: 2, background: T.textMid, borderRadius: 1 }} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Expanded card */}
@@ -2283,6 +2386,7 @@ export default function AppPage() {
                     </div>
                   )}
                   </div>
+                </div>
                 </div>
               );
             })}
