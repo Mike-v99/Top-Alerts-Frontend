@@ -2314,7 +2314,7 @@ export default function AppPage() {
                         </div>
                       )}
                       <div style={{ flex: 1, ...font, fontSize: 18, fontWeight: 400, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.label}</div>
-                      <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text, flexShrink: 0 }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      <div style={{ ...font, fontSize: 20, fontWeight: 400, color: col, flexShrink: 0 }}>{d ? `$${Number(d.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
                       {/* Edit mode — drag grip */}
                       {editMode && (
                         <div
@@ -2477,7 +2477,7 @@ export default function AppPage() {
                         </div>
                       )}
                       <div style={{ flex: 1, ...font, fontSize: 18, fontWeight: 400, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.label || w.symbol}</div>
-                      <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text, flexShrink: 0 }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                      <div style={{ ...font, fontSize: 20, fontWeight: 400, color: col, flexShrink: 0 }}>{wd ? `$${Number(wd.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
                       {editMode && (
                         <div
                           onTouchStart={(ev) => { ev.stopPropagation(); handleGripTouchStart(w.symbol, ev); }}
@@ -2681,7 +2681,7 @@ export default function AppPage() {
                       <div style={{ display: "flex", alignItems: "center", marginBottom: 8, gap: 10 }}>
                         <div style={{ width: 28, height: 28, borderRadius: 8, background: `${col}12`, border: `1px solid ${col}25`, display: "flex", alignItems: "center", justifyContent: "center", ...mono, fontSize: 11, color: col, fontWeight: 500, flexShrink: 0 }}>{i + 1}</div>
                         <div style={{ flex: 1, ...font, fontSize: 18, fontWeight: 400, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name !== t.symbol ? t.name : t.symbol}</div>
-                        <div style={{ ...font, fontSize: 20, fontWeight: 400, color: T.text, flexShrink: 0 }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div style={{ ...font, fontSize: 20, fontWeight: 400, color: col, flexShrink: 0 }}>${Number(t.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       </div>
                       {/* Row 2: Change | Volume | Range */}
                       <div style={{ display: "grid", gridTemplateColumns: "auto auto 1fr", gap: 12, alignItems: "center" }}>
