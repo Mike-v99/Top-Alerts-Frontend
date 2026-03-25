@@ -401,127 +401,142 @@ export default function AppPage() {
     }
   }
 
-  // Long-press drag state — purely visual during drag, reorder on drop
-  const dragRef = useRef({ active: false, symbol: null, startY: 0, currentY: 0, el: null, startIdx: -1 });
+  // Drag-to-reorder: other cards slide out of the way during drag, commit on drop
+  const dragRef = useRef({ active: false, symbol: null, startY: 0, el: null, startIdx: -1, currentIdx: -1, isMarket: false, cardH: 86 });
   const longPressTimer = useRef(null);
+
+  function getVisibleSymbols(isMarket) {
+    if (isMarket) return mobileCardOrder.filter(s => !hiddenMobileCards.includes(s) && MARKET_SYMBOLS.some(m => m.symbol === s));
+    return watchlist.filter(w => !MARKET_SYMBOLS.some(m => m.symbol === w.symbol)).map(w => w.symbol);
+  }
+
+  function updateOtherCards(dragSymbol, hoverIdx, isMarket) {
+    const syms = getVisibleSymbols(isMarket);
+    const startIdx = dragRef.current.startIdx;
+    const cardH = dragRef.current.cardH;
+    syms.forEach((sym, i) => {
+      if (sym === dragSymbol) return;
+      const row = document.getElementById(`edit-row-${sym}`);
+      if (!row) return;
+      let shift = 0;
+      if (startIdx < hoverIdx) {
+        // Dragging down: cards between start and hover move UP
+        if (i > startIdx && i <= hoverIdx) shift = -cardH;
+      } else if (startIdx > hoverIdx) {
+        // Dragging up: cards between hover and start move DOWN
+        if (i >= hoverIdx && i < startIdx) shift = cardH;
+      }
+      row.style.transition = "transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)";
+      row.style.transform = shift ? `translateY(${shift}px)` : "translateY(0)";
+    });
+  }
+
+  function resetAllCardTransforms(isMarket) {
+    const syms = getVisibleSymbols(isMarket);
+    syms.forEach(sym => {
+      const row = document.getElementById(`edit-row-${sym}`);
+      if (row) { row.style.transition = ""; row.style.transform = ""; row.style.zIndex = ""; row.style.boxShadow = ""; row.style.position = ""; }
+    });
+  }
 
   function handleGripTouchStart(symbol, e) {
     const touch = e.touches[0];
     const el = document.getElementById(`edit-row-${symbol}`);
-    // Calculate start index
     const isMarket = MARKET_SYMBOLS.some(m => m.symbol === symbol);
-    let startIdx = -1;
-    if (isMarket) {
-      const visible = mobileCardOrder.filter(s => !hiddenMobileCards.includes(s));
-      startIdx = visible.indexOf(symbol);
-    } else {
-      startIdx = watchlist.findIndex(w => w.symbol === symbol);
-    }
-    dragRef.current = { active: false, symbol, startY: touch.clientY, currentY: touch.clientY, el, startIdx, isMarket };
-    // Activate immediately
-    setTimeout(() => {
-      if (dragRef.current.symbol === symbol) {
-        dragRef.current.active = true;
-        if (navigator.vibrate) navigator.vibrate(15);
-        if (el) {
-          el.style.zIndex = "50";
-          el.style.transition = "box-shadow 0.15s ease";
-          el.style.boxShadow = "0 12px 40px rgba(0,0,0,0.5)";
-          el.style.position = "relative";
-        }
-      }
-    }, 80);
+    const syms = getVisibleSymbols(isMarket);
+    const startIdx = syms.indexOf(symbol);
+    // Measure actual card height
+    const cardH = el ? el.getBoundingClientRect().height + 10 : 86; // +10 for marginBottom
+    dragRef.current = { active: false, symbol, startY: touch.clientY, el, startIdx, currentIdx: startIdx, isMarket, cardH };
   }
 
   function handleGripTouchMove(symbol, e) {
     if (dragRef.current.symbol !== symbol) return;
     const touch = e.touches[0];
-    
-    // Activate on small movement if not already
-    if (!dragRef.current.active && Math.abs(touch.clientY - dragRef.current.startY) > 3) {
+    const diff = touch.clientY - dragRef.current.startY;
+
+    // Activate on small movement
+    if (!dragRef.current.active && Math.abs(diff) > 3) {
       dragRef.current.active = true;
-      if (navigator.vibrate) navigator.vibrate(15);
+      if (navigator.vibrate) navigator.vibrate(12);
       const el = dragRef.current.el;
       if (el) {
         el.style.zIndex = "50";
-        el.style.boxShadow = "0 12px 40px rgba(0,0,0,0.5)";
         el.style.position = "relative";
+        el.style.boxShadow = "0 12px 40px rgba(0,0,0,0.5)";
       }
     }
-    
+
     if (!dragRef.current.active) return;
     e.preventDefault();
-    dragRef.current.currentY = touch.clientY;
-    const diff = touch.clientY - dragRef.current.startY;
+
     const el = dragRef.current.el;
     if (el) {
-      // Use requestAnimationFrame for 60fps smooth movement
-      requestAnimationFrame(() => {
-        if (el && dragRef.current.active) {
-          el.style.transition = "none";
-          el.style.transform = `translateY(${diff}px) scale(1.02)`;
-        }
-      });
+      el.style.transition = "box-shadow 0.15s";
+      el.style.transform = `translateY(${diff}px) scale(1.02)`;
+    }
+
+    // Calculate which index we're hovering over
+    const { startIdx, cardH, isMarket } = dragRef.current;
+    const syms = getVisibleSymbols(isMarket);
+    const hoverIdx = Math.max(0, Math.min(syms.length - 1, startIdx + Math.round(diff / cardH)));
+
+    if (hoverIdx !== dragRef.current.currentIdx) {
+      dragRef.current.currentIdx = hoverIdx;
+      updateOtherCards(symbol, hoverIdx, isMarket);
+      if (navigator.vibrate) navigator.vibrate(3);
     }
   }
 
   function handleGripTouchEnd(symbol) {
     clearTimeout(longPressTimer.current);
     if (dragRef.current.symbol !== symbol) return;
-    const { active, startY, currentY, startIdx, isMarket } = dragRef.current;
-    const el = dragRef.current.el;
-    
-    if (active && el) {
-      const diff = currentY - startY;
-      const cardH = 86;
-      const moveBy = Math.round(diff / cardH);
-      
-      // Commit reorder
-      if (moveBy !== 0) {
-        if (isMarket) {
-          const order = [...mobileCardOrder];
-          const visible = order.filter(s => !hiddenMobileCards.includes(s));
-          const ci = visible.indexOf(symbol);
-          if (ci >= 0) {
-            const ti = Math.max(0, Math.min(visible.length - 1, ci + moveBy));
-            if (ci !== ti) {
-              // Remove from current position and insert at target
-              const ciF = order.indexOf(symbol);
-              order.splice(ciF, 1);
-              const targetSym = visible[ti];
-              const tiF = order.indexOf(targetSym);
-              order.splice(ti > ci ? tiF + 1 : tiF, 0, symbol);
-              setMobileCardOrder(order);
-              try { localStorage.setItem("ta-mobile-order", JSON.stringify(order)); } catch {}
-              if (navigator.vibrate) navigator.vibrate(8);
-            }
-          }
-        } else {
-          const wl = [...watchlist];
-          const ci = wl.findIndex(w => w.symbol === symbol);
-          if (ci >= 0) {
-            const ti = Math.max(0, Math.min(wl.length - 1, ci + moveBy));
-            if (ci !== ti) {
-              const item = wl.splice(ci, 1)[0];
-              wl.splice(ti, 0, item);
-              setWatchlist(wl);
-              try { localStorage.setItem("ta-watchlist", JSON.stringify(wl)); } catch {}
-              if (navigator.vibrate) navigator.vibrate(8);
-            }
-          }
+    const { active, startIdx, currentIdx, isMarket, el } = dragRef.current;
+
+    // Reset all card transforms first
+    resetAllCardTransforms(isMarket);
+
+    if (active && startIdx !== currentIdx) {
+      // Commit the reorder
+      if (isMarket) {
+        const order = [...mobileCardOrder];
+        const visible = order.filter(s => !hiddenMobileCards.includes(s) && MARKET_SYMBOLS.some(m => m.symbol === s));
+        const sym = visible[startIdx];
+        if (sym) {
+          const fromFull = order.indexOf(sym);
+          order.splice(fromFull, 1);
+          const targetSym = visible[currentIdx > startIdx ? currentIdx : currentIdx];
+          let toFull = order.indexOf(targetSym);
+          if (currentIdx > startIdx) toFull += 1;
+          order.splice(toFull, 0, sym);
+          setMobileCardOrder(order);
+          try { localStorage.setItem("ta-mobile-order", JSON.stringify(order)); } catch {}
+        }
+      } else {
+        const wl = [...watchlist];
+        const ci = startIdx;
+        const ti = currentIdx;
+        if (ci >= 0 && ti >= 0 && ci < wl.length && ti < wl.length) {
+          const item = wl.splice(ci, 1)[0];
+          wl.splice(ti, 0, item);
+          setWatchlist(wl);
+          try { localStorage.setItem("ta-watchlist", JSON.stringify(wl)); } catch {}
         }
       }
-      
-      // Animate back
-      el.style.transition = "transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease";
+      if (navigator.vibrate) navigator.vibrate(8);
+    }
+
+    // Animate dragged card back
+    if (el) {
+      el.style.transition = "transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease";
       el.style.transform = "translateY(0) scale(1)";
       el.style.boxShadow = "none";
       setTimeout(() => {
-        if (el) { el.style.zIndex = ""; el.style.transition = ""; el.style.position = ""; el.style.willChange = ""; }
-      }, 350);
+        if (el) { el.style.zIndex = ""; el.style.transition = ""; el.style.position = ""; }
+      }, 300);
     }
-    
-    dragRef.current = { active: false, symbol: null, startY: 0, currentY: 0, el: null, startIdx: -1 };
+
+    dragRef.current = { active: false, symbol: null, startY: 0, el: null, startIdx: -1, currentIdx: -1, isMarket: false, cardH: 86 };
   }
 
   // ── Edit mode reorder — simple move up/down ─────────────────────────
