@@ -3755,8 +3755,8 @@ export default function AppPage() {
             boxShadow: T.barShadow,
             pointerEvents: "auto",
           }}>
-            <div onClick={() => { setEditMode(p => !p); setMobileExpanded(null); }}
-              style={{ ...font, fontSize: 12, fontWeight: 500, color: T.textMid, cursor: "pointer", justifySelf: "start", padding: "4px 8px" }}>
+            <div onClick={() => { setEditMode(p => { const next = !p; if (next) showToast("Edit mode — swipe to remove", "success"); return next; }); setMobileExpanded(null); }}
+              style={{ ...font, fontSize: 12, fontWeight: editMode ? 600 : 500, color: editMode ? T.text : T.textMid, cursor: "pointer", justifySelf: "start", padding: "8px 12px", borderRadius: 8, background: editMode ? T.accentBg : "transparent", border: editMode ? `1px solid ${T.border}` : "1px solid transparent" }}>
               {editMode ? "Done" : "Edit"}
             </div>
             <div onClick={() => openModal()} style={{
