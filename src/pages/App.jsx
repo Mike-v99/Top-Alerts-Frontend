@@ -3977,11 +3977,11 @@ export default function AppPage() {
                     )}
                     {!detailNewsLoading && detailNews.map((n, idx) => (
                       <div key={idx} onClick={() => n.url && window.open(n.url, "_blank")}
-                        style={{ padding: "12px 0", borderBottom: idx < detailNews.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", cursor: n.url ? "pointer" : "default" }}>
-                        <div style={{ ...font, fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.4, marginBottom: 4 }}>{n.headline}</div>
-                        <div style={{ display: "flex", gap: 6, ...mono, fontSize: 9, color: "rgba(255,255,255,0.2)" }}>
-                          <span>{n.source}</span>
-                          {n.time && <><span>·</span><span>{n.time}</span></>}
+                        style={{ padding: "14px 0", borderBottom: idx < detailNews.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", cursor: n.url ? "pointer" : "default" }}>
+                        <div style={{ ...font, fontSize: 15, color: "rgba(255,255,255,0.85)", lineHeight: 1.4, marginBottom: 6 }}>{n.headline}</div>
+                        <div style={{ display: "flex", gap: 8, ...mono, fontSize: 15 }}>
+                          <span style={{ color: T.green }}>{n.source}</span>
+                          {n.time && <><span style={{ color: "rgba(255,255,255,0.15)" }}>·</span><span style={{ color: "#fff" }}>{n.time}</span></>}
                         </div>
                       </div>
                     ))}
