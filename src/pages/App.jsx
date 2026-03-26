@@ -80,15 +80,21 @@ const FREE_TRIGGERS = [
   { id: "pct_change",  label: "% change exceeds",  icon: "±", input: "percent", desc: "Fires on big moves in either direction" },
 ];
 const PRO_TRIGGERS = [
-  { id: "ma_cross_above", label: "Price crosses above MA",  icon: "↗", input: "ma",     desc: "Bullish MA crossover" },
-  { id: "ma_cross_below", label: "Price crosses below MA",  icon: "↘", input: "ma",     desc: "Bearish MA crossover" },
-  { id: "golden_cross",   label: "Golden Cross",            icon: "✦", input: null,     desc: "50MA crosses above 200MA" },
-  { id: "death_cross",    label: "Death Cross",             icon: "✗", input: null,     desc: "50MA crosses below 200MA" },
-  { id: "rsi_overbought", label: "RSI Overbought >70",      icon: "⚡", input: null,    desc: "Potential pullback signal" },
-  { id: "rsi_oversold",   label: "RSI Oversold <30",        icon: "▼", input: null,     desc: "Potential reversal signal" },
-  { id: "macd_cross",     label: "MACD Signal Cross",       icon: "⊕", input: null,     desc: "MACD line crosses signal" },
-  { id: "bb_breakout",    label: "Bollinger Band Breakout", icon: "◈", input: "bb",     desc: "Price exits Bollinger Band" },
-  { id: "volume_surge",   label: "Volume Surge",            icon: "▲", input: "volume", desc: "Unusual volume detected" },
+  { id: "golden_cross",   label: "Golden ✦",   chipLabel: "Golden ✦",   color: "#c9a84c", input: null,     desc: "50MA crosses above 200MA" },
+  { id: "death_cross",    label: "Death ✦",     chipLabel: "Death ✦",    color: "#ff5a5a", input: null,     desc: "50MA crosses below 200MA" },
+  { id: "gaps",           label: "Gaps",         chipLabel: "Gaps",        color: "#ffffff", input: null,     desc: "Price gaps up or down at open" },
+  { id: "52w_high",       label: "52W ↑",       chipLabel: "52W ↑",      color: "#3ddc84", input: null,     desc: "New 52-week high" },
+  { id: "52w_low",        label: "52W ↓",       chipLabel: "52W ↓",      color: "#ff5a5a", input: null,     desc: "New 52-week low" },
+  { id: "rsi_overbought", label: "RSI OB",       chipLabel: "RSI OB",     color: "#b388ff", input: null,     desc: "RSI crosses above 70" },
+  { id: "rsi_oversold",   label: "RSI OS",       chipLabel: "RSI OS",     color: "#64b5f6", input: null,     desc: "RSI crosses below 30" },
+  { id: "macd_cross",     label: "MACD",         chipLabel: "MACD",       color: "#ffffff", input: null,     desc: "MACD line crosses signal" },
+  { id: "ma_cross",       label: "MA Cross",     chipLabel: "MA Cross",   color: "#ffffff", input: "ma",     desc: "Price crosses moving average" },
+  { id: "volume_bo",      label: "Vol B.O",      chipLabel: "Vol B.O",    color: "#c9a84c", input: "volume", desc: "Volume breakout detected" },
+  { id: "trades_bo",      label: "Trades B.O",   chipLabel: "Trades B.O", color: "#4dd0e1", input: null,     desc: "Unusual trade count spike" },
+  { id: "price_above_ma", label: "Price ↑MA",    chipLabel: "Price ↑MA",  color: "#3ddc84", input: "ma",     desc: "Price crosses above MA" },
+  { id: "price_below_ma", label: "Price ↓MA",    chipLabel: "Price ↓MA",  color: "#ff5a5a", input: "ma",     desc: "Price crosses below MA" },
+  { id: "vwap_cross",     label: "VWAP ✕",      chipLabel: "VWAP ✕",    color: "#b388ff", input: null,     desc: "Price crosses VWAP" },
+  { id: "key_levels",     label: "Key Levels",   chipLabel: "Key Levels", color: "#c9a84c", input: null,     desc: "Support/resistance break" },
 ];
 const MA_OPTIONS = ["9","20","50","100","200"];
 const BB_OPTIONS = ["Upper Band","Lower Band"];
@@ -4055,75 +4061,81 @@ export default function AppPage() {
 
                 <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 10 }}>WHEN PRICE...</div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 6 }}>
-                  {FREE_TRIGGERS.filter(t => t.input === "price").map(t => {
+                {/* Free triggers — #7 minimal flat rows with glowing dot */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+                  {FREE_TRIGGERS.map(t => {
                     const isSelected = form.trigger?.id === t.id;
-                    const iconCol = t.id === "price_above" ? T.green : T.red;
+                    const dotCol = t.id === "price_above" ? T.green : t.id === "price_below" ? T.red : "#c9a84c";
                     const disabled = !form.asset;
                     return (
                       <div key={t.id} onClick={() => { if (!disabled) setForm(f => ({ ...f, trigger: t })); }}
-                        style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: isSelected ? `2px solid ${iconCol}40` : `1px solid ${T.border}`, borderRadius: 14, padding: "18px 16px", textAlign: "center", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.4 : 1 }}>
-                        <div style={{ fontSize: 24, color: iconCol, marginBottom: 8 }}>{t.icon}</div>
-                        <div style={{ ...font, fontSize: 15, color: T.text }}>{t.label}</div>
+                        style={{
+                          display: "flex", alignItems: "center", gap: 12,
+                          background: isSelected ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.03)",
+                          border: isSelected ? `2px solid ${dotCol}40` : `1px solid rgba(255,255,255,0.05)`,
+                          borderRadius: 12, padding: "18px", cursor: disabled ? "not-allowed" : "pointer",
+                          opacity: disabled ? 0.4 : 1,
+                        }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: dotCol, boxShadow: `0 0 8px ${dotCol}50`, flexShrink: 0 }} />
+                        <span style={{ ...font, fontSize: 16, color: "#fff", fontWeight: 400, flex: 1 }}>{t.label}</span>
+                        <span style={{ ...mono, fontSize: 10, color: "rgba(255,255,255,0.2)" }}>FREE</span>
                       </div>
                     );
                   })}
                 </div>
 
-                {FREE_TRIGGERS.filter(t => t.input === "percent").map(t => {
-                  const isSelected = form.trigger?.id === t.id;
-                  const disabled = !form.asset;
-                  return (
-                    <div key={t.id} onClick={() => { if (!disabled) setForm(f => ({ ...f, trigger: t })); }}
-                      style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: isSelected ? `2px solid ${T.accent}40` : `1px solid ${T.border}`, borderRadius: 14, padding: "14px 16px", textAlign: "center", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.4 : 1, marginBottom: 12 }}>
-                      <div style={{ fontSize: 18, color: "#c9a84c", marginBottom: 6 }}>{t.icon}</div>
-                      <div style={{ ...font, fontSize: 15, color: T.text }}>{t.label}</div>
-                    </div>
-                  );
-                })}
-
+                {/* Inline input when trigger selected */}
                 {form.trigger && form.trigger.input === "price" && (
-                  <div style={{ marginTop: 8, marginBottom: 12 }} onClick={(ev) => ev.stopPropagation()}>
+                  <div style={{ marginBottom: 12 }} onClick={(ev) => ev.stopPropagation()}>
                     <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 6 }}>TARGET PRICE (USD)</div>
                     <input type="number" placeholder="0.00" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
                       style={{ width: "100%", padding: "14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, color: T.text, ...font, fontSize: 24, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
                   </div>
                 )}
                 {form.trigger && form.trigger.input === "percent" && (
-                  <div style={{ marginTop: 8, marginBottom: 12 }} onClick={(ev) => ev.stopPropagation()}>
+                  <div style={{ marginBottom: 12 }} onClick={(ev) => ev.stopPropagation()}>
                     <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 6 }}>% CHANGE THRESHOLD</div>
                     <input type="number" placeholder="5" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
                       style={{ width: "100%", padding: "14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, color: T.text, ...font, fontSize: 24, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
                   </div>
                 )}
 
-                {/* Pro triggers — hotlist-style glass panel with grid */}
-                <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: 12, marginBottom: 12, boxShadow: "0 0 20px rgba(255,255,255,0.02)" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 10 }}>
-                    {PRO_TRIGGERS.map(t => (
-                      <div key={t.id} onClick={() => {
-                        if (!form.asset) return;
-                        if (!isPro) { showToast("Pro plan required", "warn"); return; }
-                        setForm(f => ({ ...f, trigger: t }));
-                      }} style={{
-                        padding: "12px 0", background: "rgba(255,255,255,0.04)", border: form.trigger?.id === t.id ? `2px solid ${T.accent}` : "1px solid rgba(255,255,255,0.08)",
-                        borderRadius: 10, textAlign: "center", ...font, fontSize: 15, color: form.trigger?.id === t.id ? "#fff" : "rgba(255,255,255,0.5)",
-                        cursor: !form.asset ? "not-allowed" : "pointer", opacity: !form.asset ? 0.4 : 1,
-                        boxShadow: "0 0 8px rgba(255,255,255,0.04)",
-                      }}>{t.label.split(" ").slice(0, 2).join(" ")}</div>
-                    ))}
+                {/* Pro triggers — glass panel with color-coded chips */}
+                <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: 16, marginBottom: 16 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
+                    {PRO_TRIGGERS.map(t => {
+                      const isSelected = form.trigger?.id === t.id;
+                      return (
+                        <div key={t.id} onClick={() => {
+                          if (!form.asset) return;
+                          if (!isPro) { showToast("Pro plan required", "warn"); return; }
+                          setForm(f => ({ ...f, trigger: t }));
+                        }} style={{
+                          padding: "14px 4px",
+                          background: isSelected ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
+                          border: isSelected ? `2px solid ${t.color}40` : "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: 10, textAlign: "center", ...font, fontSize: 13,
+                          color: t.color || "rgba(255,255,255,0.5)",
+                          cursor: !form.asset ? "not-allowed" : "pointer", opacity: !form.asset ? 0.4 : 1,
+                          boxShadow: `0 0 8px ${(t.color || "rgba(255,255,255,0.5)")}08`,
+                        }}>{t.chipLabel}</div>
+                      );
+                    })}
                   </div>
                   {!isPro && (
                     <div onClick={() => { setShowModal(false); setTab("pricing"); }} style={{
-                      padding: 12, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)",
-                      borderRadius: 10, textAlign: "center", ...font, fontSize: 15, fontWeight: 500, color: "#fff", cursor: "pointer",
-                      boxShadow: "0 0 12px rgba(255,255,255,0.08)",
-                    }}>Unlock Pro — <span style={{ color: T.green }}>9</span>/mo</div>
+                      padding: 16, background: `linear-gradient(135deg, ${T.green}, #2ab56a)`,
+                      borderRadius: 14, textAlign: "center", cursor: "pointer",
+                      boxShadow: `0 4px 20px ${T.green}30`,
+                    }}>
+                      <div style={{ ...font, fontSize: 17, fontWeight: 600, color: "#000" }}>Unlock {PRO_TRIGGERS.length} Pro Triggers</div>
+                      <div style={{ ...mono, fontSize: 11, color: "rgba(0,0,0,0.5)", marginTop: 4 }}><span style={{ fontWeight: 700, color: "#000" }}>9</span>/mo · Cancel anytime</div>
+                    </div>
                   )}
                 </div>
 
                 <button onClick={() => { if (form.trigger) setStep(3); }} style={{
-                  width: "100%", padding: 14, marginTop: 4,
+                  width: "100%", padding: 16,
                   background: form.trigger ? T.accent : T.border, color: form.trigger ? T.btnText : T.textFaint,
                   border: "none", borderRadius: 12, ...font, fontSize: 15, fontWeight: 600, cursor: form.trigger ? "pointer" : "not-allowed",
                 }}>Continue →</button>
