@@ -4029,14 +4029,26 @@ export default function AppPage() {
                     )}
                   </div>
                 ) : (
-                  <div style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div>
-                      <span style={{ ...font, fontSize: 28, fontWeight: 400, color: T.text }}>{form.asset}</span>
-                      <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 4 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ ...font, fontSize: 28, fontWeight: 400, color: T.green }}>{(() => { const md = marketData[MARKET_SYMBOLS.find(ms => ms.symbol === form.asset)?.id] || watchData[form.asset]; return md ? `$${Number(md.price).toFixed(2)}` : ""; })()}</span>
-                      <span onClick={() => setForm(f => ({ ...f, asset: "", trigger: null, value: "" }))} style={{ fontSize: 16, color: T.textFaint, cursor: "pointer" }}>×</span>
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+                      <div>
+                        <div style={{ ...font, fontSize: 28, fontWeight: 400, color: T.text }}>{modalAssetLabel !== form.asset ? modalAssetLabel : form.asset}</div>
+                        <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 4, letterSpacing: "3px" }}>{form.asset}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        {(() => {
+                          const md = marketData[MARKET_SYMBOLS.find(ms => ms.symbol === form.asset)?.id] || watchData[form.asset];
+                          if (!md) return null;
+                          const up = (md.changePct || 0) >= 0;
+                          const col = up ? T.green : T.red;
+                          const arrow = up ? "▲" : "▼";
+                          return (<>
+                            <div style={{ ...font, fontSize: 28, fontWeight: 400, color: col }}>${Number(md.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div style={{ ...mono, fontSize: 12, color: col, marginTop: 4 }}>{md.change != null ? `${md.change >= 0 ? "+" : ""}$${Math.abs(Number(md.change)).toFixed(2)} (${arrow} ${Math.abs(md.changePct).toFixed(2)}%)` : ""}</div>
+                          </>);
+                        })()}
+                        <span onClick={() => setForm(f => ({ ...f, asset: "", trigger: null, value: "" }))} style={{ ...mono, fontSize: 10, color: T.textFaint, cursor: "pointer", marginTop: 6, display: "inline-block" }}>change ×</span>
+                      </div>
                     </div>
                   </div>
                 )}
