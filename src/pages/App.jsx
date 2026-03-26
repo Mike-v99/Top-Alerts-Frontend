@@ -4706,70 +4706,91 @@ function CandlestickChart({ data, T, range, chartType = "candle" }) {
 function PricingPage({ T, font, mono, currentPlan, onUpgrade, isMobile }) {
   const isFree = !currentPlan || currentPlan === "free";
   const proPriceId = import.meta.env.VITE_STRIPE_PRO_PRICE_ID;
-  const themeName = T.bg === "#0a0a0a" ? "charcoal" : "paper";
   const gn = T.green;
-
-  const proFeatures = ["Unlimited alerts","All 12 trigger types","Multi-condition AND/OR","90-day backtesting","SMS & Webhook","Share chart screenshots","Alert cooldown","Priority delivery"];
 
   return (
     <div style={{ maxWidth: isMobile ? "100%" : 480, margin: "0 auto" }}>
+      <style>{`@keyframes proPulse{0%,100%{box-shadow:0 4px 20px rgba(61,220,132,0.3)}50%{box-shadow:0 4px 30px rgba(61,220,132,0.5)}}`}</style>
+
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: isMobile ? 32 : 36 }}>
-        <div style={{ ...font, fontSize: isMobile ? 24 : 28, fontWeight: 400, color: T.text }}>Upgrade to Pro</div>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4, marginTop: 12 }}>
-          <span style={{ ...font, fontSize: isMobile ? 40 : 48, fontWeight: 300, color: T.text }}>$9</span>
-          <span style={{ ...font, fontSize: 14, color: T.textFaint }}>/month</span>
-        </div>
-        <div style={{ ...font, fontSize: 12, color: T.textFaint, marginTop: 8 }}>or $65/year — save 40%</div>
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.2)", letterSpacing: "4px", marginBottom: 12 }}>◇ TOP-ALERTS</div>
+        <div style={{ ...font, fontSize: 42, fontWeight: 200, color: "#fff" }}>Go Pro</div>
+        <div style={{ ...mono, fontSize: 12, color: "rgba(255,255,255,0.2)", marginTop: 8 }}>The serious trader's toolkit</div>
       </div>
 
-      {/* Feature list */}
-      <div style={{ padding: "0 8px", marginBottom: isMobile ? 28 : 32 }}>
-        {proFeatures.map((f, i) => (
-          <div key={f} style={{
-            display: "flex", alignItems: "center", gap: 12, padding: "16px 0",
-            borderBottom: i < proFeatures.length - 1 ? `1px solid ${T.border}` : "none",
-          }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: 8,
-              background: `${gn}12`, border: `1px solid ${gn}25`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 12, color: gn, flexShrink: 0,
-            }}>&#10003;</div>
-            <div style={{ ...font, fontSize: 14, fontWeight: 400, color: themeName === "charcoal" ? "rgba(255,255,255,0.7)" : T.text }}>{f}</div>
-          </div>
-        ))}
+      {/* Main glow card */}
+      <div style={{
+        border: `1px solid ${gn}20`, borderRadius: 20, padding: "24px 20px", marginBottom: 24,
+        background: `radial-gradient(ellipse at top center, ${gn}06, transparent 70%)`,
+        position: "relative", overflow: "hidden",
+      }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${gn}40, transparent)` }} />
+
+        {/* Price */}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <span style={{ ...font, fontSize: 52, fontWeight: 200, color: "#fff" }}>$9</span>
+          <span style={{ ...font, fontSize: 14, color: "rgba(255,255,255,0.3)" }}>/mo</span>
+        </div>
+
+        {/* Trigger grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
+          {PRO_TRIGGERS.map(t => {
+            const bg = `${t.color}06`;
+            const bd = `${t.color}18`;
+            const glow = `0 0 10px ${t.color}12`;
+            return (
+              <div key={t.id} style={{
+                padding: "14px 4px", background: bg, border: `1px solid ${bd}`,
+                borderRadius: 10, textAlign: "center", ...font, fontSize: 13,
+                color: t.color, boxShadow: glow,
+              }}>{t.chipLabel}</div>
+            );
+          })}
+        </div>
+
+        {/* Features */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+          {["Unlimited alerts", "15 trigger types", "SMS & Webhook", "90-day backtest", "Priority delivery", "Chart screenshots"].map(f => (
+            <div key={f} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0" }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: gn, boxShadow: `0 0 6px ${gn}40`, flexShrink: 0 }} />
+              <span style={{ ...font, fontSize: 12, color: "rgba(255,255,255,0.5)" }}>{f}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* CTA */}
       {isFree ? (
         <button onClick={() => proPriceId && onUpgrade(proPriceId)} style={{
-          width: "100%", padding: 16,
-          background: "#fff", border: "none", borderRadius: 14,
-          ...font, fontSize: 15, fontWeight: 600, color: "#0a0a0a", cursor: "pointer",
-          boxShadow: themeName === "charcoal" ? "0 4px 12px rgba(255,255,255,0.06)" : "0 4px 12px rgba(0,0,0,0.1)",
+          width: "100%", padding: 18,
+          background: `linear-gradient(135deg, ${gn}, #2ab56a)`,
+          border: "none", borderRadius: 14,
+          ...font, fontSize: 18, fontWeight: 700, color: "#000", cursor: "pointer",
+          boxShadow: `0 4px 24px ${gn}35`,
+          animation: "proPulse 2s ease-in-out infinite",
         }}>Start Pro</button>
       ) : (
         <div style={{
-          width: "100%", padding: 16, textAlign: "center",
+          width: "100%", padding: 18, textAlign: "center",
           background: `${gn}12`, border: `1px solid ${gn}30`, borderRadius: 14,
-          ...mono, fontSize: 12, color: gn,
-        }}>&#10003; PRO ACTIVE</div>
+          ...mono, fontSize: 14, color: gn,
+        }}>✓ PRO ACTIVE</div>
       )}
 
-      <div style={{ textAlign: "center", marginTop: 12, ...font, fontSize: 11, color: T.textFaint }}>Cancel anytime</div>
+      <div style={{ textAlign: "center", marginTop: 8, ...font, fontSize: 11, color: "rgba(255,255,255,0.15)" }}>Cancel anytime</div>
 
-      {/* Free plan note */}
-      <div style={{
-        marginTop: 24, padding: 16, textAlign: "center",
-        backgroundColor: themeName === "charcoal" ? "#111" : "#f9f8f5",
-        border: `1px solid ${T.border}`, borderRadius: 12,
-      }}>
-        <div style={{ ...font, fontSize: 12, color: T.textMid }}>
-          Currently on <span style={{ color: T.text, fontWeight: 500 }}>{isFree ? "Free" : "Pro"}</span> plan
+      {/* Current plan note */}
+      {isFree && (
+        <div style={{
+          marginTop: 24, padding: 14, textAlign: "center",
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 12,
+        }}>
+          <div style={{ ...font, fontSize: 12, color: "rgba(255,255,255,0.25)" }}>
+            Currently on <span style={{ color: "#fff", fontWeight: 500 }}>Free</span> — 10 alerts · 3 triggers
+          </div>
         </div>
-        {isFree && <div style={{ ...font, fontSize: 11, color: T.textFaint, marginTop: 4 }}>10 alerts · 3 triggers · Push & Email</div>}
-      </div>
+      )}
     </div>
   );
 }
