@@ -4084,19 +4084,29 @@ export default function AppPage() {
                   })}
                 </div>
 
-                {/* Inline input when trigger selected */}
-                {form.trigger && form.trigger.input === "price" && (
-                  <div style={{ marginBottom: 12 }} onClick={(ev) => ev.stopPropagation()}>
-                    <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 6 }}>TARGET PRICE (USD)</div>
-                    <input type="number" placeholder="0.00" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
-                      style={{ width: "100%", padding: "14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, color: T.text, ...font, fontSize: 24, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
-                  </div>
-                )}
-                {form.trigger && form.trigger.input === "percent" && (
-                  <div style={{ marginBottom: 12 }} onClick={(ev) => ev.stopPropagation()}>
-                    <div style={{ ...mono, fontSize: 12, letterSpacing: "2px", color: T.textFaint, marginBottom: 6 }}>% CHANGE THRESHOLD</div>
-                    <input type="number" placeholder="5" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
-                      style={{ width: "100%", padding: "14px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, color: T.text, ...font, fontSize: 24, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
+                {/* Inline input — indented card with input + Add + pulsing Go */}
+                {form.trigger && (form.trigger.input === "price" || form.trigger.input === "percent") && (
+                  <div style={{ margin: "8px 0 8px 28px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 12, padding: 12 }}
+                    onClick={(ev) => ev.stopPropagation()}>
+                    <style>{`@keyframes goPulse{0%,100%{box-shadow:0 0 8px rgba(61,220,132,0.3)}50%{box-shadow:0 0 20px rgba(61,220,132,0.5)}}`}</style>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="number"
+                        placeholder=""
+                        value={form.value}
+                        onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
+                        autoFocus
+                        style={{ flex: 1, padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, color: "#fff", ...font, fontSize: 18, outline: "none", boxSizing: "border-box", minWidth: 0 }}
+                      />
+                      <div onClick={() => {/* TODO: add another trigger */}} style={{ padding: "10px 12px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, ...font, fontSize: 11, color: "rgba(255,255,255,0.3)", cursor: "pointer", whiteSpace: "nowrap" }}>+ Add</div>
+                      <div onClick={() => { if (form.value) setStep(3); }} style={{
+                        padding: "10px 20px", background: T.green, borderRadius: 8,
+                        ...font, fontSize: 13, fontWeight: 700, color: "#000", cursor: form.value ? "pointer" : "not-allowed",
+                        whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5,
+                        opacity: form.value ? 1 : 0.5,
+                        animation: form.value ? "goPulse 2s ease-in-out infinite" : "none",
+                      }}>Go <svg width="14" height="14" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg></div>
+                    </div>
                   </div>
                 )}
 
@@ -4133,12 +4143,6 @@ export default function AppPage() {
                     </div>
                   )}
                 </div>
-
-                <button onClick={() => { if (form.trigger) setStep(3); }} style={{
-                  width: "100%", padding: 16,
-                  background: form.trigger ? T.accent : T.border, color: form.trigger ? T.btnText : T.textFaint,
-                  border: "none", borderRadius: 12, ...font, fontSize: 15, fontWeight: 600, cursor: form.trigger ? "pointer" : "not-allowed",
-                }}>Continue →</button>
               </div>
             )}
             {/* Step 3 — Delivery */}
