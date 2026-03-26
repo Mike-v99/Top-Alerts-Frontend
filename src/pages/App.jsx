@@ -4029,14 +4029,14 @@ export default function AppPage() {
                     )}
                   </div>
                 ) : (
-                  <div style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "12px 16px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ ...font, fontSize: 16, color: T.text }}>{form.asset}</span>
-                      <span style={{ ...mono, fontSize: 10, color: T.textFaint }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</span>
+                  <div style={{ backgroundColor: themeName === "charcoal" ? "#0a0a0a" : "#fff", backgroundImage: themeName === "charcoal" ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008))" : "none", border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <span style={{ ...font, fontSize: 28, fontWeight: 400, color: T.text }}>{form.asset}</span>
+                      <div style={{ ...mono, fontSize: 11, color: T.textFaint, marginTop: 4 }}>{modalAssetLabel !== form.asset ? modalAssetLabel : ""}</div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ ...font, fontSize: 18, color: T.green }}>{(() => { const md = marketData[MARKET_SYMBOLS.find(ms => ms.symbol === form.asset)?.id] || watchData[form.asset]; return md ? `$${Number(md.price).toFixed(2)}` : ""; })()}</span>
-                      <span onClick={() => setForm(f => ({ ...f, asset: "", trigger: null, value: "" }))} style={{ fontSize: 14, color: T.textFaint, cursor: "pointer" }}>×</span>
+                      <span style={{ ...font, fontSize: 28, fontWeight: 400, color: T.green }}>{(() => { const md = marketData[MARKET_SYMBOLS.find(ms => ms.symbol === form.asset)?.id] || watchData[form.asset]; return md ? `$${Number(md.price).toFixed(2)}` : ""; })()}</span>
+                      <span onClick={() => setForm(f => ({ ...f, asset: "", trigger: null, value: "" }))} style={{ fontSize: 16, color: T.textFaint, cursor: "pointer" }}>×</span>
                     </div>
                   </div>
                 )}
