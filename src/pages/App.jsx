@@ -171,6 +171,8 @@ export default function AppPage() {
   const [detailSymbol, setDetailSymbol] = useState(null); // symbol detail screen
   const [detailChartType, setDetailChartType] = useState("line"); // "line" or "candle"
   const [detailEarningsTab, setDetailEarningsTab] = useState("earnings"); // "earnings" or "news"
+  const [detailNews, setDetailNews] = useState([]);
+  const [detailNewsLoading, setDetailNewsLoading] = useState(false);
   const [mobileNewsOpen, setMobileNewsOpen] = useState(false);
   const [expandedAlert, setExpandedAlert] = useState(null); // id of expanded alert card
   const [editMode, setEditMode] = useState(false); // watchlist reorder mode
@@ -947,6 +949,37 @@ export default function AppPage() {
         hour: e.hour || null, // "bmo" (before market open) or "amc" (after market close)
       })));
     } catch (e) { console.error("Earnings dates fetch failed", e); }
+  }
+
+  // ── Fetch company news from Finnhub ────────────────────────────────────────
+  async function fetchDetailNews(symbol) {
+    setDetailNewsLoading(true);
+    setDetailNews([]);
+    try {
+      const fKey = import.meta.env.VITE_FINNHUB_KEY || "";
+      if (!fKey) { setDetailNewsLoading(false); return; }
+      const now = new Date();
+      const from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days back
+      const pad = n => String(n).padStart(2, "0");
+      const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      const res = await fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${fmt(from)}&to=${fmt(now)}&token=${fKey}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setDetailNews(data.slice(0, 8).map(n => ({
+          headline: n.headline,
+          source: n.source,
+          url: n.url,
+          time: n.datetime ? (() => {
+            const diff = Math.floor((Date.now() / 1000 - n.datetime) / 60);
+            if (diff < 60) return `${diff}m ago`;
+            if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+            return `${Math.floor(diff / 1440)}d ago`;
+          })() : "",
+          image: n.image || "",
+        })));
+      }
+    } catch (e) { console.error("News fetch failed", e); }
+    setDetailNewsLoading(false);
   }
 
   // ── 52-week data ─────────────────────────────────────────────────────────
@@ -2281,7 +2314,7 @@ export default function AppPage() {
                     try {
                       if (isMobile) {
                         setDetailSymbol({ symbol: m.symbol, label: m.label, id: m.id });
-                        setDetailChartType("line");
+                        setDetailChartType("line"); setDetailNews([]);
                         setDetailEarningsTab("earnings");
                         openChart(m.symbol, m.label);
                       } else {
@@ -2452,7 +2485,7 @@ export default function AppPage() {
                     try {
                       if (isMobile) {
                         setDetailSymbol({ symbol: w.symbol, label: w.label || w.symbol });
-                        setDetailChartType("line");
+                        setDetailChartType("line"); setDetailNews([]);
                         setDetailEarningsTab("earnings");
                         openChart(w.symbol, w.label);
                       } else {
@@ -2675,7 +2708,7 @@ export default function AppPage() {
                       try {
                         if (isMobile) {
                           setDetailSymbol({ symbol: t.symbol, label: t.name || t.symbol });
-                          setDetailChartType("line");
+                          setDetailChartType("line"); setDetailNews([]);
                           setDetailEarningsTab("earnings");
                           openChart(t.symbol, t.name);
                         } else {
@@ -3801,7 +3834,7 @@ export default function AppPage() {
               </div>
 
               {/* Chart */}
-              <div style={{ margin: "20px -20px 0", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, padding: 4 }}>
+              <div style={{ margin: "20px -20px 0", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, padding: 4, overflow: "hidden" }}>
                 {chartLoading && <div style={{ textAlign: "center", padding: 40, ...mono, fontSize: 12, color: T.textMid }}>Loading chart...</div>}
                 {!chartLoading && chartData && chartData.length > 0 && (
                   <div style={{ overflowX: "auto" }}>
@@ -3894,7 +3927,7 @@ export default function AppPage() {
                       background: detailEarningsTab === "earnings" ? "rgba(255,255,255,0.06)" : "transparent",
                       color: detailEarningsTab === "earnings" ? "#fff" : "rgba(255,255,255,0.3)",
                     }}>EARNINGS</div>
-                    <div onClick={() => setDetailEarningsTab("news")} style={{
+                    <div onClick={() => { setDetailEarningsTab("news"); if (detailNews.length === 0 && !detailNewsLoading) fetchDetailNews(sym); }} style={{
                       padding: "7px 16px", ...mono, fontSize: 15, letterSpacing: "1px", cursor: "pointer",
                       borderLeft: "1px solid rgba(255,255,255,0.06)",
                       background: detailEarningsTab === "news" ? "rgba(255,255,255,0.06)" : "transparent",
@@ -3935,9 +3968,23 @@ export default function AppPage() {
                     )}
                   </div>
                 ) : (
-                  <div style={{ textAlign: "center", padding: 20 }}>
-                    <div style={{ ...mono, fontSize: 11, color: T.textFaint }}>News coming soon</div>
-                    <div style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.15)", marginTop: 6 }}>We're working on integrating live news feeds</div>
+                  <div>
+                    {detailNewsLoading && (
+                      <div style={{ textAlign: "center", padding: 20, ...mono, fontSize: 11, color: T.textMid }}>Loading news...</div>
+                    )}
+                    {!detailNewsLoading && detailNews.length === 0 && (
+                      <div style={{ textAlign: "center", padding: 20, ...mono, fontSize: 11, color: T.textFaint }}>No recent news found</div>
+                    )}
+                    {!detailNewsLoading && detailNews.map((n, idx) => (
+                      <div key={idx} onClick={() => n.url && window.open(n.url, "_blank")}
+                        style={{ padding: "12px 0", borderBottom: idx < detailNews.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", cursor: n.url ? "pointer" : "default" }}>
+                        <div style={{ ...font, fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.4, marginBottom: 4 }}>{n.headline}</div>
+                        <div style={{ display: "flex", gap: 6, ...mono, fontSize: 9, color: "rgba(255,255,255,0.2)" }}>
+                          <span>{n.source}</span>
+                          {n.time && <><span>·</span><span>{n.time}</span></>}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -4404,7 +4451,7 @@ function CandlestickChart({ data, T, range, chartType = "candle" }) {
 
   if (!data || !data.length) return <div style={{ padding: 20, textAlign: "center", color: T.textMid, fontSize: 12 }}>No data</div>;
 
-  const W = range === "1M" ? 700 : 600, H = 200, PAD = { top: 10, right: 10, bottom: 24, left: 52 };
+  const W = range === "1M" ? 700 : 600, H = 200, PAD = { top: 10, right: chartType === "line" ? 56 : 10, bottom: 24, left: 52 };
   const cW = W - PAD.left - PAD.right;
   const cH = H - PAD.top - PAD.bottom;
 
