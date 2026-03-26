@@ -3827,9 +3827,10 @@ export default function AppPage() {
                 <div style={{ display: "flex", gap: 4 }}>
                   {[["5m","1D"],["15m","5D"],["1D","1M"],["1W","1Y"],["1M","5Y"]].map(([rv, lbl]) => (
                     <span key={rv} onClick={() => changeChartRange(rv)} style={{
-                      padding: "6px 14px", borderRadius: 6, ...mono, fontSize: 11, cursor: "pointer",
-                      background: chartRange === rv ? T.accent : "transparent",
-                      color: chartRange === rv ? T.btnText : T.textMid,
+                      padding: "6px 14px", borderRadius: 20, ...mono, fontSize: 11, cursor: "pointer",
+                      background: chartRange === rv ? "rgba(255,255,255,0.06)" : "transparent",
+                      border: chartRange === rv ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
+                      color: chartRange === rv ? "#fff" : T.textMid,
                     }}>{lbl}</span>
                   ))}
                 </div>
@@ -4503,7 +4504,7 @@ function CandlestickChart({ data, T, range, chartType = "candle" }) {
         onTouchMove={(e) => { e.preventDefault(); handleMouseMove(e); }}
         onTouchStart={(e) => { e.preventDefault(); handleMouseMove(e); }}
       >
-        <text x="300" y="9" textAnchor="middle" fontSize="8" fill={T.textFaint} fontFamily="monospace">{`${data.length} candles · ${data.length > 0 ? new Date(data[0].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""} → ${data.length > 0 ? new Date(data[data.length-1].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""}`}</text>
+        <text x="300" y="9" textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.6)" fontFamily="monospace">{`${data.length} candles · ${data.length > 0 ? new Date(data[0].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""} → ${data.length > 0 ? new Date(data[data.length-1].t).toLocaleDateString("en-US",{month:"short",year:"numeric"}) : ""}`}</text>
         {/* Y grid lines + labels */}
         {yLabels.map((v, i) => {
           const y = PAD.top + scaleY(v);
@@ -4512,7 +4513,7 @@ function CandlestickChart({ data, T, range, chartType = "candle" }) {
               <line x1={PAD.left} x2={W - PAD.right} y1={y} y2={y}
                 stroke={T.border} strokeWidth="0.5" strokeDasharray="3,3" />
               <text x={PAD.left - 4} y={y + 4} textAnchor="end"
-                fontSize="9" fill={T.textFaint} fontFamily="'DM Mono',monospace">
+                fontSize="9" fill="rgba(255,255,255,0.8)" fontFamily="'DM Mono',monospace">
                 {fmtPrice(v)}
               </text>
             </g>
@@ -4520,28 +4521,36 @@ function CandlestickChart({ data, T, range, chartType = "candle" }) {
         })}
 
         {/* Candles or Line */}
-        {chartType === "line" ? (
-          <g>
-            <defs>
-              <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={data[data.length-1].c >= data[0].o ? T.green : T.red} stopOpacity="0.15"/>
-                <stop offset="100%" stopColor={data[data.length-1].c >= data[0].o ? T.green : T.red} stopOpacity="0"/>
-              </linearGradient>
-            </defs>
-            <polygon
-              points={data.map((d, i) => `${PAD.left + i * spacing + spacing / 2},${PAD.top + scaleY(d.c)}`).join(" ") + ` ${PAD.left + (data.length - 1) * spacing + spacing / 2},${H - PAD.bottom} ${PAD.left + spacing / 2},${H - PAD.bottom}`}
-              fill="url(#lineGrad)"
-            />
-            <polyline
-              points={data.map((d, i) => `${PAD.left + i * spacing + spacing / 2},${PAD.top + scaleY(d.c)}`).join(" ")}
-              fill="none"
-              stroke={data[data.length-1].c >= data[0].o ? T.green : T.red}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </g>
-        ) : data.map((d, i) => {
+        {chartType === "line" ? (() => {
+          const prevClose = data[0].o;
+          const prevCloseYPos = PAD.top + scaleY(prevClose);
+          const linePoints = data.map((d, i) => `${PAD.left + i * spacing + spacing / 2},${PAD.top + scaleY(d.c)}`).join(" ");
+          const lastX = PAD.left + (data.length - 1) * spacing + spacing / 2;
+          const firstX = PAD.left + spacing / 2;
+          return (
+            <g>
+              <defs>
+                <clipPath id="clipAbovePrev"><rect x={PAD.left} y={PAD.top} width={W - PAD.left - PAD.right} height={prevCloseYPos - PAD.top} /></clipPath>
+                <clipPath id="clipBelowPrev"><rect x={PAD.left} y={prevCloseYPos} width={W - PAD.left - PAD.right} height={H - prevCloseYPos} /></clipPath>
+                <linearGradient id="gradAbovePrev" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#b388ff" stopOpacity="0.12" /><stop offset="100%" stopColor="#b388ff" stopOpacity="0" /></linearGradient>
+                <linearGradient id="gradBelowPrev" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#64b5f6" stopOpacity="0" /><stop offset="100%" stopColor="#64b5f6" stopOpacity="0.12" /></linearGradient>
+              </defs>
+              {/* Fill above prev close */}
+              <polygon points={`${linePoints} ${lastX},${prevCloseYPos} ${firstX},${prevCloseYPos}`} fill="url(#gradAbovePrev)" clipPath="url(#clipAbovePrev)" />
+              {/* Fill below prev close */}
+              <polygon points={`${linePoints} ${lastX},${prevCloseYPos} ${firstX},${prevCloseYPos}`} fill="url(#gradBelowPrev)" clipPath="url(#clipBelowPrev)" />
+              {/* Line above prev close — purple */}
+              <polyline points={linePoints} fill="none" stroke="#b388ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" clipPath="url(#clipAbovePrev)" />
+              {/* Line below prev close — blue */}
+              <polyline points={linePoints} fill="none" stroke="#64b5f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" clipPath="url(#clipBelowPrev)" />
+              {/* Prev close dashed line */}
+              <line x1={PAD.left} x2={W - PAD.right} y1={prevCloseYPos} y2={prevCloseYPos} stroke="rgba(255,255,255,0.15)" strokeWidth="1" strokeDasharray="4,4" />
+              {/* PREV label + price on right */}
+              <text x={W - PAD.right + 6} y={prevCloseYPos - 4} textAnchor="start" fontSize="7" fill="rgba(255,255,255,0.35)" fontFamily="monospace" letterSpacing="1">PREV</text>
+              <text x={W - PAD.right + 6} y={prevCloseYPos + 8} textAnchor="start" fontSize="10" fill="rgba(255,255,255,0.8)" fontFamily="monospace">{fmtPrice(prevClose)}</text>
+            </g>
+          );
+        })() : data.map((d, i) => {
           const x     = PAD.left + i * spacing + spacing / 2;
           const up    = d.c >= d.o;
           const col   = up ? T.green : T.red;
@@ -4593,7 +4602,7 @@ function CandlestickChart({ data, T, range, chartType = "candle" }) {
           const x = PAD.left + i * spacing + spacing / 2;
           return (
             <text key={i} x={x} y={H - 4} textAnchor="middle"
-              fontSize="9" fill={T.textFaint} fontFamily="'DM Mono',monospace">
+              fontSize="9" fill="rgba(255,255,255,0.7)" fontFamily="'DM Mono',monospace">
               {formatXLabel(d.t)}
             </text>
           );
