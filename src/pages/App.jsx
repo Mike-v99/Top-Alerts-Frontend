@@ -128,7 +128,7 @@ export default function AppPage() {
     }
   }
 
-  const [themeName, setThemeName] = useState("charcoal");
+  const [themeName, setThemeName] = useState("charcoal"); // dark mode only
   const [tab,       setTab]       = useState("market");
   const [showModal, setShowModal] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -1468,15 +1468,6 @@ export default function AppPage() {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {/* Theme toggle */}
-            <button onClick={() => setThemeName(t => t === "paper" ? "charcoal" : "paper")} style={{
-              ...font, fontSize: 14, background: "none",
-              border: "none", cursor: "pointer", padding: "6px 8px",
-              color: T.textMid, display: "flex", alignItems: "center",
-            }}>
-              <span>{T.icon}</span>
-            </button>
-
             {/* User profile / sign in */}
             {user ? (
               <button onClick={() => setShowProfile(p => !p)} style={{
